@@ -10,6 +10,7 @@
 /// this will violate the Orphan rule
 pub mod error;
 pub mod parser;
+pub mod parser_atoms;
 
 use error::PesError;
 use pubgrub::range::Range;
