@@ -8,8 +8,8 @@ edition = "2018"
 
 [dependencies]
 nom = "6.1.0"
-pubgrub = "0.2.0"
-serde = "1.0.123"
+pubgrub = {version = "0.2.0", features = ["serde"] }
+serde = { version = "1.0.123", features = ["derive"] }
 #portable-pty = "0.3.1"
 #pty = "0.2.2"
 thiserror = "1"

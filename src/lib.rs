@@ -11,6 +11,7 @@
 pub mod error;
 pub mod parser;
 pub mod parser_atoms;
+pub mod manifest;
 
 use error::PesError;
 use pubgrub::range::Range;
@@ -28,7 +29,7 @@ impl FrmStr for Range<SemanticVersion> {
 
     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
         let _ = value;
-        Err(PesError::UnknownErr)
+        todo!()
         
     }
 }
