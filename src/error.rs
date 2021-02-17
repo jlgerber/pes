@@ -10,4 +10,7 @@ pub enum PesError {
     // PubGrubError(#[from] PubGrubError),
     #[error("unknown err")]
     UnknownErr,
+
+    #[error("Duplicate key '{0}'")]
+    DuplicateKey(String),
 }
