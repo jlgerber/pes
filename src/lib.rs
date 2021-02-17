@@ -22,10 +22,12 @@ pub trait FrmStr {
     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized;
 }
 
+
 impl FrmStr for Range<SemanticVersion> {
     type FrmStrErr = error::PesError;
 
     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
+        let _ = value;
         Err(PesError::UnknownErr)
         
     }

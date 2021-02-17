@@ -1,5 +1,5 @@
 use thiserror::Error as ThisError;
-use pubgrub::error::PubGrubError;
+//use pubgrub::error::PubGrubError;
 
 #[derive(Debug, ThisError)]
 pub enum PesError {

@@ -9,14 +9,14 @@ use nom::{
     branch::alt,
     character::complete::digit1,
     bytes::complete::tag,
-    sequence::terminated,
+    //sequence::terminated,
     sequence::preceded,
     sequence::tuple,
     sequence::separated_pair,
     multi::many_m_n,
     multi::many0,
     sequence::delimited,
-    character::complete::space0,
+    //character::complete::space0,
 };
 
 use crate::parser_atoms::alphaword_many0_underscore_word;
@@ -27,6 +27,16 @@ use crate::parser_atoms::alphaword_many0_underscore_word;
 //------------------//
 
 /// Given a string representing a semantic version range - return a Range of SemanticVersion
+/// 
+/// # Example
+/// ```
+/// # use pes::parser::parse_semver_range;
+/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # fn main()  {
+/// let range = parse_semver_range("1.2.3+<3.0.0");
+/// assert_eq!(range, Ok(("",Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0)))));
+/// # }
+/// ```
 pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
     // delimited( 
     //     space0,
@@ -39,6 +49,16 @@ pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
 
 /// Given a string like this: <package name>-<semver> (eg internal-1.2.3), return a 
 /// tuple of package name, SemanticVersion.
+///
+/// # Example
+/// ```
+/// # use pes::parser::parse_package_version;
+/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # fn main()  {
+/// let range = parse_package_version("maya-1.2.3");
+/// assert_eq!(range, Ok(("",("maya", SemanticVersion::new(1,2,3)))));
+/// # }
+/// ```
 pub fn parse_package_version(input: &str) -> IResult<&str, (&str, SemanticVersion)> {
     separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver)(input)
 
