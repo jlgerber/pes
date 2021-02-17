@@ -1,4 +1,4 @@
-//! what do we want to parse?
+//! parsers for Semantic Versions
 //! ^1.2.3
 //! 1.2.3+<4.0.0
 use pubgrub::version::SemanticVersion;
@@ -21,6 +21,54 @@ use nom::{
 
 use crate::parser_atoms::alphaword_many0_underscore_word;
 
+
+//------------------//
+// PUBLIC FUNCTIONS //
+//------------------//
+
+/// Given a string representing a semantic version range - return a Range of SemanticVersion
+pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
+    // delimited( 
+    //     space0,
+        alt((parse_semver_carrot, parse_semver_between, parse_semver_exact)) //,
+        // space0
+    // )
+    (s)
+}
+
+
+/// Given a string like this: <package name>-<semver> (eg internal-1.2.3), return a 
+/// tuple of package name, SemanticVersion.
+pub fn parse_package_version(input: &str) -> IResult<&str, (&str, SemanticVersion)> {
+    separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver)(input)
+
+}
+
+/// Given an input str representing a named package and version range separated by a dash,
+/// parse and return the package name and a semantic version range. 
+/// The Range may be either an Exact range or a Range between two SemanticVersion instances.
+///
+/// # Example Inputs
+/// - maya-1.2.3+<4 
+/// - maya-^3.2
+///
+/// # Example
+/// ```
+/// # use pes::parser::parse_package_range;
+/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # fn main()  {
+/// let range = parse_package_range("maya-1.2.3+<3");
+/// assert_eq!(range, Ok(("",("maya", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))))));
+/// # }
+/// ```
+pub fn parse_package_range(input: &str) -> IResult<&str, (&str, Range<SemanticVersion>)> {
+    separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range)(input)
+}
+
+
+//---------------------//
+//  PRIVATE FUNCTIONS  //
+//---------------------//
 
 // Given a string that represents a semantic version, that is an unsigned int,  followed by 
 // zero to two period delimited unsigned ints, return a SemanticVersion instance
@@ -70,33 +118,6 @@ fn parse_semver_carrot(s: &str) -> IResult<&str, Range<SemanticVersion>> {
 fn parse_semver_exact(s: &str) -> IResult<&str, Range<SemanticVersion>> {
     let (leftover, semver) = parse_semver(s)?;
     Ok((leftover, Range::exact(semver)))
-}
-
-/// Given a string representing a semantic version range - return a Range of SemanticVersion
-pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
-    // delimited( 
-    //     space0,
-        alt((parse_semver_carrot, parse_semver_between, parse_semver_exact)) //,
-        // space0
-    // )
-    (s)
-}
-
-
-/// Given a string like this: <package name>-<semver> (eg internal-1.2.3), return a 
-/// tuple of package name, SemanticVersion.
-pub fn parse_package_version(input: &str) -> IResult<&str, (&str, SemanticVersion)> {
-    separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver)(input)
-
-}
-
-/// Given a package range str (<package>-<range>) return a tuple of &str , Range
-/// # Example Input
-/// - maya-1.2.3+<4 
-/// - maya-^3.2
-/// etc 
-pub fn parse_package_range(input: &str) -> IResult<&str, (&str, Range<SemanticVersion>)> {
-    separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range)(input)
 }
 
 
