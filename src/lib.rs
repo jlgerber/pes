@@ -25,7 +25,7 @@ pub trait FrmStr {
 
 
 impl FrmStr for Range<SemanticVersion> {
-    type FrmStrErr = error::PesError;
+    type FrmStrErr = PesError;
 
     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
         let _ = value;

@@ -13,6 +13,7 @@ serde = { version = "1.0.123", features = ["derive"] }
 #portable-pty = "0.3.1"
 #pty = "0.2.2"
 thiserror = "1"
+serde_yaml = "0.8.17"
 
 [dependencies.indexmap]
 version = "1.6"
