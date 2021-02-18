@@ -7,7 +7,3 @@ pub use package_range::PackageRange;
 pub use package_target::PackageTarget;
 pub type TargetMap = indexmap::IndexMap<String, PackageTarget>;
 
-
-#[cfg(test)]
-#[path = "./unit_tests/manifest.rs"]
-mod unit_tests;

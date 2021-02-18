@@ -12,7 +12,9 @@ pub mod error;
 pub mod parser;
 pub mod parser_atoms;
 pub mod manifest;
+pub mod versioned_package;
 
+use versioned_package::VersionedPackage;
 use error::PesError;
 use pubgrub::range::Range;
 use pubgrub::version::SemanticVersion;

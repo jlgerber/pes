@@ -6,19 +6,22 @@ use pubgrub::range::Range;
 use pubgrub::version::SemanticVersion;
 
 use crate::error::PesError;
+use crate::parser::parse_consuming_semver_range;
+use crate::VersionedPackage;
 
 
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageTarget {
-    pub include: Vec<String>,
-    pub requires: IndexMap<String, Range<SemanticVersion>>
+    pub include: Option<Vec<String>>,
+    // Range<SemanticVersion> (Todo: newtype wrapper)
+    pub requires: IndexMap<String, String>
 }
 
 impl PackageTarget {
     /// Construct a new, empty PackageTarget
     pub fn new() -> Self {
         Self {
-            include: Vec::new(),
+            include: None,
             requires: IndexMap::new()
         }
     }
@@ -27,11 +30,16 @@ impl PackageTarget {
     /// target is supplied, an Error is returned
     pub fn include<I: Into<String>>(&mut self, target: I) -> Result<(), PesError> {
         let target = target.into();
-        if !self.include.iter().any(|x| x == target.as_str()) {
-            self.include.push(target);
+        if let Some(ref mut include) = &mut self.include {
+            if !include.iter().any(|x| x == target.as_str()) {
+                include.push(target);
+            } else {
+                return Err(PesError::DuplicateKey(target))
+            }
         } else {
-            return Err(PesError::DuplicateKey(target))
+            self.include = Some(vec![target])
         }
+
         Ok(())
     }
 
@@ -42,10 +50,42 @@ impl PackageTarget {
     /// as does the method. If the key supplied to ```requires``` is already extant, 
     /// the value in the map is updated, and the original insertion order
     /// is preserved.
-    pub fn requires<K>(&mut self, key: K, value: Range<SemanticVersion>) -> Option<Range<SemanticVersion>>
+    //pub fn requires<K>(&mut self, key: K, value: Range<SemanticVersion>) -> Option<Range<SemanticVersion>>
+    pub fn requires<K, V>(&mut self, key: K, value: V) -> Option<String>
     where
-        K: Into<String>
+        K: Into<String>,
+        V: Into<String>
     {
-        self.requires.insert(key.into(), value)
+        self.requires.insert(key.into(), value.into())
+    }
+
+    /// Retrieve the SemanticVersion Range associated with the provided key
+    pub fn get_requires(&self, key: &str) -> Result<Range<SemanticVersion>, PesError> {
+        let result = self.requires.get(key);
+        if let Some(result) = result {
+            
+            Ok(parse_consuming_semver_range(result)?)
+        } else {
+            Err(PesError::MissingKey(key.into()))
+        }
+    }
+
+    /// Retrieve all the requires
+    pub fn get_all_requires(&self) -> Result<Vec<VersionedPackage>, PesError> {
+        let mut retval = Vec::with_capacity(self.requires.len());
+        for (k,ref v) in self.requires.iter() {
+            retval.push(VersionedPackage::from_strs(k.as_str(),v)?);
+        }
+
+        Ok(retval)
+    }
+
+    /// Retrieve a vector of included targets
+    pub fn get_includes(&self) -> Vec<&str> {
+        if let Some(ref includes) = self.include {
+            includes.iter().map(|v| v.as_str()).collect()
+        } else {
+            Vec::new()
+        }
     }
 }

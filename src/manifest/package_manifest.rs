@@ -3,9 +3,12 @@ use std::path::Path;
 use indexmap::IndexMap;
 use serde::{Serialize, Deserialize};
 use pubgrub::version::SemanticVersion;
+//use pubgrub::range::Range;
 
 use crate::error::PesError;
 use crate::manifest::PackageTarget;
+use crate::VersionedPackage;
+
 
 /// Struct representation of manifest for package
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
@@ -33,4 +36,28 @@ impl PackageManifest {
         Ok(serde_yaml::from_str(&manifest)?)
     }
 
+    /// Retrieve a vector of SemanticVersion Ranges associated with the provided target
+    pub fn get_requires(&self, target: &str) -> Result<Vec<VersionedPackage>, PesError> {
+        let rtarget = self.targets.get(target);
+        let mut results = Vec::new();
+        if let Some(target) = rtarget {
+            // incorporate any included targets package ranges
+            for include in target.get_includes() {
+                let inc_target = self.targets.get(include);
+                if let Some(inc_target) = inc_target {
+                    results.append(&mut inc_target.get_all_requires()?);
+                }
+            }
+            results.append(&mut target.get_all_requires()?);
+            Ok(results)
+        } else {
+            Err(PesError::MissingKey(target.into()))
+        }
+    }
+
 }
+
+
+#[cfg(test)]
+#[path = "../unit_tests/package_manifest.rs"]
+mod unit_tests;

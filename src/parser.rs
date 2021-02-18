@@ -17,10 +17,11 @@ use nom::{
     multi::many0,
     sequence::delimited,
     //character::complete::space0,
+    combinator::all_consuming,
 };
 
 use crate::parser_atoms::alphaword_many0_underscore_word;
-
+use crate::error::PesError;
 
 //------------------//
 // PUBLIC FUNCTIONS //
@@ -44,6 +45,12 @@ pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
         // space0
     // )
     (s)
+}
+
+pub fn parse_consuming_semver_range(s: &str) -> Result<Range<SemanticVersion>, PesError> {
+    let result = all_consuming(parse_semver_range)(s).map_err(|_| PesError::ParsingFailure(s.into()))?;
+    let (_, result) = result;
+    Ok(result)
 }
 
 
