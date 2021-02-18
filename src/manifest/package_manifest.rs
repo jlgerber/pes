@@ -8,23 +8,46 @@ use pubgrub::version::SemanticVersion;
 use crate::error::PesError;
 use crate::manifest::PackageTarget;
 use crate::VersionedPackage;
+//use crate::parser::parse_consuming_semver;
 
 
-/// Struct representation of manifest for package
+/// Models a manifest for package
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageManifest {
+    /// schema version of the manifest
     pub schema: u32,
+    /// Name of the package
     pub name: String,
+    /// Version of the package
     pub version: SemanticVersion,
+    /// Description of the package
     pub description: String,
+    /// Map of targets for the manifest (eg build, run, lint, etc)
     pub targets: IndexMap<String, PackageTarget>
 }
 
 impl PackageManifest {
 
     /// Construct a PackageManifest from a str
-    pub fn from_str(value: &str) -> Result<Self, PesError> {
+    pub fn from_str_unchecked(value: &str) -> Result<Self, PesError> {
         Ok(serde_yaml::from_str(value)?)
+    }
+
+    /// Construct a PackageManifest from a readable file
+    pub fn from_file_unchecked<F>(value: F) -> Result<Self, PesError> 
+    where
+        F: AsRef<Path> 
+    {
+        let manifest = std::fs::read_to_string(value.as_ref())?;
+        Ok(Self::from_str_unchecked(&manifest)?)
+    }
+
+
+    /// Construct a PackageManifest from a str
+    pub fn from_str(value: &str) -> Result<Self, PesError> {
+        let manifest: PackageManifest = serde_yaml::from_str(value)?;
+        manifest.validate()?;
+        Ok(manifest)
     }
 
     /// Construct a PackageManifest from a readable file
@@ -53,6 +76,28 @@ impl PackageManifest {
         } else {
             Err(PesError::MissingKey(target.into()))
         }
+    }
+
+    // looks like version is already a SemanticVersion
+    // /// Retrieve the version for a package
+    // pub fn get_version(&self) -> Result<SemanticVersion, PesError> {
+    //     parse_consuming_semver(self.name.as_str())
+    // }
+    /// Validate the contents of the manifest, making sure that all versions's 
+    /// can parse
+    pub fn validate(&self) -> Result<(), PesError> {
+        // not needed as self.version is already a SemanticVersion
+        //let _ = parse_consuming_semver(self.version.as_str()).map_err(|| PesError::InvalidVersion(self.version.as_str()))?;
+        for (key, target) in self.targets.iter() {
+            for include in target.get_includes() {
+                if !self.targets.contains_key(include) {
+                    return Err(PesError::MissingInclude{target: key.into(), include: include.into()})
+                }
+            }
+            target.validate_requires()?;
+        }
+
+        Ok(())
     }
 
 }

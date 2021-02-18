@@ -5,9 +5,7 @@
 //! Furthermore, it provides a means to initialize an environment customized to the set of dependencies
 //! and invoke an executable in this known environment.
 
-/// Define a trait that will allow us to implement a conversion from a string
-/// to a Pubgrub::Range. We cannot use FromStr as defined in the standard library, as 
-/// this will violate the Orphan rule
+/// Defines a custom error - PesError for the crate
 pub mod error;
 pub mod parser;
 pub mod parser_atoms;

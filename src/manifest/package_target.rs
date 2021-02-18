@@ -10,6 +10,7 @@ use crate::parser::parse_consuming_semver_range;
 use crate::VersionedPackage;
 
 
+/// Struct used to simplify serialization & deserialization of manifest
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageTarget {
     pub include: Option<Vec<String>>,
@@ -87,5 +88,13 @@ impl PackageTarget {
         } else {
             Vec::new()
         }
+    }
+
+    /// Validate that all of the requires are valid semver ranges
+    pub fn validate_requires(&self) -> Result<(), PesError> {
+        for v in self.requires.values() {
+            let _ = parse_consuming_semver_range(v)?;
+        }
+        Ok(())
     }
 }

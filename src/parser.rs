@@ -1,6 +1,6 @@
-//! parsers for Semantic Versions
-//! ^1.2.3
-//! 1.2.3+<4.0.0
+//! Provides parsers to convert from str to SemanticVersion and 
+//! Range<SemanticVersion>
+
 use pubgrub::version::SemanticVersion;
 use pubgrub::range::Range;
 
@@ -46,7 +46,8 @@ pub fn parse_semver_range(s: &str) -> IResult<&str, Range<SemanticVersion>> {
     // )
     (s)
 }
-
+/// Wraps ```parse_semver_range```, ensuring that it completely consumes the input and 
+/// simplifies the return signature. Failure to completely consume the input results in an error.
 pub fn parse_consuming_semver_range(s: &str) -> Result<Range<SemanticVersion>, PesError> {
     let result = all_consuming(parse_semver_range)(s).map_err(|_| PesError::ParsingFailure(s.into()))?;
     let (_, result) = result;
@@ -92,7 +93,13 @@ pub fn parse_package_range(input: &str) -> IResult<&str, (&str, Range<SemanticVe
     separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range)(input)
 }
 
-
+/// Wraps ```parse_semver```, ensuring that it completely consumes the input, and simplifies the 
+/// return signature. Failure to consume the input results in an error.
+pub fn parse_consuming_semver(input: &str) -> Result<SemanticVersion, PesError> {
+    let result = all_consuming(parse_semver)(input).map_err(|_| PesError::ParsingFailure(input.into()))?;
+    let (_, result) = result;
+    Ok(result)
+}
 //---------------------//
 //  PRIVATE FUNCTIONS  //
 //---------------------//

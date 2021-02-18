@@ -1,3 +1,4 @@
+//! Provides low level parsers used in crate::parser
 use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::bytes::complete::take;

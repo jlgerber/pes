@@ -1,3 +1,6 @@
+//! Defines a VersionedPackage struct use to represent a 
+//! versioned package (surprise)
+
 use pubgrub::{
     range::Range,
     version::SemanticVersion
@@ -6,10 +9,12 @@ use pubgrub::{
 use crate::error::PesError;
 use crate::parser::parse_consuming_semver_range;
 
-
-#[derive(PartialEq, Eq, Debug)]
+/// Simple representation of a versioned package
+#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct VersionedPackage<'a> {
+    /// Name of the package
     pub name: &'a str,
+    /// Version Range for the package
     pub range: Range<SemanticVersion>
 }
 
