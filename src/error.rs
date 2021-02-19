@@ -28,6 +28,10 @@ pub enum PesError {
     #[error("Invalid Version '{0}'")]
     InvalidVersion(String),
 
+    /// Path does not exist
+    #[error("Path does not exist {0:?}")]
+    MissingPath(std::path::PathBuf),
+    
     /// Indicates an include specified in the manifest does not 
     /// map to a target
     #[error("Missing Include '{include:?}' for target '{target:?}' ")]

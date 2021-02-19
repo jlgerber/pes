@@ -10,7 +10,7 @@ use crate::error::PesError;
 use crate::parser::parse_consuming_semver_range;
 
 /// Simple representation of a versioned package
-#[derive(PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(PartialEq, Eq,  Debug)]
 pub struct VersionedPackage<'a> {
     /// Name of the package
     pub name: &'a str,
