@@ -20,7 +20,9 @@ fn expected_manifests_for(
     packages: &[&str], 
     // slice of vecs - because a slice of slices would require the inner slices 
     // to have the same size, we go with a a slice of Vec of &str
-    versions: &[Vec<&str>]
+    versions: &[Vec<&str>],
+    // manifest name (eg manifest.yaml or metadata/mani.yaml)
+    manifest: &str
 ) -> Vec<PathBuf> {
     let mut returns = Vec::with_capacity(versions.len() * packages.len());
     for (cnt, package) in packages.iter().enumerate() {
@@ -29,14 +31,17 @@ fn expected_manifests_for(
         for version in &versions[cnt] {
             let mut root = root.clone();
             root.push(version);
-            root.push("manifest.yaml");
+            root.push(manifest);
             returns.push(root);
         }
     }
 
     returns
 }
+
+// default name of manifest
 const MANI: &'static str = "manifest.yaml";
+
 //------------//
 //   TESTS    //
 //------------//
@@ -81,7 +86,8 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
     // list of versions in ROOT/test_fixtures/repo/foo
     let versions = vec!["0.1.0", "0.2.0", "0.2.1"];
     // 
-    let expected = expected_manifests_for(&["foo"], &[versions]);
+    let expected = expected_manifests_for(&["foo"], &[versions], MANI);
+    assert_eq!(expected.len(), manifests.len());
     for manifest in manifests {
         assert!(expected.iter().any(|x| &manifest == x));
     }
@@ -91,12 +97,28 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
 fn manifests__returns_vec_of_pathbuf_to_manifest_files() {
     let root = get_repo_root();
     let package_repo = PackageRepository::new(root.clone(), MANI);
-    let manifests: Vec<PathBuf> = package_repo.manifests().map(|x| x.unwrap()).collect();
+    let manifests: Vec<PathBuf> = package_repo.manifests().filter_map(|x| x.ok()).collect();
     // list of versions in ROOT/test_fixtures/repo/foo
     let packs = &["foo", "bar"];
     let versions = &[vec!["0.1.0", "0.2.0", "0.2.1"], vec!["0.1.0", "1.0.1"]];
     
-    let expected = expected_manifests_for(packs, versions);
+    let expected = expected_manifests_for(packs, versions, MANI);
+    assert_eq!(expected.len(), manifests.len());
+    for manifest in manifests {
+        assert!(expected.iter().any(|x| &manifest == x));
+    }
+}
+
+#[test]
+fn manifests__returns_vec_of_pathbuf_to_manifest_files_when_provided_manifest_path() {
+    let root = get_repo_root();
+    let package_repo = PackageRepository::new(root.clone(), "metadata/mani.yaml");
+    let manifests: Vec<PathBuf> = package_repo.manifests().filter_map(|x| x.ok()).collect();
+    // list of versions in ROOT/test_fixtures/repo/foo
+    let packs = &["foo", "bar"];
+    let versions = &[vec!["0.1.0", "0.2.1"], vec!["0.1.0"]];
+    
+    let expected = expected_manifests_for(packs, versions, "metadata/mani.yaml");
     assert_eq!(expected.len(), manifests.len());
     for manifest in manifests {
         assert!(expected.iter().any(|x| &manifest == x));

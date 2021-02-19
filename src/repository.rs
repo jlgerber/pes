@@ -121,55 +121,8 @@ impl PackageRepository {
     
  
 //     fn next(&mut self) -> Option<PathBuf> {
-
-//        if self.package.is_none() {
-//            // returns a Result<ReadDir>
-//            let mut dir_iter = self.root.read_dir().ok()?;
-//            // returns a Result<DirEntry>
-//            let  first_package_entry = dir_iter.next()?.ok()?; 
-//            // get PathBuf
-//            let  first_package = first_package_entry.path();`~
-//            // get Result<ReadDir>
-//            let mut version_iter = match first_package.read_dir()  {
-//                 Ok(val) => val,
-//                 Err(_) => {self.package = Some(dir_iter); return None}
-//            };
-//            // get Result<DirEntry>
-//            let  first_version_entry = version_iter.next()?.ok()?;
-//            // get pathbuf
-//            let mut first_version = first_version_entry.path();
-//            // add manifest
-//            first_version.push("manifest.yaml");
-//            self.versions = Some(version_iter);
-//            self.package = Some(dir_iter);
-//            return Some(first_version)
-//        }
-       
-//        if self.versions.is_none() {return None;}
-//        let  versions = self.versions.as_mut().unwrap();
-//        let next_version = versions.next();
-//        if next_version.is_none() {
-//             // unwrap package and get the next
-//             let  package_iter = self.package.as_mut().unwrap();
-//             let  next_package_entry =  package_iter.next()?.ok()?;
-//             // get PathBuf
-//             let  next_package = next_package_entry.path();
-//             // get Result<ReadDir>
-//             let mut version_iter = match next_package.read_dir() {
-//                 Ok(val) => val,
-//                 Err(_) => { return None}
-//            };
-//            // get Result<DirEntry>
-//            let  version_entry = version_iter.next()?.ok()?;
-//            // get pathbuf
-//            let  next_version = version_entry.path();
-//            self.versions = Some(version_iter);
-//            return Some(next_version);
-//        } else {
-//            let next_version = next_version.unwrap().ok()?.path();
-//             return Some(next_version);
-//        }
-//     }
+// ... using generators instead. far simpler. wish that they would
+// stabilize generators....
 // }
 
 

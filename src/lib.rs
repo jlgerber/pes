@@ -14,6 +14,7 @@ pub mod parser_atoms;
 pub mod manifest;
 pub mod versioned_package;
 pub mod repository;
+pub mod utils;
 
 use versioned_package::VersionedPackage;
 use error::PesError;
