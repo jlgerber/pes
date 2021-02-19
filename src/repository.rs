@@ -1,9 +1,12 @@
-//! Model a repository of published packages
-// use pubgrub::{
-//     version::Version,
-//     package::Package,
-// };
-// std imports
+//! Models a repository of published packages, generally of the form:
+//! ```ignore
+//! <root>/<package>/<version>/<manifest relpath>
+//! ```
+//! ## Example
+//! ```ignore
+//! /repo/foo/0.1.0/METADATA/manifest.yaml
+//! ```
+
 use std::path::{Path, PathBuf};
 // extern imports
 use generator::{Gn, Generator};

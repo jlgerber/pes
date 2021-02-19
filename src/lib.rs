@@ -15,27 +15,29 @@ pub mod manifest;
 pub mod versioned_package;
 pub mod repository;
 pub mod utils;
+pub mod solver;
+pub mod range;
+
+pub use range::*;
 
 use versioned_package::VersionedPackage;
 use error::PesError;
-use pubgrub::range::Range;
-use pubgrub::version::SemanticVersion;
+// use pubgrub::range::Range;
+// use pubgrub::version::SemanticVersion;
 
-/// Trait to provide an alternative, falible constructor from a &str
-pub trait FrmStr {
-    type FrmStrErr;
+// /// Trait to provide an alternative, falible constructor from a &str
+// pub trait FrmStr {
+//     type FrmStrErr;
 
-    /// Given a str, construct an instance of Self
-    fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized;
-}
+//     /// Given a str, construct an instance of Self
+//     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized;
+// }
 
 
-impl FrmStr for Range<SemanticVersion> {
-    type FrmStrErr = PesError;
+// impl FrmStr for Range<SemanticVersion> {
+//     type FrmStrErr = PesError;
 
-    fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
-        let _ = value;
-        todo!()
-        
-    }
-}
+//     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
+//         parse_consuming_semver_range(value)
+//     }
+// }
