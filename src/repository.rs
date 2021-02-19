@@ -29,7 +29,9 @@ pub trait Repository {
 pub struct PackageRepository {
     // we expect the repository to be laid out like so:
     // /root/<package>/<version>/manifest.yaml
-    root: PathBuf
+    root: PathBuf,
+    /// the manifest name, including any subdirectories under the version
+    manifest: String
 }
 
 
@@ -59,7 +61,7 @@ impl Repository for PackageRepository {
         for entry in manifest_path.read_dir()? {
             let entry = entry?;
             let mut newpath = entry.path();
-            newpath.push("manifest.yaml");
+            newpath.push(&self.manifest);
             manifests.push(newpath);
         }
         Ok(manifests)
@@ -76,7 +78,7 @@ impl Repository for PackageRepository {
                     for dir2 in path.read_dir().unwrap() {
                         let  mut path2 = dir2.unwrap().path();
                         if path2.is_dir() {
-                            path2.push("manifest.yaml");
+                            path2.push(&self.manifest);
                             if path2.is_file() {
                                 s.yield_(Ok(path2));
                             } else {
@@ -94,9 +96,10 @@ impl Repository for PackageRepository {
 
 impl PackageRepository {
     /// construct a new PackageRepository instance 
-    pub fn new<P: Into<PathBuf>>(root: P) -> Self {
+    pub fn new<P: Into<PathBuf>, M: Into<String> >(root: P, manifest: M) -> Self {
         Self {
-            root: root.into()
+            root: root.into(),
+            manifest: manifest.into()
         }
     }
     /// return the root of the repository
