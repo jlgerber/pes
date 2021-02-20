@@ -4,7 +4,6 @@ use indexmap::IndexMap;
 use serde::{Serialize, Deserialize};
 use pubgrub::range::Range;
 use pubgrub::version::SemanticVersion;
-
 use crate::error::PesError;
 use crate::parser::parse_consuming_semver_range;
 use crate::VersionedPackage;

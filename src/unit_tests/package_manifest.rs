@@ -6,6 +6,14 @@ use pubgrub::version::SemanticVersion;
 //use pubgrub::range::Range;
 use crate::VersionedPackage;
 use crate::manifest::TargetMap;
+use std::path::PathBuf;
+
+
+fn get_repo_root() -> PathBuf {
+    let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    root.push("test_fixtures/repo");
+    root
+}
 
 const P1: &str = r#"
 ---
@@ -26,6 +34,13 @@ targets:
             maya: 1.2.3+<4
 "#;
 
+const P2: &str = r#"
+---
+schema: 1
+name: mypackage
+version: 1.2.3
+description: this is the description
+"#;
 
 const INVALID_MANIFEST_1: &str = r#"
 ---
@@ -130,6 +145,23 @@ fn from_str__succeeds_when_given_valid_manifest_str() {
     );
 }
 
+
+#[test]
+fn from_str__succeeds_when_given_valid_manifest_str_without_targets() {
+    let manifest = PackageManifest::from_str(P2);
+    let  target_map = TargetMap::new();
+    
+    assert_eq!(manifest.unwrap(), 
+        PackageManifest {
+            schema: 1,
+            name: "mypackage".into(),
+            version: SemanticVersion::new(1,2,3),
+            description: "this is the description".into(),
+            targets: target_map,
+        }
+    );
+}
+
 // if we provide a manifest with a version that is not valid, from_str
 // should return a Result::Err
 #[test]
@@ -186,4 +218,15 @@ fn validate_manifest__returns_err_when_called_on_invalid_manifest() {
     let manifest = PackageManifest::from_str_unchecked(INVALID_MANIFEST_1).unwrap();
     let valid = manifest.validate();
     assert!(valid.is_err());
+}
+
+#[test]
+fn from_file__when_given_path_to_valid_manifest_produces_valid_manifest() {
+    let mut path = get_repo_root();
+    path.push("foo/0.1.0/manifest.yaml");
+    let manifest = PackageManifest::from_file(path);
+    assert!(manifest.is_ok());
+    let manifest = manifest.unwrap();
+    let valid = manifest.validate();
+    assert!(valid.is_ok());
 }

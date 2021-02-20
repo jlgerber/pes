@@ -13,9 +13,9 @@ use generator::{Gn, Generator};
 // crate imports
 use crate::PesError;
 
-pub trait Repository {
-    type Manifest;
-    type Err;
+pub trait Repository: std::fmt::Debug {
+    type Manifest: AsRef<Path>;
+    type Err: std::error::Error;
 
     /// retrieve a manifest for the provided package and version
     fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err>;

@@ -23,6 +23,7 @@ pub struct PackageManifest {
     /// Description of the package
     pub description: String,
     /// Map of targets for the manifest (eg build, run, lint, etc)
+    #[serde(default)]
     pub targets: IndexMap<String, PackageTarget>
 }
 

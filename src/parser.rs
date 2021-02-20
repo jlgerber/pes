@@ -90,7 +90,14 @@ pub fn parse_package_version(input: &str) -> IResult<&str, (&str, SemanticVersio
 /// # }
 /// ```
 pub fn parse_package_range(input: &str) -> IResult<&str, (&str, Range<SemanticVersion>)> {
-    separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range)(input)
+    alt((separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range), parse_package_any))(input)
+}
+
+/// Wraps ```parse_package_range```, ensuring that the wrapped parser completely consumes the input, with the 
+/// bonus of simplifying the return signature
+pub fn parse_consuming_package_range(input: &str) -> Result<(&str, Range<SemanticVersion>), PesError> {
+    let (_,result) = all_consuming(parse_package_range)(input).map_err(|e| PesError::ParsingFailure(format!("{:?}", e)))?;
+    Ok(result)
 }
 
 /// Wraps ```parse_semver```, ensuring that it completely consumes the input, and simplifies the 
@@ -103,6 +110,14 @@ pub fn parse_consuming_semver(input: &str) -> Result<SemanticVersion, PesError> 
 //---------------------//
 //  PRIVATE FUNCTIONS  //
 //---------------------//
+
+// parse a package name with no version specified. In this case, we assume that the 
+// version range is open to any version.
+fn parse_package_any(s: &str) -> IResult<&str, (&str, Range<SemanticVersion>)> {
+    let (leftover, name) = alphaword_many0_underscore_word(s)?;
+    Ok((leftover,(name, Range::<SemanticVersion>::any())))
+}
+
 
 // Given a string that represents a semantic version, that is an unsigned int,  followed by 
 // zero to two period delimited unsigned ints, return a SemanticVersion instance

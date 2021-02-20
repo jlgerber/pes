@@ -28,6 +28,12 @@ fn frm_str__when_given_valid_str_returns_ok() {
                 SemanticVersion::new(0,1,0),
                 SemanticVersion::new(0,2,0)
             )
+        ),
+        (
+            "2.0.2", 
+            Range::exact(
+                SemanticVersion::new(2,0,2),
+            )
         )
     ];
 

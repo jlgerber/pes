@@ -19,7 +19,7 @@ pub mod solver;
 pub mod range;
 
 pub use range::*;
-
+pub use solver::Solver;
 use versioned_package::VersionedPackage;
 use error::PesError;
 // use pubgrub::range::Range;

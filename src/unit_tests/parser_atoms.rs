@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use super::*;
 use nom::combinator::complete;
 //use nom::Err;

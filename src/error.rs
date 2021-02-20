@@ -44,4 +44,11 @@ pub enum PesError {
     /// Indicates that an io::Error has taken place
     #[error("io::Error {0:?}")]
     IoError(#[from] std::io::Error),
+
+    /// Wraps an opaque error type
+    #[error("PesError {0}")]
+    PesError(String),
+
+    #[error("No solution for request {0}")]
+    NoSolution(String),
 }
