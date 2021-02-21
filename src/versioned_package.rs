@@ -52,9 +52,6 @@ impl<'a> VersionedPackage<'a> {
 }
 
 
-
-
-
 /// Simple representation of a versioned package
 #[derive(PartialEq, Eq,  Debug)]
 pub struct VersionedPackageOwning {
