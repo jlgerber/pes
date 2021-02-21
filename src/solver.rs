@@ -22,16 +22,16 @@ use pubgrub::report::Reporter;
 
 
 #[derive(Debug)]
-pub struct Solver {
-   pub  dependency_provider: OfflineDependencyProvider<String, SemanticVersion>,
+pub struct Solver<P: Package, V: Version> {
+   pub  dependency_provider: OfflineDependencyProvider<P, V>,
 }
 
 const ROOT: &'static str = "ROOT_REQUEST";
 
-impl Solver {
+impl Solver<String, SemanticVersion> {
     pub fn new() -> Self {
         Self {
-            dependency_provider: OfflineDependencyProvider::<String, SemanticVersion>::new() 
+            dependency_provider: OfflineDependencyProvider::new() 
         }
     }
     /// iterate over package names
