@@ -10,8 +10,9 @@ use nom::character::complete::multispace0;
 use nom::combinator::recognize;
 use nom::multi::many0;
 use nom::sequence::pair;
-use nom::IResult;
+//use nom::IResult;
 
+use crate::error::PNResult;
 /// Parse a str that starts with a letter, followed by zero or more
 /// letters and/or numbers
 ///
@@ -24,7 +25,7 @@ use nom::IResult;
 /// let result = complete(alphaword)("a123a5");
 /// assert_eq!(result, Ok(("","a123a5")));
 /// ```
-pub fn alphaword(input: &str) -> IResult<&str, &str> {
+pub fn alphaword(input: &str) -> PNResult<&str, &str> {
     recognize(pair(alpha1, alphanumeric0))(input)
 }
 
@@ -39,7 +40,7 @@ pub fn alphaword(input: &str) -> IResult<&str, &str> {
 /// let result = complete(underscore_word)("_1foo1");
 /// assert_eq!(result, Ok(("","_1foo1")));
 /// ```
-pub fn underscore_word(input: &str) -> IResult<&str, &str> {
+pub fn underscore_word(input: &str) -> PNResult<&str, &str> {
     recognize(pair(tag("_"), alphanumeric1))(input)
 }
 
@@ -55,7 +56,7 @@ pub fn underscore_word(input: &str) -> IResult<&str, &str> {
 /// let result = complete(alphaword_many0_underscore_word)("fred1_1bla_foobar");
 /// assert_eq!(result, Ok(("","fred1_1bla_foobar")));
 /// ```
-pub fn alphaword_many0_underscore_word(input: &str) -> IResult<&str, &str> {
+pub fn alphaword_many0_underscore_word(input: &str) -> PNResult<&str, &str> {
     recognize(pair(alphaword, many0(underscore_word)))(input)
 }
 
@@ -100,7 +101,7 @@ pub fn alphaword_many0_underscore_word(input: &str) -> IResult<&str, &str> {
 /// let result = complete(space0_eol)("    \n").unwrap();
 /// assert_eq!(result, (("","    \n")) );
 /// ```
-pub fn space0_eol(input: &str) -> IResult<&str, &str> {
+pub fn space0_eol(input: &str) -> PNResult<&str, &str> {
     alt((
         // this one ends in a \n
         recognize(pair(

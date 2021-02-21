@@ -1,5 +1,10 @@
 use thiserror::Error as ThisError;
-//use pubgrub::error::PubGrubError;
+
+use nom::error::ErrorKind;
+use nom::error::ParseError;
+use nom::Err::Error;
+use nom::IResult;
+
 
 /// The package error type
 #[derive(Debug, ThisError)]
@@ -52,3 +57,41 @@ pub enum PesError {
     #[error("No solution for request {0}")]
     NoSolution(String),
 }
+
+
+
+/// Custom Error wrapper for Nom
+#[derive(Debug, PartialEq)]
+pub enum PesNomError<I> {
+  InvalidKey(String),
+  Nom(I, ErrorKind),
+}
+
+impl<I> ParseError<I> for PesNomError<I> {
+  fn from_error_kind(input: I, kind: ErrorKind) -> Self {
+    PesNomError::Nom(input, kind)
+  }
+
+  fn append(_: I, _: ErrorKind, other: Self) -> Self {
+    other
+  }
+}
+
+impl<'a> From<(&'a str, ErrorKind)> for PesNomError<&'a str> {
+    fn from((i, ek): (&'a str, ErrorKind)) -> Self {
+        PesNomError::Nom(i, ek)
+    }
+}
+
+
+impl<'a> From<PesNomError<&'a str>> for nom::Err<PesNomError<&'a str>> {
+    fn from(err: PesNomError<&'a str>) -> Self {
+        nom::Err::Error(err)
+    }
+}
+
+// impl From<PesNomError<_>> for nom::Err<PesNomError<&str>> {
+//     fn from(err: PesNomError<_>) ->
+// }
+
+pub type PNResult<I, T> = nom::IResult<I, T,PesNomError<I>>;

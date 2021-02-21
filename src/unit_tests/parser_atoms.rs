@@ -6,13 +6,14 @@ use nom::combinator::complete;
 use nom::error::ErrorKind;
 use nom::error::Error as NomError;
 use nom::Err::Error as NomErr;
+use crate::error::PesNomError;
 
 mod alphaword {
     use super::*;
 
     #[test]
     fn given_word_starting_with_letter_can_parse() {
-        fn parser(input: &str) -> IResult<&str, &str> {
+        fn parser(input: &str) -> PNResult<&str, &str> {
             complete(alphaword)(input)
         }
         let result = parser("a13b");
@@ -21,11 +22,12 @@ mod alphaword {
 
     #[test]
     fn given_word_starting_with_number_fails_to_parse() {
-        fn parser(input: &str) -> IResult<&str, &str> {
+        fn parser(input: &str) -> PNResult<&str, &str> {
             complete(alphaword)(input)
         }
         let result = parser("1abc");
-        assert_eq!(result, Err(NomErr(NomError{input: "1abc", code: ErrorKind::Alpha})));
+        //assert_eq!(result, Err(NomErr(NomError{input: "1abc", code: ErrorKind::Alpha})));
+        assert_eq!(result, Err(NomErr(PesNomError::Nom("1abc", ErrorKind::Alpha))));
     }
 }
 
@@ -36,7 +38,7 @@ mod underscore {
     // by a word (a-zA-Z0-9) can parse
     #[test]
     fn given_input_starting_with_number_can_parse() {
-        fn parser(input: &str) -> IResult<&str, &str> {
+        fn parser(input: &str) -> PNResult<&str, &str> {
             complete(underscore_word)(input)
         }
         let result = parser("_1fofo");
@@ -45,7 +47,7 @@ mod underscore {
 
     #[test]
     fn given_input_starting_with_letter_can_parse() {
-        fn parser(input: &str) -> IResult<&str, &str> {
+        fn parser(input: &str) -> PNResult<&str, &str> {
             complete(underscore_word)(input)
         }
         let result = parser("_fofo");
@@ -62,7 +64,7 @@ mod alphaword_many0_underscore_word {
     // letter.
     #[test]
     fn given_input_starting_with_num_can_parse() {
-        fn parser(input: &str) -> IResult<&str, &str> {
+        fn parser(input: &str) -> PNResult<&str, &str> {
             complete(alphaword_many0_underscore_word)(input)
         }
         let result = parser("dude_123_1fofo");
