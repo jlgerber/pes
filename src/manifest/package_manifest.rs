@@ -62,21 +62,37 @@ impl PackageManifest {
 
     /// Retrieve a vector of SemanticVersion Ranges associated with the provided target
     pub fn get_requires(&self, target: &str) -> Result<Vec<VersionedPackage>, PesError> {
-        let rtarget = self.targets.get(target);
+        let rtarget = self.targets
+                        .get(target)
+                        .ok_or_else(||PesError::MissingKey(target.into()))?;
+
         let mut results = Vec::new();
-        if let Some(target) = rtarget {
-            // incorporate any included targets package ranges
-            for include in target.get_includes() {
-                let inc_target = self.targets.get(include);
-                if let Some(inc_target) = inc_target {
-                    results.append(&mut inc_target.get_all_requires()?);
-                }
+
+        // Move the error handling for reading the target to ```ok_or_else``` above
+        //
+        // if let Some(target) = rtarget {
+        //     // incorporate any included targets package ranges
+        //     for include in target.get_includes() {
+        //         let inc_target = self.targets.get(include);
+        //         if let Some(inc_target) = inc_target {
+        //             results.append(&mut inc_target.get_all_requires()?);
+        //         }
+        //     }
+        //     results.append(&mut target.get_all_requires()?);
+        //     Ok(results)
+        // } else {
+        //     Err(PesError::MissingKey(target.into()))
+        // }
+
+        // incorporate any included targets package ranges
+        for include in rtarget.get_includes() {
+            let inc_target = self.targets.get(include);
+            if let Some(inc_target) = inc_target {
+                results.append(&mut inc_target.get_all_requires()?);
             }
-            results.append(&mut target.get_all_requires()?);
-            Ok(results)
-        } else {
-            Err(PesError::MissingKey(target.into()))
         }
+        results.append(&mut rtarget.get_all_requires()?);
+        Ok(results)
     }
 
     // looks like version is already a SemanticVersion
