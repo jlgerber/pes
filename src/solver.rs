@@ -6,19 +6,25 @@
 // (package + withs) as the solver only allows you to request a single 
 // package 
 
-use pubgrub::solver::OfflineDependencyProvider;
-//use pubgrub::package::Package;
-use pubgrub::range::Range;
-use pubgrub::version::SemanticVersion;
-use crate::repository::Repository;
-use crate::PesError;
-use crate::manifest::PackageManifest;
-use crate::versioned_package::VersionedPackage;
-use pubgrub::solver::resolve;
-use pubgrub::type_aliases::SelectedDependencies;
-use pubgrub::error::PubGrubError;
-use pubgrub::report::DefaultStringReporter;
-use pubgrub::report::Reporter;
+use std::path::Path;
+
+use pubgrub::{
+    range::Range,
+    solver::{OfflineDependencyProvider, resolve},
+    type_aliases::SelectedDependencies,
+    error::PubGrubError,
+    report::DefaultStringReporter,
+    report::Reporter,
+    package::Package,
+    version::{SemanticVersion,Version},
+};
+
+use crate::{
+    repository::Repository,
+    PesError,
+    manifest::PackageManifest,
+    versioned_package::VersionedPackage,
+};
 
 
 #[derive(Debug)]
