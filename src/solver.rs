@@ -92,7 +92,7 @@ impl Solver {
         requested
     }
     
-    /// solve for the requested constraints in the provided str
+    /// Solve for the requested constraints in the provided ```requestr``` string
     /// # Example
     /// ```ignore
     /// maya-1.0.1,maya-plugins,maya-startup-1.2.3+<4
@@ -100,9 +100,13 @@ impl Solver {
     /// maya-1 maya-plugins maya-startup-1.2.3+<4
     /// ```
     pub fn solve_from_str(&mut self, request: &str) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
-        // split between 
+        // replace comma separation with space separation in case the request string is comming from the command line
         let request = request.replace(",", " ");
+        // convert the request string to a Vec<VersionPackage>
         let requested = Self::convert_request_str(&request);
+        // call the solve method with the vector of VersionPackage
+        self.solve(requested)
+    }
         self.solve(requested)
     }
 }
