@@ -33,7 +33,8 @@ targets:
             - run
         requires:
             maya: 1.2.3+<4
-
+environment:
+    LD_LIBRARY_PATH: "{root}/foo/bar:${LD_LIBRARY_PATH}"
 ```
 
 ### Rust
