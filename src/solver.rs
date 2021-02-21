@@ -117,6 +117,14 @@ impl Solver<String, SemanticVersion> {
         // call the solve method with the vector of VersionPackage
         self.solve(requested)
     }
+
+    /// Generate a solve for a package using the provided manaifest and target to identify the dependencies.
+    pub fn solve_from_manifest(&mut self, manifest_path: impl AsRef<Path>, target: &str) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
+        // get an instance of PackageManifest from the provided manifest path
+        let manifest = PackageManifest::from_file(manifest_path.as_ref())?;
+        // get_requires returns a Vec<VersionedPackage>
+        let requested = manifest.get_requires(target)?;
+        // call the solve method with the vector of versioned packages
         self.solve(requested)
     }
 }
@@ -126,3 +134,4 @@ impl Solver<String, SemanticVersion> {
 #[cfg(test)]
 #[path = "./unit_tests/solver.rs"]
 mod unit_tests;
+
