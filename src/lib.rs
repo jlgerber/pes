@@ -17,11 +17,23 @@ pub mod repository;
 pub mod utils;
 pub mod solver;
 pub mod range;
+pub mod env;
+pub mod traits;
 
 pub use range::*;
 pub use solver::Solver;
-use versioned_package::VersionedPackage;
-use error::PesError;
+pub use versioned_package::VersionedPackage;
+pub use error::PesError;
+pub use traits::{VarProvider};
+
+pub mod prelude {
+    pub use super::{
+        VarProvider, 
+        Solver, 
+        VersionedPackage, 
+        PesError
+    };
+}
 // use pubgrub::range::Range;
 // use pubgrub::version::SemanticVersion;
 
