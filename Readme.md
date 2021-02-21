@@ -16,7 +16,7 @@
 
 schema: 1
 
-name: mypackge
+name: mypackage
 
 version: 1.2.3
 
@@ -34,7 +34,35 @@ targets:
         requires:
             maya: 1.2.3+<4
 environment:
-    LD_LIBRARY_PATH: "{root}/foo/bar:${LD_LIBRARY_PATH}"
+    LD_LIBRARY_PATH: "{root}/foo/bar:@"
+
+```
+
+## toml version
+
+```toml
+schema = 1
+
+name = "mypackage"
+
+version = "1.2.3"
+
+description  = """
+The best table ever \
+if you know what I mean"""
+
+[target.run]
+
+include-targets = [
+    "run"
+]
+
+[target.run.requires]
+maya-plugins = "^4.3"
+
+[environment]
+LD_LIBRARY_PATH = '${root}/foo/bar:@'
+
 ```
 
 ### Rust
