@@ -34,14 +34,18 @@ impl Solver<String, SemanticVersion> {
             dependency_provider: OfflineDependencyProvider::new() 
         }
     }
-    /// iterate over package names
+
+    /// Retrieve an iterator over package names that have been registered via ```add_repository```
     pub fn packages(&self) -> impl Iterator<Item = &str> {
         self.dependency_provider.packages().map(|x| x.as_str())
     }
+
+    /// Retrieve an iterator over SemanticVersions for a provided package that have been registered
     pub fn versions(&self, package: &str) -> Option<impl Iterator<Item = &SemanticVersion>> {
         self.dependency_provider.versions(&package.to_string())
     }
-    /// add packages from a repository to the dependency provider
+
+    /// Add packages from a repository to the dependency provider
     pub fn add_repository<R: Repository>(&mut self, repository: &R) -> Result<(), PesError> {
 
         for manifest_path in repository.manifests() {
