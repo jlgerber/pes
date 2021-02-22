@@ -1,5 +1,6 @@
-//! Defines a VersionedPackage struct use to represent a 
-//! versioned package (surprise)
+//! Components which model a VersionedPackage
+//! 
+//! A `VersionedPackage` has a package name, and a range of versions. (Perhaps it should be called a PackageRange?)
 
 use pubgrub::{
     range::Range,

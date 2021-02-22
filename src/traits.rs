@@ -1,3 +1,4 @@
+//! Traits defined in the `pes` crate live here
 
 /// Trait to provide a means to retrieve variables
 pub trait VarProvider<'a> {

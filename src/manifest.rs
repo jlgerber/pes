@@ -1,5 +1,7 @@
 //! Components used to create, modify, read, and write  a package's manifest.
+//!
 //! This is achieved primarily through the `PackageManifest` struct
+
 pub mod package_manifest;
 //pub mod package_range;
 pub(crate) mod package_target;

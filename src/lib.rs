@@ -1,7 +1,7 @@
 //! pes - The Package Environment System 
 //! 
 //! Provides 
-//! - A means of defining a semantically versioned package, including target specific package dependency ranges.
+//! - A means of defining a semantically versioned package, including target specific package dependency ranges, and target specific environments
 //! - A means of solving a dependency closure given a set of package requirements
 //! - A means of defining a set of environment mutations for a package version
 //! - A means of building a custom environment based on the set of envrionment mutations defined by the versioned packages within a dependency closure
