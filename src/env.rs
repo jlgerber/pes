@@ -1,14 +1,24 @@
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+//! Components involved in setting up the environment for a target
+//! - PathToken: enum modeling the tokens one may decompose a env var path string into
+//! - PathMode: enum describing the way that a path or paths are composed - eg by prepending, appending or replacing an existing variable
+//! - BasicVarProvider: struct used to store and provide path variables to a parser. This implements the `VarProvider` trait found in the `traits` module
 
-use crate::VarProvider;
-use crate::error::PesError;
+use std::collections::HashMap;
+use std::path::{
+    Path,
+    PathBuf
+};
+
+use crate::{
+    error::PesError,
+    VarProvider,
+};
 
 /// Parsed environment paths can be decomposed into a vector of PathTokens
 /// 
 /// # Example
 ///
-/// ```{root}/python``` -> ```vec![PathToken::RootVar,PathToken::Subpath("python")]```
+/// ```{root}/python``` -> ```vec![PathToken::RootVar,PathToken::Relpath(Path::new("python")]```
 ///
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathToken<'a> {
@@ -18,6 +28,7 @@ pub enum PathToken<'a> {
     RootVar,
     /// Variable, rendered as ```{<VAR NAME>}```
     Variable(&'a str),
+    /// OwnedVariable, making lifetime gymnastics simpler at the cost of an allocation.
     OwnedVariable(String),
     /// Error state. unknown variable
     UnknownVariable(&'a str),

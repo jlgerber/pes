@@ -1,19 +1,26 @@
-//use std::path::Path;
+//! Component modeling a specific target within the package manifest
 
 use indexmap::IndexMap;
-use serde::{Serialize, Deserialize};
-use pubgrub::range::Range;
-use pubgrub::version::SemanticVersion;
-use crate::error::PesError;
-use crate::parser::parse_consuming_semver_range;
-use crate::VersionedPackage;
+use serde::{
+    Serialize, 
+    Deserialize,
+};
+use pubgrub::{
+    range::Range,
+    version::SemanticVersion,
+};
+
+use crate::{
+    error::PesError,
+    parser::parse_consuming_semver_range,
+    VersionedPackage,
+};
 
 
 /// Struct used to simplify serialization & deserialization of manifest
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageTarget {
     pub include: Option<Vec<String>>,
-    // Range<SemanticVersion> (Todo: newtype wrapper)
     pub requires: IndexMap<String, String>
 }
 

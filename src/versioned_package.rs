@@ -3,12 +3,16 @@
 
 use pubgrub::{
     range::Range,
-    version::SemanticVersion
+    version::SemanticVersion,
 };
 
-use crate::error::PesError;
-use crate::parser::parse_consuming_semver_range;
-use crate::parser::parse_consuming_package_range;
+use crate::{ 
+    error::PesError,
+   parser::{
+        parse_consuming_package_range,
+        parse_consuming_semver_range,
+    },
+};
 
 /// Simple representation of a versioned package
 #[derive(PartialEq, Eq,  Debug)]

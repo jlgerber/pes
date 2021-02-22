@@ -1,14 +1,18 @@
+//! PackageManifest struct 
 use std::path::Path;
 
 use indexmap::IndexMap;
-use serde::{Serialize, Deserialize};
+use serde::{
+    Serialize, 
+    Deserialize,
+};
 use pubgrub::version::SemanticVersion;
-//use pubgrub::range::Range;
 
-use crate::error::PesError;
-use crate::manifest::PackageTarget;
-use crate::VersionedPackage;
-//use crate::parser::parse_consuming_semver;
+use crate::{
+    error::PesError,
+    manifest::PackageTarget,
+    VersionedPackage,
+};
 
 
 /// Models a manifest for package

@@ -1,12 +1,14 @@
+//! Custom error types and type aliases for Pes
+
 use thiserror::Error as ThisError;
 
-use nom::error::ErrorKind;
-use nom::error::ParseError;
-//use nom::Err::Error;
-//use nom::IResult;
+use nom::error::{
+    ErrorKind,
+    ParseError,
+};
 
 
-/// The package error type
+/// The pes crate error type - a standard enum error which wraps other error types as well as providing custom pes specific variants.
 #[derive(Debug, ThisError)]
 pub enum PesError {
     /// Failure to convert from a str to a Range<SemanticVersion>
@@ -64,7 +66,7 @@ pub enum PesError {
 
 
 
-/// Custom Error wrapper for Nom
+/// Custom Nom Error for the `pes` crate, implementing the required `nom::error::ParseError` trait.
 #[derive(Debug, PartialEq)]
 pub enum PesNomError<I> {
   InvalidKey(String),
@@ -101,6 +103,8 @@ impl<'a> From<PesNomError<&'a str>> for nom::Err<PesNomError<&'a str>> {
 //     fn from(err: PesNomError<_>) ->
 // }
 
+/// Type alias for a Pes Nom Result - that is a result for a non-consuming custom nom parser
 pub type PNResult<I, T> = nom::IResult<I, T,PesNomError<I>>;
-// complete result type
+
+/// Type alias for a Pes Nom Complete Result - that is a result for a consuming style nom parser. The big difference is that the type aliases `Result` instead of `nom::IResult`.
 pub type PNCompleteResult<I, T> = Result<T, nom::Err<PesNomError<I>>>;

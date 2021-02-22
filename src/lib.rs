@@ -1,55 +1,38 @@
 //! pes - The Package Environment System 
-//!
-//! Provides a means to define a set of versioned packages with package dependencies
-//! and calculate a dependency closure for one or more requirements. 
-//! Furthermore, it provides a means to initialize an environment customized to the set of dependencies
-//! and invoke an executable in this known environment.
+//! 
+//! Provides 
+//! - A means of defining a semantically versioned package, including target specific package dependency ranges.
+//! - A means of solving a dependency closure given a set of package requirements
+//! - A means of defining a set of environment mutations for a package version
+//! - A means of building a custom environment based on the set of envrionment mutations defined by the versioned packages within a dependency closure
+//! - A means of invoking a subshell with a specific environment either solved on the fly or via a cache
+//! - A means of invoking a runtime within a specific environment, either solved on the fly or via a cache
 #[macro_use]
 extern crate generator;
 
-/// Defines a custom error - PesError for the crate
+pub mod env;
 pub mod error;
+pub mod manifest;
 pub mod parser;
 pub mod parser_atoms;
-pub mod manifest;
-pub mod versioned_package;
-pub mod repository;
-pub mod utils;
-pub mod solver;
 pub mod range;
-pub mod env;
+pub mod repository;
+pub mod solver;
 pub mod traits;
+pub mod utils;
+pub mod versioned_package;
 
+pub use error::PesError;
 pub use range::*;
 pub use solver::Solver;
-pub use versioned_package::VersionedPackage;
-pub use error::PesError;
 pub use traits::{VarProvider};
+pub use versioned_package::VersionedPackage;
 
 pub mod prelude {
     pub use super::{
-        VarProvider, 
+        PesError,
         Solver, 
+        VarProvider, 
         VersionedPackage, 
-        PesError
     };
 }
-// use pubgrub::range::Range;
-// use pubgrub::version::SemanticVersion;
-
-// /// Trait to provide an alternative, falible constructor from a &str
-// pub trait FrmStr {
-//     type FrmStrErr;
-
-//     /// Given a str, construct an instance of Self
-//     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized;
-// }
-
-
-// impl FrmStr for Range<SemanticVersion> {
-//     type FrmStrErr = PesError;
-
-//     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized {
-//         parse_consuming_semver_range(value)
-//     }
-// }

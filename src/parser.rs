@@ -1,18 +1,31 @@
-//! Provides parsers to convert from str to SemanticVersion and 
-//! Range<SemanticVersion>
-
+//! Provides parsers for the following use cases:
+//! - versions and version ranges
+//! - environment path settings, includiing single and multiple paths, as well as special tokens indicating prepending and appending
+//!
+//! There are two variants of public parsers in the `parser` module - the consuming and non-consuming variants. 
+//!
+//! - The consuming variant of a parser ensures that the input is completely consumed, eating any surounding whitespace
+//! - The non-consuming variant of a parser is simply a `nom` parser, which returns a tuple of the remaining data to be parsed, along with the parse results (assuming a successful parse)
 use std::path::PathBuf;
 use std::rc::Rc;
 
-use pubgrub::version::SemanticVersion;
-use pubgrub::range::Range;
+use pubgrub::{
+    range::Range,
+    version::SemanticVersion,
+};
 
 use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::digit1,
-    combinator::{all_consuming, recognize},
-    multi::{many_m_n, many0, many1, separated_list0},
+    combinator::{
+        all_consuming, 
+        recognize
+    },
+    multi::{
+        many_m_n, 
+        many0, many1, separated_list0
+    },
     sequence::{
         delimited,
         pair,
@@ -35,7 +48,26 @@ pub use crate::env::BasicVarProvider;
 //------------------//
 
 
-/// Given an Rc wrapped provider, parse the paths from a string
+/// Given an Rc wrapped provider, return a parser whihc parses the paths from a string
+/// # Example
+/// ```
+/// # use pes::parser::{BasicVarProvider, parse_all_paths_with_provider};
+/// # use pes::traits::VarProvider;
+/// # use pes::env::PathMode;
+/// # use std::path::PathBuf;
+/// # fn main()  {
+/// let mut provider = BasicVarProvider::new();
+/// provider.insert("root", "foobar");
+/// provider.insert("name", "fred");
+/// let provider = std::rc::Rc::new(provider);
+/// let result = parse_all_paths_with_provider(provider.clone())("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
+/// assert_eq!(result.0, "");
+/// assert_eq!(result.1, PathMode::Exact(vec![
+///     PathBuf::from("/packages/foobar/stuff/fred"),
+///     PathBuf::from("/foo/bar/bla")
+/// ]));
+/// # }
+// todo: make these generic over VarProvider
 pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) 
     -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> 
 {
@@ -49,7 +81,31 @@ pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>)
     }
 }
 
-/// provide a VarProvider and the sring to parse, and get back a PathMode or Error
+/// Given an Rc wrapped BasicVarProvider and a path str, parse the path str, returning a PathMode or error
+///
+/// # Example
+/// ```
+/// # use pes::parser::{BasicVarProvider, parse_consuming_all_paths_with_provider};
+/// # use pes::traits::VarProvider;
+/// # use pes::env::PathMode;
+/// # use std::path::PathBuf;
+/// # fn main()  {
+/// let mut provider = BasicVarProvider::new();
+/// provider.insert("root", "foobar");
+/// provider.insert("name", "fred");
+///
+/// let provider = std::rc::Rc::new(provider);
+///
+/// let result = parse_consuming_all_paths_with_provider(
+///                     provider.clone(), 
+///                     " /packages/{root}/stuff/{name}:/foo/bar/bla "
+///              ).unwrap();
+///
+/// assert_eq!(result, PathMode::Exact(vec![
+///     PathBuf::from("/packages/foobar/stuff/fred"),
+///     PathBuf::from("/foo/bar/bla")
+/// ]));
+/// # }
 pub fn parse_consuming_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>, s: &'a str) 
     //-> PNResult<&'a str, PathMode> 
     -> PNCompleteResult<&'a str, PathMode>
@@ -71,15 +127,35 @@ pub fn parse_consuming_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider
 /// # use pubgrub::{version::SemanticVersion, range::Range};
 /// # fn main()  {
 /// let range = parse_semver_range("1.2.3+<3.0.0");
-/// assert_eq!(range, Ok(("",Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0)))));
+/// assert_eq!(
+///     range, 
+///     Ok(
+///         ("", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0)))
+///     )
+/// );
 /// # }
 /// ```
 pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
         alt((parse_semver_carrot, parse_semver_between, parse_semver_exact)) //,
     (s)
 }
-/// Wraps ```parse_semver_range```, ensuring that it completely consumes the input and 
-/// simplifies the return signature. Failure to completely consume the input results in an error.
+
+/// Given a str representing a semantic version range, return a `Range<SemanticVersion>` or an error
+/// Note that unlike a normal `nom` parser, this parser expects to completely consume the inupt. Any remaining
+/// is interpreted as an error.
+/// Furthermore, note that the parsre consumes any whitespace surounding the version range str.
+///
+/// # Example
+/// ```
+/// # use pes::parser::parse_consuming_semver_range;
+/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # fn main()  {
+/// let range = parse_consuming_semver_range("1.2.3+<3.0.0");
+/// assert_eq!(
+///     range.unwrap(), 
+///     Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))
+/// );
+/// # }
 pub fn parse_consuming_semver_range(s: &str) 
     -> Result<Range<SemanticVersion>, PesError>     
 {
@@ -102,7 +178,12 @@ pub fn parse_consuming_semver_range(s: &str)
 /// # use pubgrub::{version::SemanticVersion, range::Range};
 /// # fn main()  {
 /// let range = parse_package_version("maya-1.2.3");
-/// assert_eq!(range, Ok(("",("maya", SemanticVersion::new(1,2,3)))));
+/// assert_eq!(
+///    range, 
+///    Ok(
+///         ("", ("maya", SemanticVersion::new(1,2,3)))
+///      )
+/// );
 /// # }
 /// ```
 pub fn parse_package_version(input: &str) -> PNResult<&str, (&str, SemanticVersion)> {
@@ -133,6 +214,22 @@ pub fn parse_package_range(input: &str) -> PNResult<&str, (&str, Range<SemanticV
 
 /// Wraps ```parse_package_range```, ensuring that the wrapped parser completely consumes the input, with the 
 /// bonus of simplifying the return signature
+///
+/// # Example
+/// ```
+/// # use pes::parser::parse_consuming_package_range;
+/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # fn main()  {
+/// let range = parse_consuming_package_range("maya-1.2.3+<3");
+/// assert_eq!(
+///                range.unwrap(), 
+///                (
+///                   "maya", 
+///                    Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))
+///                )
+///           );
+/// # }
+/// ```
 pub fn parse_consuming_package_range(input: &str) -> Result<(&str, Range<SemanticVersion>), PesError> {
     let (_,result) = 
         all_consuming(

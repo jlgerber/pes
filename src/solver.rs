@@ -9,20 +9,28 @@
 use std::path::Path;
 
 use pubgrub::{
-    range::Range,
-    solver::{OfflineDependencyProvider, resolve},
-    type_aliases::SelectedDependencies,
     error::PubGrubError,
-    report::DefaultStringReporter,
-    report::Reporter,
     package::Package,
-    version::{SemanticVersion,Version},
+    range::Range,
+    report::{
+        DefaultStringReporter,
+        Reporter,
+    },
+    solver::{
+        OfflineDependencyProvider, 
+        resolve
+    },
+    type_aliases::SelectedDependencies,
+    version::{
+        SemanticVersion,
+        Version
+    },
 };
 
 use crate::{
-    repository::Repository,
-    PesError,
     manifest::PackageManifest,
+    PesError,
+    repository::Repository,
     versioned_package::VersionedPackage,
 };
 

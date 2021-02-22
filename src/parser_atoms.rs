@@ -1,20 +1,30 @@
 //! Provides low level parsers used in crate::parser
-use nom::branch::alt;
-use nom::bytes::complete::tag;
-use nom::bytes::complete::take;
-use nom::bytes::complete::take_till;
-use nom::character::complete::alpha1;
-use nom::character::complete::alphanumeric0;
-use nom::character::complete::alphanumeric1;
-use nom::character::complete::multispace0;
-use nom::combinator::recognize;
-use nom::error::ParseError;
-use nom::IResult;
-use nom::multi::many0;
-use nom::sequence::{delimited, pair};
-//use nom::IResult;
+use nom::{
+    branch::alt,
+    bytes::complete::{
+        tag,
+        take,
+        take_till,
+    },
+    character::complete::{
+        alpha1,
+        alphanumeric0,
+        alphanumeric1,
+        multispace0,
+    },
+    combinator::recognize,
+    error::ParseError,
+    IResult,
+    multi::many0,
+    sequence::{
+        delimited, 
+        pair,
+    },
+};
 
 use crate::error::PNResult;
+
+
 /// Parse a str that starts with a letter, followed by zero or more
 /// letters and/or numbers
 ///
