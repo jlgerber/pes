@@ -2,9 +2,7 @@
 
 use super::*;
 use nom::combinator::complete;
-//use nom::Err;
 use nom::error::ErrorKind;
-//use nom::error::Error as NomError;
 use nom::Err::Error as NomErr;
 use crate::error::PesNomError;
 
@@ -26,7 +24,6 @@ mod alphaword {
             complete(alphaword)(input)
         }
         let result = parser("1abc");
-        //assert_eq!(result, Err(NomErr(NomError{input: "1abc", code: ErrorKind::Alpha})));
         assert_eq!(result, Err(NomErr(PesNomError::Nom("1abc", ErrorKind::Alpha))));
     }
 }

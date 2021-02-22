@@ -101,42 +101,6 @@ mod semver_parsing {
 
 mod env_parsing {
     use super::*;
-    
-    // // parse_prepend
-    // #[test]
-    // fn parse_prepend__given_appropriate_str__succeeds() {
-    //     let result = parse_prepend(":@foobar").unwrap();
-    //     assert_eq!(result.0, "foobar");
-    //     assert_eq!(result.1, PathToken::Prepend);
-    // }
-
-    // #[test]
-    // fn parse_prepend__given_inappropriate_str__fails() {
-    //     let result = parse_prepend("fff:@foobar");
-    //     assert!(result.is_err())
-    // }
-
-    // // parse_append
-    // #[test]
-    // fn parse_append__given_appropriate_str__succeeds() {
-    //     let result = parse_append("@:foobar").unwrap();
-    //     assert_eq!(result.0, "foobar");
-    //     assert_eq!(result.1, PathToken::Append);
-    // }
-
-    // #[test]
-    // fn parse_append__given_inappropriate_str__fails() {
-    //     let result = parse_append("fff@:foobar");
-    //     assert!(result.is_err())
-    // }
-    
-    // // parse_rootvar
-    // #[test]
-    // fn parse_rootvar__given_appropriate_str__succeeds() {
-    //     let result = parse_rootvar("{root}/foobar").unwrap();
-    //     assert_eq!(result.0, "/foobar");
-    //     assert_eq!(result.1, PathToken::RootVar);
-    // }
 
     // parse_var
     #[test]
@@ -145,14 +109,6 @@ mod env_parsing {
         assert_eq!(result.0, "/foo/bar");
         assert_eq!(result.1, PathToken::Variable("othervar".into()));
     }
-
-    // // parse_separator
-    // #[test]
-    // fn parse_separator__given_appropriate_str__succeeeds() {
-    //     let result = parse_separator(":/foo/bar").unwrap();
-    //     assert_eq!(result.0, "/foo/bar");
-    //     assert_eq!(result.1, PathToken::Separator);
-    // }
     
     // parse_relpath
     #[test]
@@ -176,51 +132,6 @@ mod env_parsing {
         assert_eq!(result.0, ":");
         assert_eq!(result.1, PathToken::abspath("/foo/bar/bla"));
     }
-
-    // removed as we never use these functions in parser. They have been removed as well.
-
-    // // parse_path
-    // #[test]
-    // fn parse_path__given_path_components__succeeds() {
-    //     let result = parse_path("bla/de/da/{robot}/foo/bar/bla:").unwrap();
-    //     assert_eq!(result.0, ":");
-    //     assert_eq!(result.1, vec![
-    //         PathToken::relpath("bla/de/da/"),
-    //         PathToken::Variable("robot"),
-    //         PathToken::abspath("/foo/bar/bla")
-    //     ]);
-    // }
-
-    // // parse_path
-    // #[test]
-    // fn parse_paths__given_paths_separated_by_colon__succeeds() {
-    //     let result = parse_paths("bla/de/da/{robot}/foo/bar/bla:/foo/bar").unwrap();
-    //     assert_eq!(result.0, "");
-    //     assert_eq!(result.1, vec![
-    //         vec![
-    //             PathToken::relpath("bla/de/da/"),
-    //             PathToken::Variable("robot"),
-    //             PathToken::abspath("/foo/bar/bla")
-    //         ],
-    //         vec![
-    //             PathToken::abspath("/foo/bar")
-    //         ]
-    //     ]);
-    // }
-
-    // // parse_path
-    // #[test]
-    // fn parse_paths__given_single_path__succeeds() {
-    //     let result = parse_paths("bla/de/da/{robot}/foo/bar/bla").unwrap();
-    //     assert_eq!(result.0, "");
-    //     assert_eq!(result.1, vec![
-    //         vec![
-    //             PathToken::relpath("bla/de/da/"),
-    //             PathToken::Variable("robot"),
-    //             PathToken::abspath("/foo/bar/bla")
-    //         ]
-    //     ]);
-    // }
 }
 
 

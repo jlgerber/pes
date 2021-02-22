@@ -8,7 +8,6 @@ use pubgrub::version::SemanticVersion;
 use pubgrub::range::Range;
 
 use nom::{
-    //IResult, 
     branch::alt,
     bytes::complete::tag,
     character::complete::digit1,
@@ -217,44 +216,13 @@ fn parse_semver_exact(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 //-----------------//
 //   ENV PARSING   //
 //-----------------//
-/*
-fn parse_prepend<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, _prepend) = tag(":@")(s)?;
-    Ok((leftover, PathToken::Prepend))
-}
 
-fn parse_append<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, _append) = tag("@:")(s)?;
-    Ok((leftover, PathToken::Append))
-}
-
-fn parse_rootvar<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, _variable) = delimited(tag("{"),tag("root"), tag("}"))(s)?;
-    Ok((leftover, PathToken::RootVar))
-}
-*/
 #[allow(dead_code)] // not really dead code. it is used in a subparser
 fn parse_var<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover, variable) = delimited(tag("{"),alphaword_many0_underscore_word, tag("}"))(s)?;
     Ok((leftover, PathToken::Variable(variable)))
 }
-/*
-fn parse_separator<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover,_tag) = tag(":")(s)?;
-    Ok((leftover, PathToken::Separator))
-}
-*/
 
-// just found nom::comnbinator::recognize. No need to do this on my own
-/*
-fn parse_relpath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, relpath) = pair(alphaword_many0_underscore_word,many0(alt((tag("/"), alphaword_many0_underscore_word))))(s)?;
-    let  sz = relpath.0.len();
-    let sz = relpath.1.iter().fold(sz, |sum, val| sum + val.len());
-    let (result,_) = s.split_at(sz);
-    Ok((leftover, PathToken::relpath(result)))
-}
-*/
 fn parse_relpath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover, relpath) = 
     recognize(
@@ -274,31 +242,10 @@ fn parse_relpath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     Ok((leftover, PathToken::relpath(relpath)))
 }
 
-/*
-fn parse_abspath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, abspath) = pair(tag("/"),many0(alt((tag("/"), alphaword_many0_underscore_word))))(s)?;
-    let  sz = abspath.0.len();
-    let sz = abspath.1.iter().fold(sz, |sum, val| sum + val.len());
-    let (result,_) = s.split_at(sz);
-    Ok((leftover, PathToken::abspath(result)))
-}
-*/
-
 fn parse_abspath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover, abspath) = recognize(pair(tag("/"),many0(alt((tag("/"), alphaword_many0_underscore_word)))))(s)?;
     Ok((leftover, PathToken::abspath(abspath)))
 }
-
-// fn parse_path<'a>(s: &'a str) -> PNResult<&str, Vec<PathToken<'a>>> {
-//     many1(alt((parse_abspath, parse_relpath, parse_var)))(s)
-// }
-
-
-// fn parse_paths<'a>(s: &'a str) -> PNResult<&str, Vec<Vec<PathToken<'a>>>> {
-//     separated_list0(tag(":"), parse_path)(s)
-// }
-
-
 
 fn parse_var_with_provider<'a>(provider: Rc<BasicVarProvider>) 
 -> impl Fn(&'a str) -> PNResult<&'a str, PathToken<'a>> {
@@ -344,7 +291,6 @@ fn parse_path_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a s
 
 // given a provider to resolve path variables, 
 fn parse_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, Vec<PathBuf>> {
-    //let provider = provider.clone();
     move |s: &'a str| {
         separated_list0(tag(":"), parse_path_with_provider(provider.clone()))(s)
     }
@@ -352,7 +298,6 @@ fn parse_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a 
 
 // given a provider to resolve path variables, 
 fn parse_append_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
-    //let provider = provider.clone();
     move |s: &'a str| {
         let (leftover, result) = preceded(tag("@:"), parse_paths_with_provider(provider.clone()))(s)?;
         Ok((leftover, PathMode::Append(result)))
@@ -361,7 +306,6 @@ fn parse_append_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl 
 
 // given a provider to resolve path variables, 
 fn parse_prepend_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
-    //let provider = provider.clone();
     move |s: &'a str| {
         let (leftover, result) = terminated( parse_paths_with_provider(provider.clone()),tag(":@"))(s)?;
         Ok((leftover, PathMode::Prepend(result)))
@@ -369,7 +313,6 @@ fn parse_prepend_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl
 }
 
 fn parse_exact_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
-    //let provider = provider.clone();
     move |s: &'a str| {
         let (leftover, result) =  parse_paths_with_provider(provider.clone())(s)?;
         Ok((leftover, PathMode::Exact(result)))
