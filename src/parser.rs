@@ -75,11 +75,7 @@ pub fn parse_consuming_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider
 /// # }
 /// ```
 pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
-    // delimited( 
-    //     space0,
         alt((parse_semver_carrot, parse_semver_between, parse_semver_exact)) //,
-        // space0
-    // )
     (s)
 }
 /// Wraps ```parse_semver_range```, ensuring that it completely consumes the input and 
@@ -138,14 +134,19 @@ pub fn parse_package_range(input: &str) -> PNResult<&str, (&str, Range<SemanticV
 /// Wraps ```parse_package_range```, ensuring that the wrapped parser completely consumes the input, with the 
 /// bonus of simplifying the return signature
 pub fn parse_consuming_package_range(input: &str) -> Result<(&str, Range<SemanticVersion>), PesError> {
-    let (_,result) = all_consuming(parse_package_range)(input).map_err(|e| PesError::ParsingFailure(format!("{:?}", e)))?;
+    let (_,result) = 
+        all_consuming(
+            ws(
+                parse_package_range
+            )
+        )(input).map_err(|e| PesError::ParsingFailure(format!("{:?}", e)) )?;
     Ok(result)
 }
 
 /// Wraps ```parse_semver```, ensuring that it completely consumes the input, and simplifies the 
 /// return signature. Failure to consume the input results in an error.
 pub fn parse_consuming_semver(input: &str) -> Result<SemanticVersion, PesError> {
-    let result = all_consuming(parse_semver)(input).map_err(|_| PesError::ParsingFailure(input.into()))?;
+    let result = all_consuming(ws(parse_semver))(input).map_err(|_| PesError::ParsingFailure(input.into()))?;
     let (_, result) = result;
     Ok(result)
 }

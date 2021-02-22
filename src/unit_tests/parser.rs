@@ -9,6 +9,9 @@ use crate::error::PesNomError;
 mod semver_parsing {
     use super::*;
     use nom::Err::Error as NomErr;
+    
+    //TODO: add tests for consuming variants
+
     #[test]
     fn parse_semver_goodinput() {
         let result = parse_semver("1.2.3");
@@ -74,13 +77,13 @@ mod semver_parsing {
     }
 
     #[test]
-    fn parsee_package_name_and_version() {
+    fn parse_package_name_and_version() {
         let result = parse_package_version("maya-1.2.3");
         assert_eq!(result, Ok(("", ("maya", SemanticVersion::new(1,2,3)))));
     }
 
     #[test]
-    fn parsee_package_name_and_range() {
+    fn parse_package_name_and_range() {
         let versions = vec![
             ("maya-1.23.4", Ok(("", ("maya",Range::exact(SemanticVersion::new(1,23,4)))))) ,
             ("houdini-1.2.3+<3", Ok(("",("houdini", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0)))))),
