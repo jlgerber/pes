@@ -2,8 +2,8 @@ use thiserror::Error as ThisError;
 
 use nom::error::ErrorKind;
 use nom::error::ParseError;
-use nom::Err::Error;
-use nom::IResult;
+//use nom::Err::Error;
+//use nom::IResult;
 
 
 /// The package error type
@@ -28,6 +28,10 @@ pub enum PesError {
     /// Indicates a Map type is missing the provided key
     #[error("Missing key '{0}'")]
     MissingKey(String),
+
+    /// Indicates an Environment Variable is missing
+    #[error("Missing Environment Variable '{0}'")]
+    MissingEnvVar(#[from] std::env::VarError),
 
     /// Problem with version specification
     #[error("Invalid Version '{0}'")]
@@ -89,9 +93,14 @@ impl<'a> From<PesNomError<&'a str>> for nom::Err<PesNomError<&'a str>> {
         nom::Err::Error(err)
     }
 }
+//From<nom::Err<PesNomError<&str>>>` is not implemented for `PesError
+
+//From<nom::Err<PesNomError<&str>>>` is not implemented for `PesNomError<&str>
 
 // impl From<PesNomError<_>> for nom::Err<PesNomError<&str>> {
 //     fn from(err: PesNomError<_>) ->
 // }
 
 pub type PNResult<I, T> = nom::IResult<I, T,PesNomError<I>>;
+// complete result type
+pub type PNCompleteResult<I, T> = Result<T, nom::Err<PesNomError<I>>>;

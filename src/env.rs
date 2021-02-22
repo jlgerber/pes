@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use crate::VarProvider;
+use crate::error::PesError;
 
 /// Parsed environment paths can be decomposed into a vector of PathTokens
 /// 
@@ -62,7 +63,8 @@ pub enum PathMode {
 
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-/// Provides variables
+/// Provides variables to the parser. It is up to the user
+/// to insert variables prior to passing to the parser.
 pub struct BasicVarProvider {
     inner: HashMap<String, String>
 }
@@ -76,13 +78,19 @@ impl Default for BasicVarProvider {
 }
 
 impl BasicVarProvider {
+    /// Construct a default ```BasicVarProvider```
     pub fn new() -> Self {
         Self::default()
     }
 
-    // pub fn insert<K: Into<String>, V: Into<String> >(&mut self, k: K, v: V) -> Option<String> {
-    //     self.inner.insert(k.into(),v.into())
-    // }
+    /// specify an environment variable name to look up the value for. If it does not 
+    /// exist, then an Err(PesError::MissinvEnvVar) is returned. Otherwise, an Ok(())
+    /// is returned.
+    pub fn insert_env_var(&mut self, variable: &str) -> Result<(), PesError> {
+        let value = std::env::var(variable)?;
+        let _ = self.insert(variable, value);
+        Ok(())
+    }
 }
 
 impl<'a> VarProvider<'a> for BasicVarProvider {

@@ -24,10 +24,9 @@ use nom::{
     },
 };
 
-use crate::error::{PNResult, PesNomError};
+use crate::error::{PNResult, PesNomError, PNCompleteResult, PesError};
 use crate::env::{PathToken, PathMode};
-use crate::error::PesError;
-use crate::parser_atoms::alphaword_many0_underscore_word;
+use crate::parser_atoms::{alphaword_many0_underscore_word, ws};
 pub use crate::traits::VarProvider;
 pub use crate::env::BasicVarProvider;
 
@@ -35,6 +34,35 @@ pub use crate::env::BasicVarProvider;
 //------------------//
 // PUBLIC FUNCTIONS //
 //------------------//
+
+
+/// Given an Rc wrapped provider, parse the paths from a string
+pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) 
+    -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> 
+{
+    //let provider = provider.clone();
+    move |s: &'a str| {
+        alt((
+            parse_append_paths_with_provider(provider.clone()), 
+            parse_prepend_paths_with_provider(provider.clone()),
+            parse_exact_paths_with_provider(provider.clone())
+        ))(s)
+    }
+}
+
+/// provide a VarProvider and the sring to parse, and get back a PathMode or Error
+pub fn parse_consuming_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>, s: &'a str) 
+    //-> PNResult<&'a str, PathMode> 
+    -> PNCompleteResult<&'a str, PathMode>
+{
+    let (_, result) = all_consuming(
+        ws( // drop surrounding whitespace
+            parse_all_paths_with_provider(provider.clone())
+        )
+    )(s)?;
+    Ok(result)
+
+}
 
 /// Given a string representing a semantic version range - return a Range of SemanticVersion
 /// 
@@ -57,8 +85,14 @@ pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 }
 /// Wraps ```parse_semver_range```, ensuring that it completely consumes the input and 
 /// simplifies the return signature. Failure to completely consume the input results in an error.
-pub fn parse_consuming_semver_range(s: &str) -> Result<Range<SemanticVersion>, PesError> {
-    let result = all_consuming(parse_semver_range)(s).map_err(|_| PesError::ParsingFailure(s.into()))?;
+pub fn parse_consuming_semver_range(s: &str) 
+    -> Result<Range<SemanticVersion>, PesError>     
+{
+    let result = all_consuming(
+        ws(
+            parse_semver_range
+        )
+    )(s).map_err(|_| PesError::ParsingFailure(s.into()))?;
     let (_, result) = result;
     Ok(result)
 }
@@ -116,6 +150,8 @@ pub fn parse_consuming_semver(input: &str) -> Result<SemanticVersion, PesError> 
     let (_, result) = result;
     Ok(result)
 }
+
+
 //---------------------//
 //  PRIVATE FUNCTIONS  //
 //---------------------//
@@ -181,7 +217,7 @@ fn parse_semver_exact(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 //-----------------//
 //   ENV PARSING   //
 //-----------------//
-
+/*
 fn parse_prepend<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover, _prepend) = tag(":@")(s)?;
     Ok((leftover, PathToken::Prepend))
@@ -193,19 +229,22 @@ fn parse_append<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
 }
 
 fn parse_rootvar<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
-    let (leftover, variable) = delimited(tag("{"),tag("root"), tag("}"))(s)?;
+    let (leftover, _variable) = delimited(tag("{"),tag("root"), tag("}"))(s)?;
     Ok((leftover, PathToken::RootVar))
 }
-
+*/
+#[allow(dead_code)] // not really dead code. it is used in a subparser
 fn parse_var<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover, variable) = delimited(tag("{"),alphaword_many0_underscore_word, tag("}"))(s)?;
     Ok((leftover, PathToken::Variable(variable)))
 }
-
+/*
 fn parse_separator<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     let (leftover,_tag) = tag(":")(s)?;
     Ok((leftover, PathToken::Separator))
 }
+*/
+
 // just found nom::comnbinator::recognize. No need to do this on my own
 /*
 fn parse_relpath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
@@ -250,18 +289,14 @@ fn parse_abspath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     Ok((leftover, PathToken::abspath(abspath)))
 }
 
-fn parse_path<'a>(s: &'a str) -> PNResult<&str, Vec<PathToken<'a>>> {
-    many1(alt((parse_abspath, parse_relpath, parse_var)))(s)
-}
+// fn parse_path<'a>(s: &'a str) -> PNResult<&str, Vec<PathToken<'a>>> {
+//     many1(alt((parse_abspath, parse_relpath, parse_var)))(s)
+// }
 
 
-fn parse_paths<'a>(s: &'a str) -> PNResult<&str, Vec<Vec<PathToken<'a>>>> {
-    separated_list0(tag(":"), parse_path)(s)
-}
-
-fn parse_env_str<'a>(s: &'a str) -> PNResult<&str, Vec<PathToken<'a>>> {
-    todo!()
-}
+// fn parse_paths<'a>(s: &'a str) -> PNResult<&str, Vec<Vec<PathToken<'a>>>> {
+//     separated_list0(tag(":"), parse_path)(s)
+// }
 
 
 
@@ -338,18 +373,6 @@ fn parse_exact_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl F
     move |s: &'a str| {
         let (leftover, result) =  parse_paths_with_provider(provider.clone())(s)?;
         Ok((leftover, PathMode::Exact(result)))
-    }
-}
-
-
-fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
-    //let provider = provider.clone();
-    move |s: &'a str| {
-        alt((
-            parse_append_paths_with_provider(provider.clone()), 
-            parse_prepend_paths_with_provider(provider.clone()),
-            parse_exact_paths_with_provider(provider.clone())
-        ))(s)
     }
 }
 

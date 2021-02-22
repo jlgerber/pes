@@ -4,11 +4,11 @@
 use super::*;
 
 use nom::error::ErrorKind;
-use nom::error::Error as NomError;
-use nom::Err::Error as NomErr;
+//use nom::error::Error as NomError;
 use crate::error::PesNomError;
 mod semver_parsing {
     use super::*;
+    use nom::Err::Error as NomErr;
     #[test]
     fn parse_semver_goodinput() {
         let result = parse_semver("1.2.3");
@@ -102,41 +102,41 @@ mod semver_parsing {
 mod env_parsing {
     use super::*;
     
-    // parse_prepend
-    #[test]
-    fn parse_prepend__given_appropriate_str__succeeds() {
-        let result = parse_prepend(":@foobar").unwrap();
-        assert_eq!(result.0, "foobar");
-        assert_eq!(result.1, PathToken::Prepend);
-    }
+    // // parse_prepend
+    // #[test]
+    // fn parse_prepend__given_appropriate_str__succeeds() {
+    //     let result = parse_prepend(":@foobar").unwrap();
+    //     assert_eq!(result.0, "foobar");
+    //     assert_eq!(result.1, PathToken::Prepend);
+    // }
 
-    #[test]
-    fn parse_prepend__given_inappropriate_str__fails() {
-        let result = parse_prepend("fff:@foobar");
-        assert!(result.is_err())
-    }
+    // #[test]
+    // fn parse_prepend__given_inappropriate_str__fails() {
+    //     let result = parse_prepend("fff:@foobar");
+    //     assert!(result.is_err())
+    // }
 
-    // parse_append
-    #[test]
-    fn parse_append__given_appropriate_str__succeeds() {
-        let result = parse_append("@:foobar").unwrap();
-        assert_eq!(result.0, "foobar");
-        assert_eq!(result.1, PathToken::Append);
-    }
+    // // parse_append
+    // #[test]
+    // fn parse_append__given_appropriate_str__succeeds() {
+    //     let result = parse_append("@:foobar").unwrap();
+    //     assert_eq!(result.0, "foobar");
+    //     assert_eq!(result.1, PathToken::Append);
+    // }
 
-    #[test]
-    fn parse_append__given_inappropriate_str__fails() {
-        let result = parse_append("fff@:foobar");
-        assert!(result.is_err())
-    }
+    // #[test]
+    // fn parse_append__given_inappropriate_str__fails() {
+    //     let result = parse_append("fff@:foobar");
+    //     assert!(result.is_err())
+    // }
     
-    // parse_rootvar
-    #[test]
-    fn parse_rootvar__given_appropriate_str__succeeds() {
-        let result = parse_rootvar("{root}/foobar").unwrap();
-        assert_eq!(result.0, "/foobar");
-        assert_eq!(result.1, PathToken::RootVar);
-    }
+    // // parse_rootvar
+    // #[test]
+    // fn parse_rootvar__given_appropriate_str__succeeds() {
+    //     let result = parse_rootvar("{root}/foobar").unwrap();
+    //     assert_eq!(result.0, "/foobar");
+    //     assert_eq!(result.1, PathToken::RootVar);
+    // }
 
     // parse_var
     #[test]
@@ -146,13 +146,13 @@ mod env_parsing {
         assert_eq!(result.1, PathToken::Variable("othervar".into()));
     }
 
-    // parse_separator
-    #[test]
-    fn parse_separator__given_appropriate_str__succeeeds() {
-        let result = parse_separator(":/foo/bar").unwrap();
-        assert_eq!(result.0, "/foo/bar");
-        assert_eq!(result.1, PathToken::Separator);
-    }
+    // // parse_separator
+    // #[test]
+    // fn parse_separator__given_appropriate_str__succeeeds() {
+    //     let result = parse_separator(":/foo/bar").unwrap();
+    //     assert_eq!(result.0, "/foo/bar");
+    //     assert_eq!(result.1, PathToken::Separator);
+    // }
     
     // parse_relpath
     #[test]
@@ -177,54 +177,56 @@ mod env_parsing {
         assert_eq!(result.1, PathToken::abspath("/foo/bar/bla"));
     }
 
-    // parse_path
-    #[test]
-    fn parse_path__given_path_components__succeeds() {
-        let result = parse_path("bla/de/da/{robot}/foo/bar/bla:").unwrap();
-        assert_eq!(result.0, ":");
-        assert_eq!(result.1, vec![
-            PathToken::relpath("bla/de/da/"),
-            PathToken::Variable("robot"),
-            PathToken::abspath("/foo/bar/bla")
-        ]);
-    }
+    // removed as we never use these functions in parser. They have been removed as well.
 
-    // parse_path
-    #[test]
-    fn parse_paths__given_paths_separated_by_colon__succeeds() {
-        let result = parse_paths("bla/de/da/{robot}/foo/bar/bla:/foo/bar").unwrap();
-        assert_eq!(result.0, "");
-        assert_eq!(result.1, vec![
-            vec![
-                PathToken::relpath("bla/de/da/"),
-                PathToken::Variable("robot"),
-                PathToken::abspath("/foo/bar/bla")
-            ],
-            vec![
-                PathToken::abspath("/foo/bar")
-            ]
-        ]);
-    }
+    // // parse_path
+    // #[test]
+    // fn parse_path__given_path_components__succeeds() {
+    //     let result = parse_path("bla/de/da/{robot}/foo/bar/bla:").unwrap();
+    //     assert_eq!(result.0, ":");
+    //     assert_eq!(result.1, vec![
+    //         PathToken::relpath("bla/de/da/"),
+    //         PathToken::Variable("robot"),
+    //         PathToken::abspath("/foo/bar/bla")
+    //     ]);
+    // }
 
-    // parse_path
-    #[test]
-    fn parse_paths__given_single_path__succeeds() {
-        let result = parse_paths("bla/de/da/{robot}/foo/bar/bla").unwrap();
-        assert_eq!(result.0, "");
-        assert_eq!(result.1, vec![
-            vec![
-                PathToken::relpath("bla/de/da/"),
-                PathToken::Variable("robot"),
-                PathToken::abspath("/foo/bar/bla")
-            ]
-        ]);
-    }
+    // // parse_path
+    // #[test]
+    // fn parse_paths__given_paths_separated_by_colon__succeeds() {
+    //     let result = parse_paths("bla/de/da/{robot}/foo/bar/bla:/foo/bar").unwrap();
+    //     assert_eq!(result.0, "");
+    //     assert_eq!(result.1, vec![
+    //         vec![
+    //             PathToken::relpath("bla/de/da/"),
+    //             PathToken::Variable("robot"),
+    //             PathToken::abspath("/foo/bar/bla")
+    //         ],
+    //         vec![
+    //             PathToken::abspath("/foo/bar")
+    //         ]
+    //     ]);
+    // }
+
+    // // parse_path
+    // #[test]
+    // fn parse_paths__given_single_path__succeeds() {
+    //     let result = parse_paths("bla/de/da/{robot}/foo/bar/bla").unwrap();
+    //     assert_eq!(result.0, "");
+    //     assert_eq!(result.1, vec![
+    //         vec![
+    //             PathToken::relpath("bla/de/da/"),
+    //             PathToken::Variable("robot"),
+    //             PathToken::abspath("/foo/bar/bla")
+    //         ]
+    //     ]);
+    // }
 }
 
 
-mod BasicVarProvider_TEST {
+mod BasicVarProvider_test {
     use super::*;
-    use nom::Err::Error as NomErr;
+    //use nom::Err::Error as NomErr;
     use std::rc::Rc;
     
     #[test]
@@ -335,5 +337,52 @@ mod BasicVarProvider_TEST {
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
         ]));
+    }
+
+
+    #[test]
+    fn parse_consuming_all_paths_with_provider__given_valid_path__succeeds() {
+        let mut provider = BasicVarProvider::new();
+        provider.insert("root", "foobar");
+        provider.insert("name", "fred");
+        let provider = Rc::new(provider);
+        // note that we introduce whitespace in front and behind to verify that the `ws` parser is working
+        let result = parse_consuming_all_paths_with_provider(provider.clone(), " /packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
+        assert_eq!(result, PathMode::Exact(vec![
+            PathBuf::from("/packages/foobar/stuff/fred"),
+            PathBuf::from("/foo/bar/bla")
+        ]));
+
+        let result = parse_consuming_all_paths_with_provider(provider.clone(), " /packages/{root}/stuff/{name}:/foo/bar/bla:@ ").unwrap();
+        assert_eq!(result, PathMode::Prepend(vec![
+            PathBuf::from("/packages/foobar/stuff/fred"),
+            PathBuf::from("/foo/bar/bla")
+        ]));
+
+        let result = parse_consuming_all_paths_with_provider(provider, " @:/packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
+        assert_eq!(result, PathMode::Append(vec![
+            PathBuf::from("/packages/foobar/stuff/fred"),
+            PathBuf::from("/foo/bar/bla")
+        ]));
+    }
+
+    // verify that the consuming version of the parser will error if provided with additional data
+    #[test]
+    fn parse_consuming_all_paths_with_provider__given_invalid_path__succeeds() {
+        let mut provider = BasicVarProvider::new();
+        provider.insert("root", "foobar");
+        provider.insert("name", "fred");
+        let provider = Rc::new(provider);
+
+        let result = parse_consuming_all_paths_with_provider(provider.clone(), "/packages/{root}/stuff/{name}:/foo/bar/bla other stuff");
+        assert!(result.is_err());
+        
+        let result = parse_consuming_all_paths_with_provider(provider.clone(), "/packages/{root}/stuff/{name}:/foo/bar/bla:@ bla");
+        assert!(result.is_err());
+
+
+        let result = parse_consuming_all_paths_with_provider(provider, "@:/packages/{root}/stuff/{name}:/foo/bar/bla   bla");
+        assert!(result.is_err());
+
     }
 }

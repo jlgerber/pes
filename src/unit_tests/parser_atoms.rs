@@ -4,7 +4,7 @@ use super::*;
 use nom::combinator::complete;
 //use nom::Err;
 use nom::error::ErrorKind;
-use nom::error::Error as NomError;
+//use nom::error::Error as NomError;
 use nom::Err::Error as NomErr;
 use crate::error::PesNomError;
 
