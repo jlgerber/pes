@@ -73,7 +73,7 @@ impl Repository for PackageRepository {
     fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> {
         let root = self.root.clone();
 
-        let g = Gn::new_scoped(move |mut s| {
+        Gn::new_scoped(move |mut s| {
            
             for dir in root.read_dir().unwrap() {
                 let  path = dir.unwrap().path();
@@ -92,8 +92,7 @@ impl Repository for PackageRepository {
                 }
             }
             done!();
-        });
-        return g
+        })
     }
 }
 

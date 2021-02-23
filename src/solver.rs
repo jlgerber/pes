@@ -42,13 +42,19 @@ pub struct Solver<P: Package, V: Version> {
    pub  dependency_provider: OfflineDependencyProvider<P, V>,
 }
 
-const ROOT: &'static str = "ROOT_REQUEST";
+const ROOT: &str = "ROOT_REQUEST";
 
-impl Solver<String, SemanticVersion> {
-    pub fn new() -> Self {
+impl Default for Solver<String, SemanticVersion> {
+    fn default() -> Self {
         Self {
             dependency_provider: OfflineDependencyProvider::new() 
         }
+    }
+}
+
+impl Solver<String, SemanticVersion> {
+    pub fn new() -> Self {
+       Self::default()
     }
 
     /// Retrieve an iterator over package names that have been registered via ```add_repository```
@@ -96,9 +102,9 @@ impl Solver<String, SemanticVersion> {
                 Ok(solution) => Ok(solution),
                 Err(PubGrubError::NoSolution(mut derivation_tree)) => {
                     derivation_tree.collapse_no_versions();
-                    Err(PesError::NoSolution(format!("{}", DefaultStringReporter::report(&derivation_tree))))
+                    Err(PesError::NoSolution(DefaultStringReporter::report(&derivation_tree)))
                 },
-                Err(err) => Err(PesError::PesError(format!("{:?}", err))),
+                Err(err) => Err(PesError::PesError(err.to_string())),
             }
     }
 

@@ -24,13 +24,18 @@ pub struct PackageTarget {
     pub requires: IndexMap<String, String>
 }
 
-impl PackageTarget {
-    /// Construct a new, empty PackageTarget
-    pub fn new() -> Self {
+impl Default for PackageTarget {
+    fn default() -> Self {
         Self {
             include: None,
             requires: IndexMap::new()
         }
+    }
+}
+impl PackageTarget {
+    /// Construct a new, empty PackageTarget
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Add a new include to the vec of existing includes. If an existing

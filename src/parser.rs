@@ -48,8 +48,10 @@ pub use crate::env::BasicVarProvider;
 //------------------//
 
 
-/// Given an Rc wrapped provider, return a parser whihc parses the paths from a string
+/// Given an Rc wrapped provider, return a parser which parses the paths from a string
+///
 /// # Example
+///
 /// ```
 /// # use pes::parser::{BasicVarProvider, parse_all_paths_with_provider};
 /// # use pes::traits::VarProvider;
@@ -106,13 +108,13 @@ pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>)
 ///     PathBuf::from("/foo/bar/bla")
 /// ]));
 /// # }
-pub fn parse_consuming_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>, s: &'a str) 
+pub fn parse_consuming_all_paths_with_provider(provider: Rc<BasicVarProvider>, s: &str) 
     //-> PNResult<&'a str, PathMode> 
-    -> PNCompleteResult<&'a str, PathMode>
+    -> PNCompleteResult<&str, PathMode>
 {
     let (_, result) = all_consuming(
         ws( // drop surrounding whitespace
-            parse_all_paths_with_provider(provider.clone())
+            parse_all_paths_with_provider(provider)
         )
     )(s)?;
     Ok(result)
@@ -267,8 +269,8 @@ fn parse_semver(s: &str) -> PNResult<&str, SemanticVersion> {
     let (leftover,(first, rest)) = tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1))))(s)?;
     let semver = SemanticVersion::new(
         first.parse::<u32>().unwrap(),
-        rest.get(0).unwrap_or_else(|| &"0").parse::<u32>().unwrap(),
-        rest.get(1).unwrap_or_else(|| &"0").parse::<u32>().unwrap()
+        rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+        rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap()
     );
 
     Ok((leftover,semver))
@@ -286,8 +288,8 @@ fn parse_semver_between(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 fn parse_semver_carrot(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
     let (leftover,(first, rest)) = preceded(tag("^"), tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)))))(s)?;
     let major = first.parse::<u32>().unwrap();
-    let minor =  rest.get(0).unwrap_or_else(|| &"0").parse::<u32>().unwrap();
-    let patch =  rest.get(1).unwrap_or_else(|| &"0").parse::<u32>().unwrap();
+    let minor =  rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap();
+    let patch =  rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap();
 
     let semver = SemanticVersion::new(
         major,
@@ -366,7 +368,7 @@ fn parse_var_with_provider<'a>(provider: Rc<BasicVarProvider>)
 
 // given a provider to resolve path variables, 
 fn parse_path_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathBuf> {
-    let provider = provider.clone();
+    //let provider = provider.clone();
     move |s: &'a str| {
         let (leftover, path_tokens) = many1(alt((parse_abspath, parse_relpath, parse_var_with_provider(provider.clone()))))(s)?;
         let mut retpath = PathBuf::new();
