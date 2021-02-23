@@ -22,8 +22,6 @@ use crate::{
 ///
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathToken<'a> {
-    /// Separates tokes representing a path. Typically rendered as ":"
-    Separator,
     /// Variable representing the root of a package
     RootVar,
     /// Variable, rendered as ```{<VAR NAME>}```
@@ -32,32 +30,48 @@ pub enum PathToken<'a> {
     OwnedVariable(String),
     /// Error state. unknown variable
     UnknownVariable(&'a str),
-    /// A SubPath - that is a part of the path having no special 
-    /// tokens represented by the other variants
+    /// A relative path
     Relpath(&'a std::path::Path),
+    /// An absolute path
     Abspath(&'a std::path::Path),
-    /// Token indicating that previous path compoennts should be 
-    /// prepended to the existing environment path variable
-    Prepend,
-    /// Token indicating that subsequent path tokens should be 
-    /// appended to the existing environment path variable
-    Append,
 }
 
 impl<'a> PathToken<'a> {
-    /// Construct a PathToken::Var
+    /// Construct a PathToken::Variable
     pub fn variable<'b: 'a>(value: &'b str) -> Self {
         Self::Variable(value)
+    }
+    /// Construct a PathToken::OwnedVariable
+    pub fn owned_variable<V: Into<String>>(value: V) -> Self {
+        Self::OwnedVariable(value.into())
+    }
+
+    /// Construct a relpath or abspath
+    pub fn path<'b: 'a, P: AsRef<Path> +?Sized>(value: &'b P) -> Self {
+        let path = value.as_ref();
+        if path.is_absolute() {
+            Self::Abspath(path)
+        } else {
+            Self::Relpath(path)
+        }
     }
 
     /// Construct a PathToken::Relpath
     pub fn relpath<'b: 'a, P: AsRef<Path> + ?Sized>(value: &'b P) -> Self {
-        Self::Relpath(value.as_ref())
+        let value = value.as_ref();
+        if value.is_absolute() {
+            panic!("{:?} is absolute path", value);
+        }
+        Self::Relpath(value)
     }
 
     /// Construct a PathToken::Abspath
     pub fn abspath<'b: 'a, P: AsRef<Path>+ ?Sized>(value: &'b P) -> Self {
-        Self::Abspath(value.as_ref())
+        let value = value.as_ref();
+        if value.is_relative() {
+            panic!("{:?} is relative path", value);
+        }
+        Self::Abspath(value)
     }
 }
 
@@ -117,3 +131,9 @@ impl<'a> VarProvider<'a> for BasicVarProvider {
         self.inner.get(value.as_ref()).map(|x| x.as_ref())
     }
 }
+
+
+
+#[cfg(test)]
+#[path = "./unit_tests/env.rs"]
+mod unit_tests;
