@@ -1,3 +1,5 @@
+//! Components which participate in generating a dependency closure for a set of package version constraints
+
 // what does the solver have to do?
 // we need to build up a list of packages and package constraints
 // ie iterate through the package manifests for each distribution in 
