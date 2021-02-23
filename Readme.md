@@ -86,3 +86,14 @@ struct PackageTarget {
     requires: IndexMap<String, Range<SemanticVersion>>
 }
 ```
+
+## thoughts
+
+How will the system work in practice?
+
+There are a number of things that one needs to know when extending a manifest to act as a context:
+
+1 - version - trivial as the manifest already has the info
+2 - package name - trivial as the manifest already has the info
+3 - package root - how do we record this? Do we brand the manifest at install time?
+4 - base environment - what is the set of environment variables that are needed? How is this communicated? (trait?)

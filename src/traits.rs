@@ -1,4 +1,5 @@
 //! Traits defined in the `pes` crate live here
+use std::path::Path;
 
 /// Trait to provide a means to retrieve variables
 pub trait VarProvider<'a> {
@@ -17,4 +18,17 @@ pub trait FrmStr {
 
     /// Given a str, construct an instance of Self
     fn frm_str(value: &str) -> Result<Self, Self::FrmStrErr> where Self: Sized;
+}
+
+
+/// Trait to provide basic metedata for a package manifest
+pub trait MetadataProvider {
+    type Version;
+    type Error;
+
+    fn version(&self) -> Result<Self::Version, Self::Error>;
+
+    fn name(&self) -> Result<&str, Self::Error>;
+
+    fn repository<P: AsRef<Path>>(&self) -> Result<P, Self::Error>;
 }
