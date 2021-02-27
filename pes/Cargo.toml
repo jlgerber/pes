@@ -7,3 +7,4 @@ edition = "2018"
 
 [dependencies]
 peslib = {path = "../peslib" }
+structopt = "0.3.21"

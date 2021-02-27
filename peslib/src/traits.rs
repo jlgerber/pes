@@ -37,5 +37,6 @@ pub trait MetadataProvider {
 /// Define a base environment as a vector of CStrings of the form "var=value"
 pub trait BaseEnv {
     fn base_env(&self) -> Vec<CString>;
+    fn keys(&self) -> &'static [&'static str];
 }
 

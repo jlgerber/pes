@@ -119,6 +119,11 @@ impl BasicVarProvider {
         let _ = self.insert(variable, value);
         Ok(())
     }
+
+    /// Given a key and value, insert them into the provider
+    pub fn insert_var(&mut self, key: impl Into<String>, value: impl Into<String>)  {
+        self.insert(key, value);
+    }
 }
 
 impl<'a> VarProvider<'a> for BasicVarProvider {
@@ -235,6 +240,12 @@ impl BaseEnv for JsysCleanEnv {
             }).ok()
         ).collect()
     }
+
+
+    fn keys(&self) -> &'static [&'static str] {
+        self.vars
+    }
+
 }
 
 #[cfg(test)]
