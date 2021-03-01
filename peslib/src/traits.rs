@@ -2,6 +2,10 @@
 use std::path::Path;
 use std::ffi::CString;
 
+use generator::Generator;
+
+use crate::PesError;
+
 /// Trait to provide a means to retrieve variables
 pub trait VarProvider<'a> {
     type Returns;
@@ -40,3 +44,17 @@ pub trait BaseEnv {
     fn keys(&self) -> &'static [&'static str];
 }
 
+
+pub trait Repository: std::fmt::Debug {
+    type Manifest: AsRef<Path>;
+    type Err: std::error::Error;
+
+    /// retrieve a manifest for the provided package and version
+    fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err>;
+    
+    /// retrieve manifests for the provided package
+    fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError>;
+
+    /// retrieve a generator over all of the manifests in a repository
+    fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
+}

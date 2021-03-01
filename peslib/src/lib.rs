@@ -21,12 +21,15 @@ pub mod solver;
 pub mod traits;
 pub mod utils;
 pub mod versioned_package;
+pub mod constants;
 
 pub use error::PesError;
 pub use range::*;
 pub use solver::Solver;
-pub use traits::{VarProvider, BaseEnv};
+pub use traits::{VarProvider, BaseEnv, Repository};
 pub use versioned_package::VersionedPackage;
+pub use repository::PackageRepository;
+pub use pubgrub::version::SemanticVersion;
 
 pub mod prelude {
     pub use super::{
@@ -35,6 +38,9 @@ pub mod prelude {
         VarProvider, 
         BaseEnv,
         VersionedPackage, 
+        Repository,
+        SemanticVersion,
+        PackageRepository,
     };
 }
 

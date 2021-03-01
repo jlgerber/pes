@@ -62,6 +62,9 @@ pub enum PesError {
 
     #[error("No solution for request {0}")]
     NoSolution(String),
+
+    #[error("No Repositories Found at Path(2): {0}")]
+    NoRepositories(String),
 }
 
 

@@ -12,20 +12,9 @@ use std::path::{Path, PathBuf};
 use generator::{Gn, Generator};
 // crate imports
 use crate::PesError;
+use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
+use crate::Repository;
 
-pub trait Repository: std::fmt::Debug {
-    type Manifest: AsRef<Path>;
-    type Err: std::error::Error;
-
-    /// retrieve a manifest for the provided package and version
-    fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err>;
-    
-    /// retrieve manifests for the provided package
-    fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError>;
-
-    /// retrieve a generator over all of the manifests in a repository
-    fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
-}
 
 
 #[derive(Debug, PartialEq, Eq)]
@@ -107,6 +96,24 @@ impl PackageRepository {
     /// return the root of the repository
     pub fn root(&self) -> &Path {
         return &self.root.as_path()
+    }
+
+    /// Retrieve the location(s) of package repositories from the environment and
+    /// return a vector of them, assuming they exist. If no repos are found, then 
+    /// return an Error.
+    pub fn from_env() -> Result<Vec<PackageRepository>, PesError> {
+        let repos_env = std::env::var(PACKAGE_REPO_PATH_VAR_NAME)?;
+        // construct a vector of repos
+        let repos = repos_env.split(":")
+                    .map(|x| Path::new(x))
+                    .filter_map(|x| (if x.exists() {Some(x)}else{None}))
+                    .map(|x| Self::new(x, MANIFEST_NAME))
+                    .collect::<Vec<_>>();
+        if repos.len() == 0 {
+            Err(PesError::NoRepositories(repos_env))
+        } else {
+            Ok(repos)
+        }
     }
 }
 

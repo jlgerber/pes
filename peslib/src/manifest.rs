@@ -39,6 +39,10 @@ impl Manifest {
             inner: package_manifest
         }
     }
+    
+    pub fn distribution(&self) -> String {
+        self.inner.distribution()
+    }
 
     /// retrieve a list of requires for the supplied target
     pub fn get_requires(&self, target: &str) -> Result<Vec<VersionedPackage>, PesError> {

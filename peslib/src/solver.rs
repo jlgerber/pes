@@ -32,7 +32,7 @@ use pubgrub::{
 use crate::{
     manifest::PackageManifest,
     PesError,
-    repository::Repository,
+    Repository,
     versioned_package::VersionedPackage,
 };
 

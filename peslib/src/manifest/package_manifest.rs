@@ -121,6 +121,10 @@ impl PackageManifest {
         Ok(())
     }
 
+    pub fn distribution(&self) -> String {
+        format!("{}-{}", self.name, self.version)
+    }
+
 }
 
 

@@ -230,3 +230,14 @@ fn from_file__when_given_path_to_valid_manifest_produces_valid_manifest() {
     let valid = manifest.validate();
     assert!(valid.is_ok());
 }
+
+#[test]
+fn distribution__returns_name_version() {
+    let mut path = get_repo_root();
+    path.push("foo/0.1.0/manifest.yaml");
+    let manifest = PackageManifest::from_file(path);
+    assert!(manifest.is_ok());
+    let manifest = manifest.unwrap();
+    let dist = manifest.distribution();
+    assert_eq!(dist.as_str(), "foo-0.1.0");   
+}
