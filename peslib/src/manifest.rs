@@ -12,6 +12,7 @@ use serde::{
 
 use crate::versioned_package::VersionedPackage;
 use crate::error::PesError;
+use crate::constants::MANIFEST_NAME;
 
 
 pub mod package_manifest;
@@ -39,7 +40,18 @@ impl Manifest {
             inner: package_manifest
         }
     }
-    
+
+    /// Construct a manifest given a path to the manifest. We expect the manifest to be found 
+    /// at the root of the distribution. 
+    pub fn from_path<P: Into<PathBuf>>(path: P) -> Result<Self, PesError> {
+
+        let manifest = path.into();
+        let mut root = manifest.clone();
+        root.pop();
+        let package_manifest = PackageManifest::from_file(manifest)?;
+        Ok(Self::new(root, package_manifest))
+    }
+
     pub fn distribution(&self) -> String {
         self.inner.distribution()
     }
@@ -49,6 +61,11 @@ impl Manifest {
         self.inner.get_requires(target)
     }
 
+    pub fn environment(&self) -> indexmap::map::Iter<String, String> {
+        self.inner.environment.iter()
+    }
+
+    /// Retrive the path to the package root
     pub fn package_root(&self) -> &Path {
         self.root.as_path()
     }
@@ -67,3 +84,5 @@ impl Manifest {
     }
 
 }
+
+

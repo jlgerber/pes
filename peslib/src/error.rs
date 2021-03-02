@@ -43,6 +43,10 @@ pub enum PesError {
     #[error("Path does not exist {0:?}")]
     MissingPath(std::path::PathBuf),
     
+    /// Manifests do not exist for distributions
+    #[error("Manifests missing for {0:?}")]
+    MissingManifests(Vec<String>),
+
     /// Indicates an include specified in the manifest does not 
     /// map to a target
     #[error("Missing Include '{include:?}' for target '{target:?}' ")]
@@ -65,6 +69,9 @@ pub enum PesError {
 
     #[error("No Repositories Found at Path(2): {0}")]
     NoRepositories(String),
+
+    #[error("PesNomError {0}")]
+    PesNomError(String),
 }
 
 
@@ -97,6 +104,12 @@ impl<'a> From<PesNomError<&'a str>> for nom::Err<PesNomError<&'a str>> {
     fn from(err: PesNomError<&'a str>) -> Self {
         nom::Err::Error(err)
     }
+}
+
+impl<'a> From<nom::Err<PesNomError<&'a str>>> for PesError {
+  fn from(err: nom::Err<PesNomError<&'a str>>) -> Self {
+      PesError::PesNomError(err.to_string())
+  }
 }
 //From<nom::Err<PesNomError<&str>>>` is not implemented for `PesError
 

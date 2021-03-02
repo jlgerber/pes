@@ -22,17 +22,21 @@ pub mod traits;
 pub mod utils;
 pub mod versioned_package;
 pub mod constants;
+pub mod jsys;
 
 pub use error::PesError;
 pub use range::*;
 pub use solver::Solver;
-pub use traits::{VarProvider, BaseEnv, Repository};
+pub use traits::{VarProvider, BaseEnv, Repository, ManifestLocator};
 pub use versioned_package::VersionedPackage;
 pub use repository::PackageRepository;
 pub use pubgrub::version::SemanticVersion;
+pub use manifest::Manifest;
+pub use env::BasicVarProvider;
 
 pub mod prelude {
     pub use super::{
+        BasicVarProvider,
         PesError,
         Solver, 
         VarProvider, 
@@ -41,9 +45,11 @@ pub mod prelude {
         Repository,
         SemanticVersion,
         PackageRepository,
+        ManifestLocator,
+        Manifest,
     };
 }
 
-pub mod jsys {
-    pub use super::env::JsysCleanEnv;
-}
+// pub mod jsys {
+//     pub use super::env::JsysCleanEnv;
+// }

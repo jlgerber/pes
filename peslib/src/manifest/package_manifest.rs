@@ -14,7 +14,6 @@ use crate::{
     VersionedPackage,
 };
 
-
 /// Models a manifest for package
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageManifest {
@@ -28,7 +27,9 @@ pub struct PackageManifest {
     pub description: String,
     /// Map of targets for the manifest (eg build, run, lint, etc)
     #[serde(default)]
-    pub targets: IndexMap<String, PackageTarget>
+    pub targets: IndexMap<String, PackageTarget>,
+    #[serde(default)]
+    pub environment: IndexMap<String, String>
 }
 
 impl PackageManifest {
@@ -72,22 +73,6 @@ impl PackageManifest {
 
         let mut results = Vec::new();
 
-        // Move the error handling for reading the target to ```ok_or_else``` above
-        //
-        // if let Some(target) = rtarget {
-        //     // incorporate any included targets package ranges
-        //     for include in target.get_includes() {
-        //         let inc_target = self.targets.get(include);
-        //         if let Some(inc_target) = inc_target {
-        //             results.append(&mut inc_target.get_all_requires()?);
-        //         }
-        //     }
-        //     results.append(&mut target.get_all_requires()?);
-        //     Ok(results)
-        // } else {
-        //     Err(PesError::MissingKey(target.into()))
-        // }
-
         // incorporate any included targets package ranges
         for include in rtarget.get_includes() {
             let inc_target = self.targets.get(include);
@@ -121,6 +106,7 @@ impl PackageManifest {
         Ok(())
     }
 
+    /// Retrieve the name of the distribution - ie <name>-<SemanticVersion>. so `foo-0.1.0`
     pub fn distribution(&self) -> String {
         format!("{}-{}", self.name, self.version)
     }

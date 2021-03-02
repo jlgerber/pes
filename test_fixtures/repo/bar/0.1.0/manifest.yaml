@@ -8,3 +8,6 @@ targets:
   run:
     requires:
       foo: 0.1+<0.3
+environment: 
+  PATH: "{root}/bin:@"
+  PYTHONPATH: "{root}/python:@"

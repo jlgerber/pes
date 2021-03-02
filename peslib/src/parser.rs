@@ -8,6 +8,8 @@
 //! - The non-consuming variant of a parser is simply a `nom` parser, which returns a tuple of the remaining data to be parsed, along with the parse results (assuming a successful parse)
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::cell::RefCell;
+use std::collections::VecDeque;
 
 use pubgrub::{
     range::Range,
@@ -70,18 +72,19 @@ pub use crate::env::BasicVarProvider;
 /// ]));
 /// # }
 // todo: make these generic over VarProvider
-pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) 
+pub fn parse_all_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) 
     -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> 
 {
     //let provider = provider.clone();
     move |s: &'a str| {
         alt((
-            parse_append_paths_with_provider(provider.clone()), 
-            parse_prepend_paths_with_provider(provider.clone()),
-            parse_exact_paths_with_provider(provider.clone())
+            parse_append_paths_with_provider(Rc::clone(&provider)), 
+            parse_prepend_paths_with_provider(Rc::clone(&provider)),
+            parse_exact_paths_with_provider(Rc::clone(&provider))
         ))(s)
     }
 }
+
 
 /// Given an Rc wrapped BasicVarProvider and a path str, parse the path str, returning a PathMode or error
 ///
@@ -108,7 +111,7 @@ pub fn parse_all_paths_with_provider<'a>(provider: Rc<BasicVarProvider>)
 ///     PathBuf::from("/foo/bar/bla")
 /// ]));
 /// # }
-pub fn parse_consuming_all_paths_with_provider(provider: Rc<BasicVarProvider>, s: &str) 
+pub fn parse_consuming_all_paths_with_provider(provider: Rc<RefCell<BasicVarProvider>>, s: &str) 
     //-> PNResult<&'a str, PathMode> 
     -> PNCompleteResult<&str, PathMode>
 {
@@ -120,6 +123,7 @@ pub fn parse_consuming_all_paths_with_provider(provider: Rc<BasicVarProvider>, s
     Ok(result)
 
 }
+
 
 /// Given a string representing a semantic version range - return a Range of SemanticVersion
 /// 
@@ -148,12 +152,7 @@ pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 /// Furthermore, note that the parsre consumes any whitespace surounding the version range str.
 ///
 /// # Example
-/// ```
-/// # use peslib::parser::parse_consuming_semver_range;
-/// # use pubgrub::{version::SemanticVersion, range::Range};
-/// # fn main()  {
-/// let range = parse_consuming_semver_range("1.2.3+<3.0.0");
-/// assert_eq!(
+/// ```PathMode
 ///     range.unwrap(), 
 ///     Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))
 /// );
@@ -200,13 +199,7 @@ pub fn parse_package_version(input: &str) -> PNResult<&str, (&str, SemanticVersi
 /// # Example Inputs
 /// - maya-1.2.3+<4 
 /// - maya-^3.2
-///
-/// # Example
-/// ```
-/// # use peslib::parser::parse_package_range;
-/// # use pubgrub::{version::SemanticVersion, range::Range};
-/// # fn main()  {
-/// let range = parse_package_range("maya-1.2.3+<3");
+///PathMode
 /// assert_eq!(range, Ok(("",("maya", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))))));
 /// # }
 /// ```
@@ -347,7 +340,7 @@ fn parse_abspath<'a>(s: &'a str) -> PNResult<&str, PathToken<'a>> {
     Ok((leftover, PathToken::abspath(abspath)))
 }
 
-fn parse_var_with_provider<'a>(provider: Rc<BasicVarProvider>) 
+fn parse_var_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) 
 -> impl Fn(&'a str) -> PNResult<&'a str, PathToken<'a>> {
     let provider = Rc::clone(&provider);
     move |s: &'a str| {
@@ -361,16 +354,17 @@ fn parse_var_with_provider<'a>(provider: Rc<BasicVarProvider>)
                     tag("}")
                 ))
             )(s)?;
+        let provider = provider.borrow();
         let result = provider.get(variable).ok_or_else(|| PesNomError::<&str>::InvalidKey(variable.to_string()))?;
         Ok((leftover, PathToken::OwnedVariable(result.to_string())))
     }
 }
 
 // given a provider to resolve path variables, 
-fn parse_path_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathBuf> {
+fn parse_path_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathBuf> {
     //let provider = provider.clone();
     move |s: &'a str| {
-        let (leftover, path_tokens) = many1(alt((parse_abspath, parse_relpath, parse_var_with_provider(provider.clone()))))(s)?;
+        let (leftover, path_tokens) = many1(alt((parse_abspath, parse_relpath, parse_var_with_provider(Rc::clone(&provider) ))))(s)?;
         let mut retpath = PathBuf::new();
         
         for token in path_tokens {
@@ -378,6 +372,7 @@ fn parse_path_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a s
                 PathToken::Relpath(path) => retpath.push(path),
                 PathToken::OwnedVariable(ref var) => retpath.push(var),
                 PathToken::RootVar => {
+                    let provider = provider.borrow();
                     let result = provider.get("root").ok_or_else(|| PesNomError::<&str>::InvalidKey("root".to_string()))?;
                     retpath.push(result)
                 },
@@ -390,32 +385,32 @@ fn parse_path_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a s
 }
 
 // given a provider to resolve path variables, 
-fn parse_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, Vec<PathBuf>> {
+fn parse_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, Vec<PathBuf>> {
     move |s: &'a str| {
-        separated_list0(tag(":"), parse_path_with_provider(provider.clone()))(s)
+        separated_list0(tag(":"), parse_path_with_provider(Rc::clone(&provider)))(s)
     }
 }
 
 // given a provider to resolve path variables, 
-fn parse_append_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
+fn parse_append_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
-        let (leftover, result) = preceded(tag("@:"), parse_paths_with_provider(provider.clone()))(s)?;
-        Ok((leftover, PathMode::Append(result)))
+        let (leftover, result) = preceded(tag("@:"), parse_paths_with_provider(Rc::clone(&provider) ))(s)?;
+        Ok((leftover, PathMode::Append(VecDeque::from(result))))
     }
 }
 
 // given a provider to resolve path variables, 
-fn parse_prepend_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
+fn parse_prepend_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
-        let (leftover, result) = terminated( parse_paths_with_provider(provider.clone()),tag(":@"))(s)?;
-        Ok((leftover, PathMode::Prepend(result)))
+        let (leftover, result) = terminated( parse_paths_with_provider(Rc::clone(&provider) ),tag(":@"))(s)?;
+        Ok((leftover, PathMode::Prepend(VecDeque::from(result))))
     }
 }
 
-fn parse_exact_paths_with_provider<'a>(provider: Rc<BasicVarProvider>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
+fn parse_exact_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
-        let (leftover, result) =  parse_paths_with_provider(provider.clone())(s)?;
-        Ok((leftover, PathMode::Exact(result)))
+        let (leftover, result) =  parse_paths_with_provider(Rc::clone(&provider) )(s)?;
+        Ok((leftover, PathMode::Exact(VecDeque::from(result))))
     }
 }
 

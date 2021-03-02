@@ -1,10 +1,10 @@
 //! Traits defined in the `pes` crate live here
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::ffi::CString;
 
 use generator::Generator;
 
-use crate::PesError;
+use crate::{Manifest, PesError};
 
 /// Trait to provide a means to retrieve variables
 pub trait VarProvider<'a> {
@@ -49,6 +49,8 @@ pub trait Repository: std::fmt::Debug {
     type Manifest: AsRef<Path>;
     type Err: std::error::Error;
 
+    fn root(&self) -> &Path;
+
     /// retrieve a manifest for the provided package and version
     fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err>;
     
@@ -57,4 +59,13 @@ pub trait Repository: std::fmt::Debug {
 
     /// retrieve a generator over all of the manifests in a repository
     fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
+}
+
+/// Locate a manifest given a path to the root of a distribution. This trait allows us to 
+/// define different package layouts. 
+pub trait ManifestLocator: std::fmt::Debug {
+    /// locate a manifest within a distribution. 
+    fn locate<P: Into<PathBuf>>(&self, distribution: P) -> PathBuf;
+    /// construct a manifest
+    fn manifest<P: Into<PathBuf>>(&self, distribution: P) -> Result<Manifest, PesError>;
 }

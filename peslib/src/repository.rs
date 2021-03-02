@@ -16,7 +16,7 @@ use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
 use crate::Repository;
 
 
-
+/// A collection of package distributions
 #[derive(Debug, PartialEq, Eq)]
 pub struct PackageRepository {
     // we expect the repository to be laid out like so:
@@ -26,17 +26,19 @@ pub struct PackageRepository {
     manifest: String
 }
 
-
 impl Repository for PackageRepository {
     type Manifest = PathBuf;
     type Err = PesError;
 
+    fn root(&self) -> &Path {
+        self.root.as_path()
+    }
     fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err> {
         // construct path
         let mut manifest = self.root.clone();
         manifest.push(package.as_ref());
         manifest.push(version.as_ref());
-        manifest.push("manifest.yaml");
+        manifest.push(MANIFEST_NAME);
 
         if manifest.exists() {
             Ok(manifest)

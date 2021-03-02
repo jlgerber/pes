@@ -4,15 +4,14 @@
 //! - BasicVarProvider: struct used to store and provide path variables to a parser. This implements the `VarProvider` trait found in the `traits` module
 
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::env;
-use std::ffi::CString;
 use std::path::{
     Path,
     PathBuf
 };
 
 use crate::{
-    BaseEnv,
     error::PesError,
     VarProvider,
 };
@@ -84,11 +83,74 @@ impl<'a> PathToken<'a> {
 ///
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathMode {
-    Append(Vec<PathBuf>),
-    Prepend(Vec<PathBuf>),
-    Exact(Vec<PathBuf>)
+    Append(VecDeque<PathBuf>),
+    Prepend(VecDeque<PathBuf>),
+    Exact(VecDeque<PathBuf>)
 }
 
+impl PathMode {
+    pub fn inner(self) -> VecDeque<PathBuf> {
+        match self {
+            Self::Append(me) | Self::Prepend(me) | Self::Exact(me) => {
+                me
+            }
+        }
+    }
+}
+use std::ops::{Add, AddAssign};
+impl Add for PathMode {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        match self {
+            PathMode::Append(mut me) | PathMode::Prepend(mut me) | PathMode::Exact(mut me) =>  {
+                match other {
+                    PathMode::Prepend(you) => {
+                        for v in you {
+                            me.push_front(v);
+                        }
+                        PathMode::Prepend(me)
+                    },
+                    PathMode::Append(you) => {
+                        for v in you {
+                            me.push_back(v);
+                        }
+                        PathMode::Append(me)
+                    },
+                    PathMode::Exact(you) => PathMode::Exact(you)
+                }
+            }
+        }
+    }
+}
+
+impl AddAssign for PathMode {
+
+    fn add_assign(&mut self, mut other: Self)  {
+         match self {
+            PathMode::Append(ref mut me) | PathMode::Prepend(ref mut me) | PathMode::Exact(ref mut me) =>  {
+                match other {
+                    PathMode::Prepend(you) => {
+                        for v in you {
+                            me.push_front(v);
+                        }
+                        
+                    },
+                    PathMode::Append(you) => {
+                        for v in you {
+                            me.push_back(v);
+                        }
+                       
+                    },
+                    PathMode::Exact(ref mut you) => {
+                        me.clear();
+                        me.append(you);
+                    }
+                }
+            }
+        }
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 /// Provides variables to the parser. It is up to the user
@@ -140,113 +202,6 @@ impl<'a> VarProvider<'a> for BasicVarProvider {
     }
 }
 
-
-#[derive(Debug)]
-/// Provides a base environment for the Jsys system
-pub struct JsysCleanEnv {
-    vars: &'static[&'static str]
-}
-
-impl Default for JsysCleanEnv {
-    fn default() -> Self {
-        Self {
-            vars: &[
-                "JSYS_PROJECT", 
-                "JSYS_SEQUENCE", 
-                "JSYS_SHOT", 
-                "JSYS_LEVEL", 
-                "JSYS_ROOT",
-                "_",
-                "COLORTERM",
-                "DBUS_SESSION_BUS_ADDRESS",
-                "DEFAULTS_PATH",
-                "DESKTOP_SESSION",
-                "DISPLAY",
-                "GDMSESSION",
-                "G_ENABLE_DIAGNOSTIC",
-                "GNOME_DESKTOP_SESSION_ID",
-                "GNOME_SHELL_SESSION_MODE",
-                "GNOME_TERMINAL_SCREEN",
-                "GNOME_TERMINAL_SERVICE",
-                "GPG_AGENT_INFO",
-                "GTK_IM_MODULE",
-                "GTK_MODULES",
-                "HOME",
-                "INVOCATION_ID",
-                "JOURNAL_STREAM",
-                "LANG",
-                "LANGUAGE",
-                "LC_ADDRESS",
-                "LC_IDENTIFICATION",
-                "LC_MEASUREMENT",
-                "LC_MONETARY",
-                "LC_NAME",
-                "LC_NUMERIC",
-                "LC_PAPER",
-                "LC_TELEPHONE",
-                "LC_TIME",
-                "LESSCLOSE",
-                "LESSOPEN",
-                "LOGNAME",
-                "LS_COLORS",
-                "MANAGERPID",
-                "MANDATORY_PATH",
-                "PAPERSIZE",
-                "PATH",
-                "PWD",
-                "QT_ACCESSIBILITY",
-                "QT_IM_MODULE",
-                "SESSION_MANAGER",
-                "SHELL",
-                "SHLVL",
-                "SSH_AGENT_PID",
-                "SSH_AUTH_SOCK",
-                "TERM",
-                "USER",
-                "USERNAME",
-                "VTE_VERSION",
-                "WINDOWPATH",
-                "XAUTHORITY",
-                "XDG_CONFIG_DIRS",
-                "XDG_CURRENT_DESKTOP",
-                "XDG_DATA_DIRS",
-                "XDG_MENU_PREFIX",
-                "XDG_RUNTIME_DIR",
-                "XDG_SESSION_CLASS",
-                "XDG_SESSION_DESKTOP",
-                "XDG_SESSION_TYPE",
-                "XMODIFIERS"
-                
-            ]
-        }
-    }
-}
-
-impl JsysCleanEnv {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl BaseEnv for JsysCleanEnv {
-
-    fn base_env(&self) -> Vec<CString> {
-        // TODO: could use partition here to split results into 
-        // success and failure values instead of filtering out failures (assuming no failures really)
-        self.vars.iter().filter_map(|x| 
-            CString::new(match env::var(x) {
-                Ok(val) => format!("{}={}",x, val),
-                Err(_) => format!("{}=", x),
-            }).ok()
-        ).collect()
-    }
-
-
-    fn keys(&self) -> &'static [&'static str] {
-        self.vars
-    }
-
-}
 
 #[cfg(test)]
 #[path = "./unit_tests/env.rs"]

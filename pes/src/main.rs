@@ -1,9 +1,15 @@
+use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::path::PathBuf;
+
 use peslib::prelude::*;
 use peslib::jsys::*;
+use peslib::parser::parse_consuming_all_paths_with_provider;
 
 // must bring the StructOpt trait into scope
 use structopt::StructOpt;
-use main_error::MainError;
+//use main_error::MainError;
 
 //use std::fmt;
 //use std::error::Error;
@@ -85,8 +91,77 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
             // construct clean environment
             let clean_env = JsysCleanEnv::new().base_env();
 
-            // iterate through package manifests, building environment
+            // construct a list of repositories
+            let repos = PackageRepository::from_env()?;
+            // iterate through the solve. For each package version, find it in a repository and store it
+            // in a hashmap
+            let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
+            // list of distributions for which we cannot find manifests
+            let mut missing_manifests = Vec::new();
+            // solution is a HashMap of (package,version) pairs
+            for (package, version) in solution.iter() {
+                // search through repositories for registered manifests                
+                let mut manifest_path = None;
+                for repo in &repos {
+                    let version_str = version.to_string();
+                   // let distribution = PathBuf::from("")
+                    match repo.manifest(package, &version_str) {
+                        Ok(path) => manifest_path = Some(path),
+                        Err(_) => (),
+                    }
+                }
+
+                // if we found a manifest path, construct the actual manifest and 
+                // add it to the hashmap tracking manifests
+                if let Some(path) = manifest_path {
+                    let distribution = format!("{}-{}", package, version);
+                    let mani = Manifest::from_path(&path)?;
+                    manifests.insert(distribution, (path, mani));
+                } else if package.as_str() != "ROOT_REQUEST" {
+                    let distribution = format!("{}-{}", package, version);
+                    // if we were unable to find the manifest, add it to the list of missing manifests
+                    missing_manifests.push(distribution);
+                }
+            }
             
+            if missing_manifests.len() > 0 {
+                return Err(PesError::MissingManifests(missing_manifests));
+            }
+
+            // hashmap to store env vars
+            let mut env_vars = HashMap::new();
+
+            // instantiate provider
+            let  provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
+            // iterate through package manifests, building environment
+            for (name, (root, manifest)) in manifests {
+                println!("name: {}", name);
+                //println!("{:#?}", manifest);
+                {
+                    let mut prov = provider.borrow_mut();
+                    prov.insert_var("root", root.as_path().display().to_string());
+                }
+                for (key, value) in manifest.environment() {
+                    println!("{} {}", &key, value);
+                    let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), value)?;
+                    println!("{:?}", result);
+                    {
+                        if let Some(val) = env_vars.get_mut(key) {
+                            *val += result;
+                        } else {    
+                            env_vars.insert(key.clone(), result);
+                        }
+                    }
+                }
+            }
+
+            println!("OUTPUT VARS");
+            for (k,v ) in env_vars {
+                println!("{}", k);
+                for val in v.inner() {
+                    println!("\t{:?}", val);
+                }
+            }
             // construct environment vec<CString> for execve call
             // identify shell
             // call execve with environment vec

@@ -142,7 +142,8 @@ mod BasicVarProvider_test {
     use super::*;
     //use nom::Err::Error as NomErr;
     use std::rc::Rc;
-    
+    use std::collections::VecDeque;
+
     #[test]
     fn parse_var_with_provider__given_known_var() {
         let mut provider = BasicVarProvider::new();
@@ -174,10 +175,10 @@ mod BasicVarProvider_test {
         let provider = Rc::new(provider);
         let result = parse_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, vec![
+        assert_eq!(result.1, VecDeeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]);
+        ]));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use peslib::env::JsysCleanEnv;
+use peslib::jsys::JsysCleanEnv;
 use peslib::BaseEnv;
 
 fn main() {
