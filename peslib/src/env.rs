@@ -5,7 +5,6 @@
 
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::env;
 use std::path::{
     Path,
     PathBuf

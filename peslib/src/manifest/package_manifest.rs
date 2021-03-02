@@ -1,7 +1,7 @@
 //! PackageManifest struct 
 use std::path::Path;
 use crate::{TargetMap, EnvMap};
-use indexmap::IndexMap;
+//use indexmap::IndexMap;
 use serde::{
     Serialize, 
     Deserialize,
@@ -10,7 +10,7 @@ use pubgrub::version::SemanticVersion;
 
 use crate::{
     error::PesError,
-    manifest::PackageTarget,
+    //manifest::PackageTarget,
     VersionedPackage,
 };
 

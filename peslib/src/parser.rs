@@ -62,6 +62,7 @@ pub use crate::env::BasicVarProvider;
 /// # use std::rc::Rc;
 /// # use std::collections::VecDeque;
 /// # use std::cell::RefCell;
+/// #
 /// # fn main()  {
 /// let mut provider = BasicVarProvider::new();
 /// provider.insert("root", "foobar");

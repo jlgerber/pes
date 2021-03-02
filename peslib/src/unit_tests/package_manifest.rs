@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 use super::*;
-use PackageTarget;
+use crate::manifest::package_target::PackageTarget;
 use pubgrub::version::SemanticVersion;
 //use pubgrub::range::Range;
 use crate::VersionedPackage;
