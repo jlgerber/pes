@@ -2,6 +2,8 @@ use std::collections::HashMap;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::path::PathBuf;
+use std::ffi::CString;
+use nix::unistd::execve;
 
 use peslib::prelude::*;
 use peslib::jsys::*;
@@ -90,9 +92,12 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
 
                 // if we found a manifest path, construct the actual manifest and 
                 // add it to the hashmap tracking manifests
-                if let Some(path) = manifest_path {
+                if let Some(mut path) = manifest_path {
                     let distribution = format!("{}-{}", package, version);
                     let mani = Manifest::from_path(&path)?;
+                    // remove manifest from path
+                    // todo: introduce abstraction for finding manifest & root of package
+                    path.pop();
                     manifests.insert(distribution, (path, mani));
                 } else if package.as_str() != "ROOT_REQUEST" {
                     let distribution = format!("{}-{}", package, version);
@@ -106,10 +111,14 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
             }
 
             // hashmap to store env vars
-            let mut env_vars = HashMap::new();
-
+            //let mut env_vars = HashMap::new();
+            let jsys = JsysCleanEnv::new();
+            let mut env_vars = jsys.base_env2();
             // instantiate provider
-            let  provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
+            let mut provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
+            
+            println!("\n\nPATH: {:?}", env_vars.get("PATH"));
+
             // iterate through package manifests, building environment
             for (name, (root, manifest)) in manifests {
                 debug!("name: {}", name);
@@ -130,17 +139,32 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
                     }
                 }
             }
-
+            let mut c_env_vars: Vec<std::ffi::CString> = Vec::with_capacity(env_vars.len());
             info!("OUTPUT VARS");
-            for (k,v ) in env_vars {
-                info!("{}", k);
-                for val in v.inner() {
-                    info!("\t{:?}", val);
-                }
-            }
             // construct environment vec<CString> for execve call
+            for (k, v ) in env_vars {
+                // filter out non-extant paths
+                let existing_paths = v.inner()
+                                        .into_iter()
+                                        .filter(|x| x.exists())
+                                        .map(|x| x.display().to_string())
+                                        .collect::<Vec<_>>();
+                // construct required format for execve
+                let existing_paths = format!("{}={}",k, existing_paths.join(":")) ;
+                info!("{}", &existing_paths);
+                //let existing_paths : std::ffi::CString = existing_paths.bytes().into();
+                let existing_paths = std::ffi::CString::new(&existing_paths[..]).expect("unable to convert to cstring");
+                c_env_vars.push(existing_paths);
+            }
+            for v in &c_env_vars {
+                println!("{:?}", v);
+            }
             // identify shell
+            let shell = CString::new("/usr/bin/env").unwrap();
+            let args = vec![CString::new("-i").unwrap(),CString::new("bash").unwrap(),CString::new("--noprofile").unwrap(), CString::new("--norc").unwrap()];
             // call execve with environment vec
+            execve(&shell, &args[..], &c_env_vars[..]).unwrap();
+
         },
         _ => panic!("SubCmd expected to be SubCmds::Shell variant"),
         

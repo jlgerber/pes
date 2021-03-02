@@ -1,4 +1,4 @@
-
+use log::debug;
 use std::env;
 use std::ffi::CString;
 use std::path::{
@@ -11,6 +11,7 @@ use crate::{
     ManifestLocator,
     constants::MANIFEST_NAME,
     Manifest,
+    env::PathMode,
 };
 
 #[derive(Debug)]
@@ -94,9 +95,26 @@ impl Default for JsysCleanEnv {
     }
 }
 
+use std::collections::HashMap;
+use std::collections::VecDeque;
+type EnvVarMap = HashMap<String, PathMode>;
 impl JsysCleanEnv {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn base_env2(self) -> EnvVarMap {
+        let mut retmap = EnvVarMap::new();
+        for var in self.vars {
+            let value = match env::var(&var) {
+                Ok(val) => val,
+                Err(_) =>  String::new()
+            };
+            debug!("Value: {} {}", var, &value);
+            let paths = value.split(":").map(|x| PathBuf::from(x)).collect::<Vec<_>>();
+            retmap.insert(var.to_string(), PathMode::Prepend(VecDeque::from(paths)));
+        }
+        retmap
     }
 }
 
