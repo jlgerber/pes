@@ -2,10 +2,10 @@
 
 ## TODOs
 - [x] implement parser from str to  Range<SemanticVersion>
-- [ ] implement parser from str to  Range<Number>
-- [ ] design a manifest for a pes package
+- [x] implement parser from str to  Range<Number>
+- [x] design a manifest for a pes package
 - [x] implement a reader for the manifest 
-- [ ] define a package repository to store manifests 
+- [x] define a package repository to store manifests 
 - [ ] write a caching package version provider 
 
 
@@ -97,3 +97,9 @@ There are a number of things that one needs to know when extending a manifest to
 2 - package name - trivial as the manifest already has the info
 3 - package root - how do we record this? Do we brand the manifest at install time?
 4 - base environment - what is the set of environment variables that are needed? How is this communicated? (trait?)
+
+# Running pres
+
+```
+ env PES_PACKAGE_REPO_PATH=/home/jgerber/src/rust/pes/test_fixtures/repo cargo run --release --bin pes -- shell  bar-1.0.1
+ ```

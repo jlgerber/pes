@@ -7,10 +7,12 @@ use peslib::prelude::*;
 use peslib::jsys::*;
 use peslib::parser::parse_consuming_all_paths_with_provider;
 
+use log::{debug, info};
 use structopt::StructOpt;
 
 mod cli_opts;
 use cli_opts::*;
+
 
 // setup the solver, adding package repositories
 fn setup_solver() -> Result <Solver<String, SemanticVersion>, PesError> 
@@ -54,7 +56,7 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
         },
         SubCmds::Shell {constraints, lockfile: None, debug, ..} => {
             if debug == true { 
-                eprintln!("user supplied constraints: {:?}. Debug Mode? {}", constraints, debug || global_debug);
+                debug!("user supplied constraints: {:?}. Debug Mode? {}", constraints, debug || global_debug);
             }
                 // construct request
             let request = constraints.iter().map(|x| VersionedPackage::from_str(x.as_str())).collect::<Result<Vec<_>,PesError>>()?;
@@ -62,7 +64,7 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
             // calculate the solution
 
             let solution = solver.solve(request)?;
-            if debug == true || debug == false { eprintln!("{:#?}", solution); }
+            if debug == true || debug == false { debug!("{:#?}", solution); }
             // construct clean environment
             let clean_env = JsysCleanEnv::new().base_env();
 
@@ -110,16 +112,15 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
             let  provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
             // iterate through package manifests, building environment
             for (name, (root, manifest)) in manifests {
-                println!("name: {}", name);
-                //println!("{:#?}", manifest);
+                debug!("name: {}", name);
                 {
                     let mut prov = provider.borrow_mut();
                     prov.insert_var("root", root.as_path().display().to_string());
                 }
                 for (key, value) in manifest.environment() {
-                    println!("{} {}", &key, value);
+                    debug!("{} {}", &key, value);
                     let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), value)?;
-                    println!("{:?}", result);
+                    debug!("{:?}", result);
                     {
                         if let Some(val) = env_vars.get_mut(key) {
                             *val += result;
@@ -130,11 +131,11 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
                 }
             }
 
-            println!("OUTPUT VARS");
+            info!("OUTPUT VARS");
             for (k,v ) in env_vars {
-                println!("{}", k);
+                info!("{}", k);
                 for val in v.inner() {
-                    println!("\t{:?}", val);
+                    info!("\t{:?}", val);
                 }
             }
             // construct environment vec<CString> for execve call
@@ -147,7 +148,14 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
     Ok(())
 }
 
-fn main() {
+fn init_log(level: &str) {
+    match level {
+        "trace" | "debug" | "info" | "warn" | "error" | "critical" => std::env::set_var("RUST_LOG", level),
+        _ => std::env::set_var("RUST_LOG","warn"),
+    }
+    pretty_env_logger::init();
+}
+fn main() {    
     match _main() {
         Ok(_) => (),
         Err(PesError::NoSolution(msg)) => {
@@ -185,7 +193,8 @@ fn _main() -> Result<(), PesError> {
         println!("{:?}", opt);
     }
 
-    let Opt{ debug, subcmd } = opt;
+    let Opt{ debug, log_level, subcmd } = opt;
+    init_log(&log_level);
     match subcmd {
         SubCmds::Env { .. } => env_cmd(subcmd, debug)?,
         SubCmds::Shell { .. } => shell_cmd(subcmd, debug)?,

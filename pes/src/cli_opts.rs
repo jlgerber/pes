@@ -1,6 +1,8 @@
 use structopt::{StructOpt, clap::ArgGroup};
 use std::path::PathBuf;
 
+const DEFAULT_LOG_LEVEL: &str = "info";
+
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "pes", about = "PES - the Package Environment System command line")]
@@ -8,7 +10,11 @@ pub struct Opt {
     /// Activate debug mode
     #[structopt(short = "d", long = "debug")]
     pub debug: bool,
- 
+
+    /// Set the log level (trace, debug, info, warn, error, critical)
+    #[structopt(short="l", long="log-level", default_value = DEFAULT_LOG_LEVEL)]
+    pub log_level: String,
+
     #[structopt(subcommand)]  // Note that we mark a field as a subcommand
     pub subcmd: SubCmds
 }
