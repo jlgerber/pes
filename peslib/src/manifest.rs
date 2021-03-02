@@ -13,17 +13,16 @@ use serde::{
 use crate::versioned_package::VersionedPackage;
 use crate::error::PesError;
 use crate::constants::MANIFEST_NAME;
-
+use crate::TargetMap;
 
 pub mod package_manifest;
 //pub mod package_range;
 pub(crate) mod package_target;
 
 pub use package_manifest::PackageManifest;
+
 //pub use package_range::PackageRange;
 pub(crate) use package_target::PackageTarget;
-/// custom type mapping a target name to a PackageTarget
-pub type TargetMap = indexmap::IndexMap<String, PackageTarget>;
 
 // manifest wraps inner manifest with metadata
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]

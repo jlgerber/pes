@@ -7,36 +7,7 @@ use peslib::prelude::*;
 use peslib::jsys::*;
 use peslib::parser::parse_consuming_all_paths_with_provider;
 
-// must bring the StructOpt trait into scope
 use structopt::StructOpt;
-//use main_error::MainError;
-
-//use std::fmt;
-//use std::error::Error;
-// pub struct MainError(Box<dyn Error>);
-
-// impl<E: Into<Box<dyn Error>>> From<E> for MainError {
-//     fn from(e: E) -> Self {
-//         MainError(e.into())
-//     }
-// }
-
-// // impl Debug (to satisfy trait bound for main()-Result error reporting), but use Display of wrapped
-// // error internally (for nicer output).
-// impl fmt::Debug for MainError {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         //fmt::Debug::fmt(&self.0, f)?;
-//         write!(f, "{}", format!("{}", &self.0));
-        
-//         let mut source = self.0.source();
-//         while let Some(error) = source {
-//             write!(f, "\ncaused by: {:#?}", error)?;
-//             source = error.source();
-//         }
-//         Ok(())
-//     }
-// }
-
 
 mod cli_opts;
 use cli_opts::*;
@@ -55,11 +26,15 @@ fn setup_solver() -> Result <Solver<String, SemanticVersion>, PesError>
 fn env_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
     
     match subcmd {
-        SubCmds::Env{ output: Some(output), debug, ..} => println!("User supplied output: {:?}. debug mode? {}", output, debug || global_debug),
-        SubCmds::Env {constraints, output: None, debug, ..} => println!("user supplied constraints: {:?}. Debug mode? {}", constraints, debug || global_debug),
+        SubCmds::Env{ output: Some(output), debug, ..} => 
+            println!("User supplied output: {:?}. debug mode? {}", output, debug || global_debug),
+
+        SubCmds::Env {constraints, output: None, debug, ..} => 
+            println!("user supplied constraints: {:?}. Debug mode? {}", constraints, debug || global_debug),
+
         _ => panic!("SubCmd expected to be SubCmds::Env variant"),
-        
     };
+
     Ok(())
 }
 
@@ -96,7 +71,7 @@ fn shell_cmd(subcmd: SubCmds, global_debug: bool) -> Result<(), PesError> {
             // iterate through the solve. For each package version, find it in a repository and store it
             // in a hashmap
             let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
-            // list of distributions for which we cannot find manifests
+            // define a var to hold a list of distributions for which we cannot find manifests
             let mut missing_manifests = Vec::new();
             // solution is a HashMap of (package,version) pairs
             for (package, version) in solution.iter() {

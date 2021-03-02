@@ -4,3 +4,6 @@ pub const PACKAGE_REPO_PATH_VAR_NAME: &str = "PES_PACKAGE_REPO_PATH";
 
 /// The name of the manifest file
 pub const MANIFEST_NAME: &str = "manifest.yaml";
+
+/// Name of the root package constructed to 
+pub const ROOT_REQUEST: &str  = "ROOT-REQUEST";

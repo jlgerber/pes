@@ -2,7 +2,6 @@
 #![allow(non_snake_case)]
 
 use super::*;
-
 use nom::error::ErrorKind;
 //use nom::error::Error as NomError;
 use crate::error::PesNomError;
@@ -104,7 +103,7 @@ mod semver_parsing {
 
 mod env_parsing {
     use super::*;
-
+    
     // parse_var
     #[test]
     fn parse_var__given_appropriate_str__succeeds() {
@@ -142,13 +141,14 @@ mod BasicVarProvider_test {
     use super::*;
     //use nom::Err::Error as NomErr;
     use std::rc::Rc;
+    use std::cell::RefCell;
     use std::collections::VecDeque;
 
     #[test]
     fn parse_var_with_provider__given_known_var() {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_var_with_provider(provider)("{root}").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathToken::OwnedVariable("foobar".into()));
@@ -160,7 +160,7 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_path_with_provider(provider)("/packages/{root}/stuff/{name}").unwrap();
         let expected = PathBuf::from("/packages/foobar/stuff/fred");
         assert_eq!(result.0, "");
@@ -172,13 +172,14 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, VecDeeque::from(vec![
+        // NOTE: parse_paths_with_provider returns a Result<Vec<PathBuf>,_>, not a Result<VecDeque<PathBuf>>,_> 
+        assert_eq!(result.1, vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ]);
     }
 
     #[test]
@@ -186,13 +187,13 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_append_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Append(vec![
+        assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
     }
 
     #[test]
@@ -200,13 +201,13 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_prepend_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Prepend(vec![
+        assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
     }
 
 
@@ -215,13 +216,13 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         let result = parse_exact_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Exact(vec![
+        assert_eq!(result.1, PathMode::Exact(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
     }
 
 
@@ -230,28 +231,28 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
 
-        let result = parse_all_paths_with_provider(provider.clone())("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
+        let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Exact(vec![
+        assert_eq!(result.1, PathMode::Exact(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
 
-        let result = parse_all_paths_with_provider(provider.clone())("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
+        let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Prepend(vec![
+        assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
 
         let result = parse_all_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
-        assert_eq!(result.1, PathMode::Append(vec![
+        assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
     }
 
 
@@ -260,25 +261,25 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
         // note that we introduce whitespace in front and behind to verify that the `ws` parser is working
-        let result = parse_consuming_all_paths_with_provider(provider.clone(), " /packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
-        assert_eq!(result, PathMode::Exact(vec![
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " /packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
+        assert_eq!(result, PathMode::Exact(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
 
-        let result = parse_consuming_all_paths_with_provider(provider.clone(), " /packages/{root}/stuff/{name}:/foo/bar/bla:@ ").unwrap();
-        assert_eq!(result, PathMode::Prepend(vec![
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " /packages/{root}/stuff/{name}:/foo/bar/bla:@ ").unwrap();
+        assert_eq!(result, PathMode::Prepend(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
 
         let result = parse_consuming_all_paths_with_provider(provider, " @:/packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
-        assert_eq!(result, PathMode::Append(vec![
+        assert_eq!(result, PathMode::Append(VecDeque::from(vec![
             PathBuf::from("/packages/foobar/stuff/fred"),
             PathBuf::from("/foo/bar/bla")
-        ]));
+        ])));
     }
 
     // verify that the consuming version of the parser will error if provided with additional data
@@ -287,12 +288,12 @@ mod BasicVarProvider_test {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
-        let provider = Rc::new(provider);
+        let provider = Rc::new(RefCell::new(provider));
 
-        let result = parse_consuming_all_paths_with_provider(provider.clone(), "/packages/{root}/stuff/{name}:/foo/bar/bla other stuff");
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), "/packages/{root}/stuff/{name}:/foo/bar/bla other stuff");
         assert!(result.is_err());
         
-        let result = parse_consuming_all_paths_with_provider(provider.clone(), "/packages/{root}/stuff/{name}:/foo/bar/bla:@ bla");
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), "/packages/{root}/stuff/{name}:/foo/bar/bla:@ bla");
         assert!(result.is_err());
 
 

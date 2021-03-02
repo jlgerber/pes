@@ -23,6 +23,7 @@ pub mod utils;
 pub mod versioned_package;
 pub mod constants;
 pub mod jsys;
+pub mod aliases;
 
 pub use error::PesError;
 pub use range::*;
@@ -33,6 +34,7 @@ pub use repository::PackageRepository;
 pub use pubgrub::version::SemanticVersion;
 pub use manifest::Manifest;
 pub use env::BasicVarProvider;
+pub use aliases::*;
 
 pub mod prelude {
     pub use super::{
@@ -47,6 +49,7 @@ pub mod prelude {
         PackageRepository,
         ManifestLocator,
         Manifest,
+        aliases::*,
     };
 }
 

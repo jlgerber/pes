@@ -140,7 +140,6 @@ impl AddAssign for PathMode {
                         for v in you {
                             me.push_back(v);
                         }
-                       
                     },
                     PathMode::Exact(ref mut you) => {
                         me.clear();

@@ -1,6 +1,6 @@
 //! PackageManifest struct 
 use std::path::Path;
-
+use crate::{TargetMap, EnvMap};
 use indexmap::IndexMap;
 use serde::{
     Serialize, 
@@ -27,9 +27,10 @@ pub struct PackageManifest {
     pub description: String,
     /// Map of targets for the manifest (eg build, run, lint, etc)
     #[serde(default)]
-    pub targets: IndexMap<String, PackageTarget>,
+    pub targets: TargetMap, //IndexMap<String, PackageTarget>,
+    /// environment vars (doesnt really have to be an index map)
     #[serde(default)]
-    pub environment: IndexMap<String, String>
+    pub environment: EnvMap, //IndexMap<String, String>
 }
 
 impl PackageManifest {

@@ -59,17 +59,20 @@ pub use crate::env::BasicVarProvider;
 /// # use peslib::traits::VarProvider;
 /// # use peslib::env::PathMode;
 /// # use std::path::PathBuf;
+/// # use std::rc::Rc;
+/// # use std::collections::VecDeque;
+/// # use std::cell::RefCell;
 /// # fn main()  {
 /// let mut provider = BasicVarProvider::new();
 /// provider.insert("root", "foobar");
 /// provider.insert("name", "fred");
-/// let provider = std::rc::Rc::new(provider);
-/// let result = parse_all_paths_with_provider(provider.clone())("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
+/// let provider = std::rc::Rc::new(RefCell::new(provider));
+/// let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
 /// assert_eq!(result.0, "");
-/// assert_eq!(result.1, PathMode::Exact(vec![
+/// assert_eq!(result.1, PathMode::Exact(VecDeque::from(vec![
 ///     PathBuf::from("/packages/foobar/stuff/fred"),
 ///     PathBuf::from("/foo/bar/bla")
-/// ]));
+/// ])));
 /// # }
 // todo: make these generic over VarProvider
 pub fn parse_all_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) 
@@ -94,22 +97,25 @@ pub fn parse_all_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>
 /// # use peslib::traits::VarProvider;
 /// # use peslib::env::PathMode;
 /// # use std::path::PathBuf;
+/// # use std::cell::RefCell;
+/// # use std::rc::Rc;
+/// # use std::collections::VecDeque;
 /// # fn main()  {
 /// let mut provider = BasicVarProvider::new();
 /// provider.insert("root", "foobar");
 /// provider.insert("name", "fred");
 ///
-/// let provider = std::rc::Rc::new(provider);
+/// let provider = Rc::new(RefCell::new(provider));
 ///
 /// let result = parse_consuming_all_paths_with_provider(
-///                     provider.clone(), 
+///                     Rc::clone(&provider), 
 ///                     " /packages/{root}/stuff/{name}:/foo/bar/bla "
 ///              ).unwrap();
 ///
-/// assert_eq!(result, PathMode::Exact(vec![
+/// assert_eq!(result, PathMode::Exact(VecDeque::from(vec![
 ///     PathBuf::from("/packages/foobar/stuff/fred"),
 ///     PathBuf::from("/foo/bar/bla")
-/// ]));
+/// ])));
 /// # }
 pub fn parse_consuming_all_paths_with_provider(provider: Rc<RefCell<BasicVarProvider>>, s: &str) 
     //-> PNResult<&'a str, PathMode> 

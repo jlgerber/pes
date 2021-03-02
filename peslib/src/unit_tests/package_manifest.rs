@@ -5,7 +5,8 @@ use PackageTarget;
 use pubgrub::version::SemanticVersion;
 //use pubgrub::range::Range;
 use crate::VersionedPackage;
-use crate::manifest::TargetMap;
+use crate::TargetMap;
+use crate::EnvMap;
 use std::path::PathBuf;
 
 
@@ -99,7 +100,7 @@ fn from_str_unchecked__succeeds() {
     let mut target_map = TargetMap::new();
     target_map.insert("run".into(), run_target);
     target_map.insert("build".into(), build_target);
-
+    
     assert_eq!(manifest.unwrap(), 
         PackageManifest {
             schema: 1,
@@ -107,6 +108,7 @@ fn from_str_unchecked__succeeds() {
             version: SemanticVersion::new(1,2,3),
             description: "this is the description".into(),
             targets: target_map,
+            environment: EnvMap::new()
         }
     );
 }
@@ -141,6 +143,7 @@ fn from_str__succeeds_when_given_valid_manifest_str() {
             version: SemanticVersion::new(1,2,3),
             description: "this is the description".into(),
             targets: target_map,
+            environment: EnvMap::new()
         }
     );
 }
@@ -158,6 +161,7 @@ fn from_str__succeeds_when_given_valid_manifest_str_without_targets() {
             version: SemanticVersion::new(1,2,3),
             description: "this is the description".into(),
             targets: target_map,
+            environment: EnvMap::new()
         }
     );
 }
