@@ -410,7 +410,7 @@ fn parse_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> imp
 // given a provider to resolve path variables, 
 fn parse_append_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
-        let (leftover, result) = preceded(tag("@:"), parse_paths_with_provider(Rc::clone(&provider) ))(s)?;
+        let (leftover, result) = delimited(tag("append("), ws(parse_paths_with_provider(Rc::clone(&provider) )), tag(")"))(s)?;
         //let result = result.display().to_string();
         let result = result.iter().map(|x| x.display().to_string()).collect::<Vec<_>>();
 
@@ -421,7 +421,7 @@ fn parse_append_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>)
 // given a provider to resolve path variables, 
 fn parse_prepend_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
-        let (leftover, result) = terminated( parse_paths_with_provider(Rc::clone(&provider) ),tag(":@"))(s)?;
+        let (leftover, result) = delimited(tag("prepend("), ws(parse_paths_with_provider(Rc::clone(&provider))),tag(")"))(s)?;
         let result = result.iter().map(|x| x.display().to_string()).collect::<Vec<_>>();
         Ok((leftover, PathMode::Prepend(VecDeque::from(result))))
     }

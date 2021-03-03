@@ -34,7 +34,7 @@ targets:
         requires:
             maya: 1.2.3+<4
 environment:
-    LD_LIBRARY_PATH: "{root}/foo/bar:@"
+    LD_LIBRARY_PATH: "prepend({root}/foo/bar)"
 
 ```
 
@@ -61,7 +61,7 @@ include-targets = [
 maya-plugins = "^4.3"
 
 [environment]
-LD_LIBRARY_PATH = '${root}/foo/bar:@'
+LD_LIBRARY_PATH = 'prepend(${root}/foo/bar)'
 
 ```
 

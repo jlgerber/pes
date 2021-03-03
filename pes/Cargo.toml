@@ -1,6 +1,6 @@
 [package]
 name = "pes"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["jgerber"]
 edition = "2018"
 
@@ -9,7 +9,6 @@ edition = "2018"
 itertools = "0.10.0"
 log = "0.4.14"
 nix = "0.20.0"
-#main_error = "0.1.1"
 peslib = {path = "../peslib" }
 pretty_env_logger = "0.4.0"
 structopt = "0.3.21"

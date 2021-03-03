@@ -9,5 +9,5 @@ targets:
     requires:
       foo: 0.2+<0.3
 environment: 
-  PATH: "{root}/bin:@"
-  PYTHONPATH: "{root}/python:@"
+  PATH: "prepend( {root}/bin )"
+  PYTHONPATH: "prepend( {root}/python )"

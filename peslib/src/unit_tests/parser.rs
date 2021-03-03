@@ -188,7 +188,7 @@ mod BasicVarProvider_test {
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
         let provider = Rc::new(RefCell::new(provider));
-        let result = parse_append_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
+        let result = parse_append_paths_with_provider(provider)("append(/packages/{root}/stuff/{name}:/foo/bar/bla)").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
@@ -202,7 +202,7 @@ mod BasicVarProvider_test {
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
         let provider = Rc::new(RefCell::new(provider));
-        let result = parse_prepend_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
+        let result = parse_prepend_paths_with_provider(provider)("prepend(/packages/{root}/stuff/{name}:/foo/bar/bla)").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
@@ -240,14 +240,14 @@ mod BasicVarProvider_test {
             "/foo/bar/bla".to_string()
         ])));
 
-        let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
+        let result = parse_all_paths_with_provider(Rc::clone(&provider))("prepend(/packages/{root}/stuff/{name}:/foo/bar/bla)").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
             "/foo/bar/bla".to_string()
         ])));
 
-        let result = parse_all_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
+        let result = parse_all_paths_with_provider(provider)("append(/packages/{root}/stuff/{name}:/foo/bar/bla)").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
@@ -268,13 +268,13 @@ mod BasicVarProvider_test {
             "/foo/bar/bla".to_string()
         ])));
 
-        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " /packages/{root}/stuff/{name}:/foo/bar/bla:@ ").unwrap();
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " prepend( /packages/{root}/stuff/{name}:/foo/bar/bla ) ").unwrap();
         assert_eq!(result, PathMode::Prepend(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
             "/foo/bar/bla".to_string()
         ])));
 
-        let result = parse_consuming_all_paths_with_provider(provider, " @:/packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
+        let result = parse_consuming_all_paths_with_provider(provider, " append( /packages/{root}/stuff/{name}:/foo/bar/bla ) ").unwrap();
         assert_eq!(result, PathMode::Append(VecDeque::from(vec![
             "/packages/foobar/stuff/fred".to_string(),
             "/foo/bar/bla".to_string()
@@ -283,7 +283,7 @@ mod BasicVarProvider_test {
 
     // verify that the consuming version of the parser will error if provided with additional data
     #[test]
-    fn parse_consuming_all_paths_with_provider__given_invalid_path__succeeds() {
+    fn parse_consuming_all_paths_with_provider__given_invalid_path__errors() {
         let mut provider = BasicVarProvider::new();
         provider.insert("root", "foobar");
         provider.insert("name", "fred");
@@ -292,11 +292,11 @@ mod BasicVarProvider_test {
         let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), "/packages/{root}/stuff/{name}:/foo/bar/bla other stuff");
         assert!(result.is_err());
         
-        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), "/packages/{root}/stuff/{name}:/foo/bar/bla:@ bla");
+        let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), "prepend(/packages/{root}/stuff/{name}:/foo/bar/bla) bla");
         assert!(result.is_err());
 
 
-        let result = parse_consuming_all_paths_with_provider(provider, "@:/packages/{root}/stuff/{name}:/foo/bar/bla   bla");
+        let result = parse_consuming_all_paths_with_provider(provider, "append(/packages/{root}/stuff/{name}:/foo/bar/bla   )bla");
         assert!(result.is_err());
 
     }

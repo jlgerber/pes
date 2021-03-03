@@ -4,5 +4,5 @@ name: foo
 version: 0.2.0
 description: This is the foo package
 environment: 
-  PATH: "{root}/bin:@"
-  PYTHONPATH: "{root}/python:@"
+  PATH: "prepend( {root}/bin )"
+  PYTHONPATH: "prepend({root}/python)"
