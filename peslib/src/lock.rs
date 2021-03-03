@@ -1,0 +1,1 @@
+//! This module implements the lockfile. A lockfile is a serialization of a solve

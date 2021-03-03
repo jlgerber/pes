@@ -31,6 +31,7 @@ fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, Semanti
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     
     match subcmd {
+        // Here the user has specified a specific distribution (eg foo-1.0.1) and a target
         SubCmds::Env {distribution: Some(dist), target, output, ..} => {
             let results = solve_for_distribution_and_target(dist.as_str(), target.as_str())?;
             let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
@@ -41,6 +42,8 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 println!("{}-{}", result.0, result.1);
             }
         },
+        // here the user has specified a set of constraints instead of a specific distribution. This is 
+        // used to generate a solve for runtime
         SubCmds::Env {constraints, output: None,  ..} => 
         {
             let results = perform_solve(constraints)?;
