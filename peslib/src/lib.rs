@@ -24,6 +24,7 @@ pub mod versioned_package;
 pub mod constants;
 pub mod jsys;
 pub mod aliases;
+pub mod lock;
 
 pub use error::PesError;
 pub use range::*;
@@ -53,7 +54,3 @@ pub mod prelude {
         aliases::*,
     };
 }
-
-// pub mod jsys {
-//     pub use super::env::JsysCleanEnv;
-// }

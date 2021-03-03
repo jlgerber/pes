@@ -98,6 +98,32 @@ There are a number of things that one needs to know when extending a manifest to
 3 - package root - how do we record this? Do we brand the manifest at install time?
 4 - base environment - what is the set of environment variables that are needed? How is this communicated? (trait?)
 
+## The lockfile
+We need to be able to serialize and deserialize data
+### needed fields
+In addition to storing the actual solution, we need to consider the following:
+- the solve request (eg what did we solve)
+- the solve timestamp
+- the author 
+
+We should key the solve to the target as well:
+
+```toml
+schema = 1
+request = "pes env -d foo-1.0.1 -t build"
+timestamp = some timestamp goes here
+author = jgerber
+
+[lock.run]
+foo = "1.2.3"
+bar = "2.4.3"
+
+[lock.build]
+foo = "1.2.4"
+bar = "2.0.1"
+somelib = "1.2.3"
+```
+
 # Running pres
 
 ```

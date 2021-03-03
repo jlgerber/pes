@@ -1,6 +1,7 @@
 //! Custom error types and type aliases for Pes
 
 use thiserror::Error as ThisError;
+use toml;
 
 use nom::error::{
     ErrorKind,
@@ -76,6 +77,9 @@ pub enum PesError {
 
     #[error("PesNomError {0}")]
     PesNomError(String),
+
+    #[error("Toml::de::Error {0:#?}")]
+    TomlDeserializeError(#[from] toml::de::Error),
 }
 
 
