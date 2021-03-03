@@ -191,8 +191,8 @@ mod BasicVarProvider_test {
         let result = parse_append_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
     }
 
@@ -205,8 +205,8 @@ mod BasicVarProvider_test {
         let result = parse_prepend_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
     }
 
@@ -220,8 +220,8 @@ mod BasicVarProvider_test {
         let result = parse_exact_paths_with_provider(provider)("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Exact(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+           "/foo/bar/bla".to_string()
         ])));
     }
 
@@ -236,25 +236,24 @@ mod BasicVarProvider_test {
         let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Exact(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
 
         let result = parse_all_paths_with_provider(Rc::clone(&provider))("/packages/{root}/stuff/{name}:/foo/bar/bla:@").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Prepend(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
 
         let result = parse_all_paths_with_provider(provider)("@:/packages/{root}/stuff/{name}:/foo/bar/bla").unwrap();
         assert_eq!(result.0, "");
         assert_eq!(result.1, PathMode::Append(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
     }
-
 
     #[test]
     fn parse_consuming_all_paths_with_provider__given_valid_path__succeeds() {
@@ -265,20 +264,20 @@ mod BasicVarProvider_test {
         // note that we introduce whitespace in front and behind to verify that the `ws` parser is working
         let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " /packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
         assert_eq!(result, PathMode::Exact(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
 
         let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), " /packages/{root}/stuff/{name}:/foo/bar/bla:@ ").unwrap();
         assert_eq!(result, PathMode::Prepend(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
 
         let result = parse_consuming_all_paths_with_provider(provider, " @:/packages/{root}/stuff/{name}:/foo/bar/bla ").unwrap();
         assert_eq!(result, PathMode::Append(VecDeque::from(vec![
-            PathBuf::from("/packages/foobar/stuff/fred"),
-            PathBuf::from("/foo/bar/bla")
+            "/packages/foobar/stuff/fred".to_string(),
+            "/foo/bar/bla".to_string()
         ])));
     }
 
