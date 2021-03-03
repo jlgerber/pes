@@ -7,7 +7,6 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::{
     Path,
-    PathBuf
 };
 
 use crate::{
@@ -82,13 +81,13 @@ impl<'a> PathToken<'a> {
 ///
 #[derive(Debug, PartialEq, Eq)]
 pub enum PathMode {
-    Append(VecDeque<PathBuf>),
-    Prepend(VecDeque<PathBuf>),
-    Exact(VecDeque<PathBuf>)
+    Append(VecDeque<String>),
+    Prepend(VecDeque<String>),
+    Exact(VecDeque<String>)
 }
 
 impl PathMode {
-    pub fn inner(self) -> VecDeque<PathBuf> {
+    pub fn inner(self) -> VecDeque<String> {
         match self {
             Self::Append(me) | Self::Prepend(me) | Self::Exact(me) => {
                 me

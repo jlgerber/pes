@@ -199,6 +199,17 @@ pub fn parse_package_version(input: &str) -> PNResult<&str, (&str, SemanticVersi
 
 }
 
+/// Given a string like this: package-version (eg foo-1.2.3) return a tuple of (package name, SemanticVersion)
+pub fn parse_consuming_package_version(input: &str) -> Result <(&str, SemanticVersion), PesError> {
+    let (_,result) = 
+    all_consuming(
+        ws(
+            parse_package_version
+        )
+    )(input).map_err(|e| PesError::ParsingFailure(format!("{:?}", e)) )?;
+    Ok(result)
+}
+
 /// Given an input str representing a named package and version range separated by a dash,
 /// parse and return the package name and a semantic version range. 
 /// The Range may be either an Exact range or a Range between two SemanticVersion instances.
@@ -402,6 +413,9 @@ fn parse_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> imp
 fn parse_append_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
         let (leftover, result) = preceded(tag("@:"), parse_paths_with_provider(Rc::clone(&provider) ))(s)?;
+        //let result = result.display().to_string();
+        let result = result.iter().map(|x| x.display().to_string()).collect::<Vec<_>>();
+
         Ok((leftover, PathMode::Append(VecDeque::from(result))))
     }
 }
@@ -410,6 +424,7 @@ fn parse_append_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>)
 fn parse_prepend_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
         let (leftover, result) = terminated( parse_paths_with_provider(Rc::clone(&provider) ),tag(":@"))(s)?;
+        let result = result.iter().map(|x| x.display().to_string()).collect::<Vec<_>>();
         Ok((leftover, PathMode::Prepend(VecDeque::from(result))))
     }
 }
@@ -417,6 +432,8 @@ fn parse_prepend_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>
 fn parse_exact_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>) -> impl Fn(&'a str) -> PNResult<&'a str, PathMode> {
     move |s: &'a str| {
         let (leftover, result) =  parse_paths_with_provider(Rc::clone(&provider) )(s)?;
+        let result = result.iter().map(|x| x.display().to_string()).collect::<Vec<_>>();
+
         Ok((leftover, PathMode::Exact(VecDeque::from(result))))
     }
 }

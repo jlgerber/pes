@@ -1,8 +1,8 @@
 use structopt::{StructOpt, clap::ArgGroup};
 use std::path::PathBuf;
 
-const DEFAULT_LOG_LEVEL: &str = "info";
-
+const DEFAULT_LOG_LEVEL: &str = "warn";
+const DEFAULT_TARGET: &str = "run";
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "pes", about = "PES - the Package Environment System command line")]
@@ -24,17 +24,22 @@ pub enum SubCmds {
     #[structopt(name = "env", group = ArgGroup::with_name("env_action").required(true))]
     /// solve for the environment
     Env {
-        #[structopt(short="d", long="debug")]
-        /// Debug mode
-         debug: bool,
-        
+    
         #[structopt(short = "l", long = "lock-file", parse(from_os_str), group="env_action")]
         /// Output solve to a pes lock-file
          output: Option<PathBuf>,
 
         #[structopt(group="env_action")]
         /// provide a list of constraints
-         constraints: Vec<String>
+         constraints: Vec<String>,
+
+         #[structopt(short="d", long="distribution", group="env_action")]
+         /// Provide a distribution to solve, coupled with an optional target name (defaults to run)
+         distribution: Option<String>,
+
+         #[structopt(short="t", long="target", default_value=DEFAULT_TARGET)]
+         /// Provide a target to calculate the dependencies for. Used with -d | --distribution
+         target: String
     },
     #[structopt(name = "shell", group = ArgGroup::with_name("shell_action").required(true))]
     /// Solve a dependency closure based on supplied package constraints, build an environment,

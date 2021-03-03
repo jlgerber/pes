@@ -111,7 +111,7 @@ impl JsysCleanEnv {
                 Err(_) =>  String::new()
             };
             debug!("Value: {} {}", var, &value);
-            let paths = value.split(":").map(|x| PathBuf::from(x)).collect::<Vec<_>>();
+            let paths = value.split(":").map(|x| x.to_string()).collect::<Vec<_>>();
             retmap.insert(var.to_string(), PathMode::Prepend(VecDeque::from(paths)));
         }
         retmap

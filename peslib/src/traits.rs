@@ -54,6 +54,9 @@ pub trait Repository: std::fmt::Debug {
     /// retrieve a manifest for the provided package and version
     fn manifest<P: AsRef<str>, V: AsRef<str> >(&self, package: P, version: V) -> Result<Self::Manifest, Self::Err>;
     
+    /// Retrieve the manifest for the provided distribution
+    fn manifest_for<P: AsRef<str> >(&self, distribution: P) -> Result<Self::Manifest, PesError>;
+
     /// retrieve manifests for the provided package
     fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError>;
 

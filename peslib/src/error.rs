@@ -47,6 +47,10 @@ pub enum PesError {
     #[error("Manifests missing for {0:?}")]
     MissingManifests(Vec<String>),
 
+    /// Distribution not found
+    #[error("Distribution not fouhd: {0}")]
+    DistributionNotFound(String),
+
     /// Indicates an include specified in the manifest does not 
     /// map to a target
     #[error("Missing Include '{include:?}' for target '{target:?}' ")]

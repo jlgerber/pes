@@ -35,6 +35,7 @@ pub use pubgrub::version::SemanticVersion;
 pub use manifest::Manifest;
 pub use env::BasicVarProvider;
 pub use aliases::*;
+pub use solver::SelectedDependencies;
 
 pub mod prelude {
     pub use super::{

@@ -14,7 +14,7 @@ use generator::{Gn, Generator};
 use crate::PesError;
 use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
 use crate::Repository;
-
+use crate::parser::parse_consuming_package_version;
 
 /// A collection of package distributions
 #[derive(Debug, PartialEq, Eq)]
@@ -45,6 +45,13 @@ impl Repository for PackageRepository {
         } else {
             Err(PesError::MissingPath(manifest))
         }
+    }
+
+    fn manifest_for<P: AsRef<str> >(&self, distribution: P) -> Result<Self::Manifest, PesError> {
+        let (name, version) = parse_consuming_package_version(distribution.as_ref())?;
+        let version_str = version.to_string();
+        let manifest_path = self.manifest(name, version_str.as_str())?;
+        Ok(manifest_path)
     }
 
     fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError> {

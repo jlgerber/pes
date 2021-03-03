@@ -22,15 +22,18 @@ use pubgrub::{
         OfflineDependencyProvider, 
         resolve
     },
-    type_aliases::SelectedDependencies,
+    //type_aliases::SelectedDependencies,
     version::{
         SemanticVersion,
         Version
     },
 };
 
+pub use pubgrub::type_aliases::SelectedDependencies;
+
 use crate::{
     manifest::PackageManifest,
+    manifest::Manifest,
     PesError,
     Repository,
     versioned_package::VersionedPackage,
@@ -106,6 +109,13 @@ impl Solver<String, SemanticVersion> {
                 },
                 Err(err) => Err(PesError::PesError(err.to_string())),
             }
+    }
+
+    /// Given the path to a manifest and the name of a target within the manifest, calculate the solution
+    pub fn solve_target_from_manifest(&mut self, target: &str, manifest: &Path) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
+        let manifest = Manifest::from_path(manifest)?;
+        let request = manifest.get_requires(target)?;
+        self.solve(request)
     }
 
     // utility function facilitating unit testing
