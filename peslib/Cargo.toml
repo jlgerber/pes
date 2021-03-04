@@ -1,6 +1,6 @@
 [package]
 name = "peslib"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["jgerber"]
 edition = "2018"
 
@@ -22,3 +22,6 @@ log = "0.4.*"
 [dependencies.indexmap]
 version = "^1.6"
 features = ["serde-1"]
+
+[dev-dependencies]
+testutils = {path = "../testutils" }

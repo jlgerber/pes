@@ -37,6 +37,7 @@ pub use manifest::Manifest;
 pub use env::BasicVarProvider;
 pub use aliases::*;
 pub use solver::SelectedDependencies;
+pub use lock::LockFile;
 
 pub mod prelude {
     pub use super::{
@@ -52,5 +53,6 @@ pub mod prelude {
         ManifestLocator,
         Manifest,
         aliases::*,
+        LockFile,
     };
 }

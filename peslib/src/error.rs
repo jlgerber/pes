@@ -80,6 +80,9 @@ pub enum PesError {
 
     #[error("Toml::de::Error {0:#?}")]
     TomlDeserializeError(#[from] toml::de::Error),
+
+    #[error("Toml::ser::Error {0:#?}")]
+    TomlSerializeError(#[from] toml::ser::Error),
 }
 
 
