@@ -4,3 +4,5 @@ use crate::manifest::package_target::PackageTarget;
 pub type TargetMap = indexmap::IndexMap<String, PackageTarget>;
 
 pub type EnvMap = indexmap::IndexMap<String, String>;
+
+pub use pubgrub::type_aliases::SelectedDependencies;

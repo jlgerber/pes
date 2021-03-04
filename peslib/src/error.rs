@@ -32,6 +32,10 @@ pub enum PesError {
     #[error("Missing key '{0}'")]
     MissingKey(String),
 
+    // Indicates a Map type is missing the provided target
+    #[error("Missing target '{0}'")]
+    MissingTarget(String),
+
     /// Indicates an Environment Variable is missing
     #[error("Missing Environment Variable '{0}'")]
     MissingEnvVar(#[from] std::env::VarError),

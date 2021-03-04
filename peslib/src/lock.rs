@@ -8,13 +8,14 @@ use std::{
     path::Path,
 };
 
-use pubgrub::version::SemanticVersion;
+use pubgrub::{version::SemanticVersion};
 use serde::{Serialize, Deserialize};
 use toml;
 
 use crate::{
     PesError,
     parser::parse_consuming_package_version,
+    SelectedDependencies,
 };
 
 pub type VersionMap = HashMap<String, SemanticVersion>;
@@ -121,6 +122,16 @@ impl LockFile {
         }
     }
 
+    pub fn selected_dependencies_for(&self, target: &str) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
+        let mut selected_deps: SelectedDependencies<String, SemanticVersion> = SelectedDependencies::default();
+        match self.dists_for(target) {
+            Some(iter) => {
+                iter.for_each(|(k,v)| {selected_deps.insert(k.into(), v.clone()); ()});
+            },
+            None => return Err(PesError::MissingTarget(target.to_string()))
+        }
+        Ok(selected_deps)
+    }
     /// convenience function to convert the tuple returned by dist_for to a string
     pub fn dist_tuple_to_string(input: (&String, &SemanticVersion)) -> String {
         format!("{}-{}", input.0, input.1)

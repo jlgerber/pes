@@ -95,8 +95,9 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     
     match subcmd {
         SubCmds::Shell{ lockfile: Some(lockfile), ..} => {
-            let _ = lockfile;
-            todo!()
+           let lockfile = LockFile::from_file(lockfile)?;
+           let  solution  = lockfile.selected_dependencies_for("run")?; 
+           launch_shell(solution)
         },
         SubCmds::Shell {constraints, lockfile: None, ..} => {
             let solution = perform_solve(constraints)?;
