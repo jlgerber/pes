@@ -1,13 +1,10 @@
 //! This module implements the lockfile. A lockfile is a serialization of a solve
 use std::{
-    collections::{
-        HashMap,
-        hash_map::{Iter, Keys}
-    },
     io::{Read, Write},
     path::Path,
 };
-
+use indexmap::IndexMap;
+use indexmap::map::{Keys, Iter};
 use pubgrub::{version::SemanticVersion};
 use serde::{Serialize, Deserialize};
 use toml;
@@ -18,8 +15,8 @@ use crate::{
     SelectedDependencies,
 };
 
-pub type VersionMap = HashMap<String, SemanticVersion>;
-pub type LockMap = HashMap<String, VersionMap>;
+pub type VersionMap = IndexMap<String, SemanticVersion>;
+pub type LockMap = IndexMap<String, VersionMap>;
 
 
 /// The lockfile stores resolved dependency closures for targets
@@ -40,7 +37,7 @@ impl LockFile {
             schema: 1,
             request: request.into(),
             author: author.into(),
-            lock: HashMap::new()
+            lock: LockMap::new()
         }
     }
 
@@ -85,7 +82,7 @@ impl LockFile {
                 map.insert(name.to_string(), version);
             },
             None => {
-                let mut map = HashMap::new();
+                let mut map = VersionMap::new();
                 map.insert(name.to_string(), version);
                 self.lock.insert(target.to_string(), map);
             }

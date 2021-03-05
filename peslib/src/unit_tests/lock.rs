@@ -114,30 +114,22 @@ fn targets__returns_iterator_over_targets() {
 }
 
 #[test]
-fn dists_for__when_given_valid_target__returns_some_iter() {
+fn dists_for__when_given_valid_target__returns_some_iter_preserving_insertion_order() {
     let mut lockfile = LockFile::new("", "jgerber");
+    lockfile.add_dist("run", "zebra-0.2.3").unwrap();
     lockfile.add_dist("run", "maya-1.0.0").unwrap();
     lockfile.add_dist("run", "nuke-2.4.0").unwrap();
 
     let result = lockfile.dists_for("run").unwrap();
-    let result = result.collect::<Vec<_>>();
+    let result = result.map(|(n,v)| (n.to_string(), v.clone())).collect::<Vec<(String, SemanticVersion)>>();
 
     let expected = vec![
-        ("maya", SemanticVersion::new(1,0,0)),
-        ("nuke", SemanticVersion::new(2,4,0))
+        ("zebra".to_string(), SemanticVersion::new(0,2,3)),
+        ("maya".to_string(), SemanticVersion::new(1,0,0)),
+        ("nuke".to_string(), SemanticVersion::new(2,4,0))
     ];
 
-    // a bit of a pain because the iterator doesnt return in a known order.
-    assert_eq!(result.len(), expected.len());
-    for record in result {
-        let mut exists = false;
-        for e in &expected {
-            if e.0 == record.0.as_str() && record.1 == &e.1 {
-                exists = true;
-            }
-        }
-        assert!(exists);
-    }
+    assert_eq!(result, expected);
 }
 
 #[test]
