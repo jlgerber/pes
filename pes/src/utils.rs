@@ -10,7 +10,6 @@ use std::{
 use itertools::join;
 use log::{debug, info};
 use nix::unistd::execve;
-//use users::{get_user_by_uid, get_current_uid};
 
 use peslib::{
     prelude::*,
@@ -33,7 +32,7 @@ fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, Semanti
 
 /// given a set of constraints, calculate a solution
 pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<String, SemanticVersion>,PesError> {
-   
+
     debug!("user supplied constraints: {:?}.", constraints );
     
         // construct request
@@ -167,9 +166,51 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
     }
 
     // identify shell
-    let shell = CString::new("/usr/bin/env").unwrap();
-    let args = vec![CString::new("-i").unwrap(),CString::new("bash").unwrap(),CString::new("--noprofile").unwrap(), CString::new("--norc").unwrap()];
+    let env_cmd = CString::new("/usr/bin/env").unwrap();
+    let shell = std::env::var("SHELL").unwrap_or("bash".to_string());
+    let shell = Shell::from_str(shell.as_str())?;
+    let args = shell.env_args();
+    
     // call execve with environment vec
-    execve(&shell, &args[..], &c_env_vars[..]).unwrap();
+    execve(&env_cmd, &args[..], &c_env_vars[..]).unwrap();
     Ok(())
+}
+
+// store the args needed to launch a shell for the shell subcommand
+enum Shell {
+    Bash,
+    Tcsh,
+    Sh,
+}
+use std::str::FromStr;
+impl FromStr for Shell {
+    type Err = PesError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "bash" => Ok(Self::Bash),
+            "tcsh" | "-csh" => Ok(Self::Tcsh),
+            "sh" => Ok(Self::Sh),
+            _ => Err(PesError::ParsingFailure(s.to_string()))
+        }
+    }
+}
+
+impl Shell {
+    fn env_args(&self) -> Vec<CString> {
+        match self {
+            Self::Bash => vec![
+                CString::new("-i").expect("Unable to convert -i into CString"),
+                CString::new("bash").expect("unable to convert shell str into CString"),
+                CString::new("--noprofile").expect("unable to convert --noprofile into CString"), 
+                CString::new("--norc").expect("unable to convert --norc into CString")
+            ],
+            Self::Tcsh => vec![
+                CString::new("-i").expect("Unable to convert -i into CString"),
+                CString::new("tcsh").expect("unable to convert shell str into CString"),
+                CString::new("-f").expect("unable to convert -f into CString"), 
+            ],
+            _ => panic!("shell not supported")
+        }
+    }
 }
