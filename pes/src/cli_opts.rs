@@ -22,7 +22,7 @@ pub struct Opt {
 #[derive(Debug, StructOpt)]
 pub enum SubCmds {
     #[structopt(name = "env", group = ArgGroup::with_name("env_action").required(true))]
-    /// solve for the environment
+    /// Solve a dependency closure for the provided constraints, or the provided distribution and target
     Env {
         #[structopt(short = "l", long = "lock-file", parse(from_os_str))]
         /// Output solve to a pes lock-file
