@@ -5,6 +5,7 @@ use std::{
     ffi::CString,
     path::PathBuf,
     rc::Rc,
+    str::FromStr,
 };
 
 use itertools::join;
@@ -182,7 +183,6 @@ enum Shell {
     Tcsh,
     Sh,
 }
-use std::str::FromStr;
 impl FromStr for Shell {
     type Err = PesError;
 
