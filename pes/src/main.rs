@@ -64,6 +64,8 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 println!("{}-{}", result.0, result.1);
             }
         },
+        // here the user has specified a set of constraints as well as an output lockfile. Rather
+        // than display the results, we write them to a file.
         SubCmds::Env{ constraints, output: Some(output),  ..} => {
             // perform the solve given the constraints
             let results = perform_solve(constraints)?;

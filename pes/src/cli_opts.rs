@@ -24,7 +24,6 @@ pub enum SubCmds {
     #[structopt(name = "env", group = ArgGroup::with_name("env_action").required(true))]
     /// solve for the environment
     Env {
-    
         #[structopt(short = "l", long = "lock-file", parse(from_os_str))]
         /// Output solve to a pes lock-file
          output: Option<PathBuf>,

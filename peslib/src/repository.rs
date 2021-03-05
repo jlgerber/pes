@@ -26,6 +26,9 @@ pub struct PackageRepository {
     manifest: String
 }
 
+// todo: Repository should be responsible for finding the path to a distribution (specific package 
+// version), not the manifest itself. a ManifestLocator should be responsible for taking a pathbuf
+// to a distribution and producing a pathbuf pointing at a manifest
 impl Repository for PackageRepository {
     type Manifest = PathBuf;
     type Err = PesError;
