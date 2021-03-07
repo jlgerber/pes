@@ -18,7 +18,15 @@ use peslib::{
     parser::parse_consuming_all_paths_with_provider,
     SelectedDependencies,
 };
-
+use prettytable::{
+    Attr,
+    Cell,
+    color,
+    format,
+    Row,
+    Table, 
+     
+};
 
 // setup the solver, adding package repositories
 fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, SemanticVersion>, PesError> 
@@ -33,24 +41,47 @@ fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, Semanti
 
 /// given a set of constraints, calculate a solution
 pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<String, SemanticVersion>,PesError> {
-
     debug!("user supplied constraints: {:?}.", constraints );
     
-        // construct request
+    // construct request
     let request = constraints.iter().map(|x| VersionedPackage::from_str(x.as_str())).collect::<Result<Vec<_>,PesError>>()?;
     let repos = PackageRepository::from_env()?;
     let mut solver = setup_solver(repos)?;
     // calculate the solution
-    let solution = solver.solve(request)?;
+    let mut solution = solver.solve(request)?;
+    // remove the root request from the solution as that is not a valid package
+    solution.remove("ROOT_REQUEST");
+
     debug!("Solver solution:\n{:#?}", solution);
+    
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_CLEAN);
+    table.add_row(Row::new(vec![
+        Cell::new("DISTRIBUTION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+        Cell::new("LOCATION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+    ]));
+
     for (name, version) in &solution {
         let dist = format!("{}-{}", name, version);
         if let Some(value) = solver.dist_path(&dist) {
-            eprintln!("{} => {:?}", name, value);
+            table.add_row(Row::new(vec![
+                Cell::new(dist.as_str())
+                    .with_style(Attr::Bold)
+                    .with_style(Attr::ForegroundColor(color::GREEN)),
+                Cell::new(value.as_os_str().to_str().unwrap_or(""))
+            ]));
         }
     }
+
+    eprintln!("");
+    table.printstd();
     Ok(solution)
 }
+
 ///
 pub fn solve_for_distribution_and_target(distribution: &str, target: &str) -> Result<SelectedDependencies<String, SemanticVersion>,PesError> {
     debug!("distribution: {} target: {}", distribution, target);

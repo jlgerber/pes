@@ -1,3 +1,4 @@
+#![recursion_limit="256"]
 
 use structopt::StructOpt;
 use users::{get_user_by_uid, get_current_uid};
@@ -69,9 +70,12 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         SubCmds::Env{ constraints, output: Some(output),  ..} => {
             // perform the solve given the constraints
             let results = perform_solve(constraints)?;
+            
             // filter out the fake request we build to pass the solver, which only takes a 
             // single distribution as input
-            let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
+            // we should not need to do this now, as we are deleting this in perform_solve
+            //let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
+            
             // calculate the request string 
             let request = std::env::args().collect::<Vec<_>>().join(" ");
             // extract the user's login from the current process
