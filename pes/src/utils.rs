@@ -43,6 +43,12 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<St
     // calculate the solution
     let solution = solver.solve(request)?;
     debug!("Solver solution:\n{:#?}", solution);
+    for (name, version) in &solution {
+        let dist = format!("{}-{}", name, version);
+        if let Some(value) = solver.dist_path(&dist) {
+            eprintln!("{} => {:?}", name, value);
+        }
+    }
     Ok(solution)
 }
 ///
@@ -188,10 +194,10 @@ impl FromStr for Shell {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "bash" => Ok(Self::Bash),
+            "bash" | "/bin/bash" => Ok(Self::Bash),
             "tcsh" | "-csh" => Ok(Self::Tcsh),
             "sh" => Ok(Self::Sh),
-            _ => Err(PesError::ParsingFailure(s.to_string()))
+            _ => Err(PesError::ParsingFailure(format!("Shell::from_str {}",s)))
         }
     }
 }

@@ -35,6 +35,7 @@ use crate::{
     manifest::PackageManifest,
     manifest::Manifest,
     PesError,
+    aliases::DistMap,
     Repository,
     versioned_package::VersionedPackage,
 };
@@ -43,6 +44,7 @@ use crate::{
 #[derive(Debug)]
 pub struct Solver<P: Package, V: Version> {
    pub  dependency_provider: OfflineDependencyProvider<P, V>,
+   dist_cache: DistMap,
 }
 
 const ROOT: &str = "ROOT_REQUEST";
@@ -50,7 +52,8 @@ const ROOT: &str = "ROOT_REQUEST";
 impl Default for Solver<String, SemanticVersion> {
     fn default() -> Self {
         Self {
-            dependency_provider: OfflineDependencyProvider::new() 
+            dependency_provider: OfflineDependencyProvider::new() ,
+            dist_cache: DistMap::new()
         }
     }
 }
@@ -69,13 +72,20 @@ impl Solver<String, SemanticVersion> {
     pub fn versions(&self, package: &str) -> Option<impl Iterator<Item = &SemanticVersion>> {
         self.dependency_provider.versions(&package.to_string())
     }
-
+    /// Retrieve the path to the supplied distribution, assuming it exists
+    pub fn dist_path(&self, distribution: &str) -> Option<&Path> {
+        self.dist_cache.get(distribution).map(|x| x.as_path())
+    }
     /// Add packages from a repository to the dependency provider
     pub fn add_repository<R: Repository>(&mut self, repository: &R) -> Result<(), PesError> {
 
         for manifest_path in repository.manifests() {
             let manifest_path = manifest_path
                                 .map_err(|e| PesError::PesError(format!("{:?}", e)) )?;
+            let mut dist_path= manifest_path.as_ref().to_path_buf();
+            // we currently need to know the details of manifest location. we should change repository to return
+            // dist paths and then have a manifestfactory 
+            dist_path.pop();
             let manifest = PackageManifest::from_file(manifest_path)?; 
             let requires: Vec<(String, Range<SemanticVersion>)> = manifest
                                                                     .get_requires("run")
@@ -85,7 +95,9 @@ impl Solver<String, SemanticVersion> {
                 let VersionedPackage{name, range, ..} = versioned_package; 
                 (name.to_string(), range)
             }).collect();
-            let PackageManifest{name, version, ..} = manifest; 
+            let PackageManifest{name, version, ..} = manifest;
+            // update distribution cache so that we can print it out later 
+            self.dist_cache.insert(format!("{}-{}", name.as_str(), &version), dist_path);
             self.dependency_provider.add_dependencies(name, version, requires);
         }
         Ok(())
