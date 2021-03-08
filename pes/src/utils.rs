@@ -1,11 +1,15 @@
 //! utils command
-use std::{cell::RefCell, collections::HashMap, ffi::CString, path::PathBuf, rc::Rc, str::FromStr};
+use std::{
+    cell::RefCell, 
+    collections::HashMap, 
+    ffi::CString, 
+    path::PathBuf, 
+    rc::Rc, 
+    str::FromStr
+};
 
 use itertools::join;
-use log::{
-    debug, 
-    info
-};
+use log::{debug, info};
 use nix::unistd::execve;
 
 use peslib::{
@@ -23,6 +27,13 @@ use prettytable::{
     Table
 };
 
+// Type Aliases
+/// A Map whose key is a distribution and whose value is a version
+pub type DistPathMap = indexmap::IndexMap<String, String>;
+
+/// Tuple returned by perform_solve function
+pub type SolveResult = (DistPathMap, SelectedDependencies<String, SemanticVersion>);
+
 // setup the solver, adding package repositories
 fn setup_solver(
     repos: Vec<PackageRepository>,
@@ -34,10 +45,8 @@ fn setup_solver(
     Ok(solver)
 }
 
-pub type DistPathMap = indexmap::IndexMap<String, String>;
-
 /// print the provided solver results as a pretty table of distribution, paths
-pub fn prettyprint_solve_results(dpmap: DistPathMap) {
+pub fn present_solve_results(dpmap: DistPathMap) {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_CLEAN);
     table.add_row(Row::new(vec![
@@ -61,13 +70,11 @@ pub fn prettyprint_solve_results(dpmap: DistPathMap) {
     table.printstd();
 }
 
-pub type SolveResult = (DistPathMap, SelectedDependencies<String, SemanticVersion>);
-
 /// given a set of constraints, calculate a solution
 pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> {
     debug!("user supplied constraints: {:?}.", constraints);
 
-    // construct request
+    // construct request from a vector of constraint strings
     let request = constraints
         .iter()
         .map(|x| VersionedPackage::from_str(x.as_str()))
@@ -103,7 +110,7 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> 
     Ok((distpathmap, solution))
 }
 
-///
+/// generate a solution for the provided distribution and target
 pub fn solve_for_distribution_and_target(
     distribution: &str,
     target: &str,

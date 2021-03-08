@@ -10,8 +10,7 @@ mod utils;
 
 use cli_opts::*;
 use utils::{
-    init_log, launch_shell, perform_solve, prettyprint_solve_results,
-    solve_for_distribution_and_target,
+    init_log, launch_shell, perform_solve, present_solve_results, solve_for_distribution_and_target,
 };
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
@@ -63,7 +62,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             let (distmap, _results) = perform_solve(constraints)?;
             //let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
             // print the results
-            prettyprint_solve_results(distmap);
+            present_solve_results(distmap);
             // for result in results {
             //     println!("{}-{}", result.0, result.1);
             // }
@@ -94,7 +93,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 let dist = format!("{}-{}", result.0, result.1);
                 lockfile.add_dist("run", dist.as_str())?;
             }
-            prettyprint_solve_results(distmap);
+            present_solve_results(distmap);
             lockfile.to_file(output, true)?;
         }
         _ => println!("Unsupported argument combination for pes env"),
@@ -118,7 +117,7 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             ..
         } => {
             let (distmap, solution) = perform_solve(constraints)?;
-            prettyprint_solve_results(distmap);
+            present_solve_results(distmap);
             launch_shell(solution)
         }
         _ => panic!("SubCmd expected to be SubCmds::Shell variant"),
