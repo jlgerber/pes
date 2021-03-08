@@ -1,36 +1,32 @@
 //! utils command
-use std::{
-    cell::RefCell,
-    collections::HashMap,
-    ffi::CString,
-    path::PathBuf,
-    rc::Rc,
-    str::FromStr,
-};
+use std::{cell::RefCell, collections::HashMap, ffi::CString, path::PathBuf, rc::Rc, str::FromStr};
 
 use itertools::join;
-use log::{debug, info};
+use log::{
+    debug, 
+    info
+};
 use nix::unistd::execve;
 
 use peslib::{
-    prelude::*,
-    jsys::*,
-    parser::parse_consuming_all_paths_with_provider,
+    jsys::*, 
+    parser::parse_consuming_all_paths_with_provider, 
+    prelude::*, 
     SelectedDependencies,
 };
 use prettytable::{
-    Attr,
-    Cell,
-    color,
-    format,
-    Row,
-    Table, 
-     
+    color, 
+    format, 
+    Attr, 
+    Cell, 
+    Row, 
+    Table
 };
 
 // setup the solver, adding package repositories
-fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, SemanticVersion>, PesError> 
-{
+fn setup_solver(
+    repos: Vec<PackageRepository>,
+) -> Result<Solver<String, SemanticVersion>, PesError> {
     let mut solver = Solver::new();
     for repo in repos {
         solver.add_repository(&repo)?;
@@ -38,13 +34,44 @@ fn setup_solver(repos: Vec<PackageRepository>) -> Result <Solver<String, Semanti
     Ok(solver)
 }
 
+pub type DistPathMap = indexmap::IndexMap<String, String>;
+
+/// print the provided solver results as a pretty table of distribution, paths
+pub fn prettyprint_solve_results(dpmap: DistPathMap) {
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_CLEAN);
+    table.add_row(Row::new(vec![
+        Cell::new("DISTRIBUTION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+        Cell::new("LOCATION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+    ]));
+
+    for (dist, version) in dpmap.iter() {
+        table.add_row(Row::new(vec![
+            Cell::new(dist.as_str())
+                .with_style(Attr::Bold)
+                .with_style(Attr::ForegroundColor(color::GREEN)),
+            Cell::new(version),
+        ]));
+    }
+    eprintln!("");
+    table.printstd();
+}
+
+pub type SolveResult = (DistPathMap, SelectedDependencies<String, SemanticVersion>);
 
 /// given a set of constraints, calculate a solution
-pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<String, SemanticVersion>,PesError> {
-    debug!("user supplied constraints: {:?}.", constraints );
-    
+pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> {
+    debug!("user supplied constraints: {:?}.", constraints);
+
     // construct request
-    let request = constraints.iter().map(|x| VersionedPackage::from_str(x.as_str())).collect::<Result<Vec<_>,PesError>>()?;
+    let request = constraints
+        .iter()
+        .map(|x| VersionedPackage::from_str(x.as_str()))
+        .collect::<Result<Vec<_>, PesError>>()?;
     let repos = PackageRepository::from_env()?;
     let mut solver = setup_solver(repos)?;
     // calculate the solution
@@ -53,7 +80,8 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<St
     solution.remove("ROOT_REQUEST");
 
     debug!("Solver solution:\n{:#?}", solution);
-    
+
+    let mut distpathmap = DistPathMap::new();
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_CLEAN);
     table.add_row(Row::new(vec![
@@ -68,22 +96,18 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SelectedDependencies<St
     for (name, version) in &solution {
         let dist = format!("{}-{}", name, version);
         if let Some(value) = solver.dist_path(&dist) {
-            table.add_row(Row::new(vec![
-                Cell::new(dist.as_str())
-                    .with_style(Attr::Bold)
-                    .with_style(Attr::ForegroundColor(color::GREEN)),
-                Cell::new(value.as_os_str().to_str().unwrap_or(""))
-            ]));
+            distpathmap.insert(dist, value.as_os_str().to_str().unwrap_or("").to_string());
         }
     }
 
-    eprintln!("");
-    table.printstd();
-    Ok(solution)
+    Ok((distpathmap, solution))
 }
 
 ///
-pub fn solve_for_distribution_and_target(distribution: &str, target: &str) -> Result<SelectedDependencies<String, SemanticVersion>,PesError> {
+pub fn solve_for_distribution_and_target(
+    distribution: &str,
+    target: &str,
+) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
     debug!("distribution: {} target: {}", distribution, target);
     let repos = PackageRepository::from_env()?;
     let mut path = None;
@@ -108,15 +132,18 @@ pub fn solve_for_distribution_and_target(distribution: &str, target: &str) -> Re
 /// Initialize the log given the provided level
 pub fn init_log(level: &str) {
     match level {
-        "trace" | "debug" | "info" | "warn" | "error" | "critical" => std::env::set_var("RUST_LOG", level),
-        _ => std::env::set_var("RUST_LOG","warn"),
+        "trace" | "debug" | "info" | "warn" | "error" | "critical" => {
+            std::env::set_var("RUST_LOG", level)
+        }
+        _ => std::env::set_var("RUST_LOG", "warn"),
     }
     pretty_env_logger::init();
 }
 
 /// launch an interactive shell given a solution
-pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> Result<(), PesError> {
-   
+pub fn launch_shell(
+    solution: SelectedDependencies<String, SemanticVersion>,
+) -> Result<(), PesError> {
     // construct a list of repositories
     let repos = PackageRepository::from_env()?;
     // iterate through the solve. For each package version, find it in a repository and store it
@@ -126,7 +153,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
     let mut missing_manifests = Vec::new();
     // solution is a HashMap of (package,version) pairs
     for (package, version) in solution.iter() {
-        // search through repositories for registered manifests                
+        // search through repositories for registered manifests
         let mut manifest_path = None;
         for repo in &repos {
             let version_str = version.to_string();
@@ -137,7 +164,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
             }
         }
 
-        // if we found a manifest path, construct the actual manifest and 
+        // if we found a manifest path, construct the actual manifest and
         // add it to the hashmap tracking manifests
         if let Some(mut path) = manifest_path {
             let distribution = format!("{}-{}", package, version);
@@ -152,7 +179,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
             missing_manifests.push(distribution);
         }
     }
-    
+
     if missing_manifests.len() > 0 {
         return Err(PesError::MissingManifests(missing_manifests));
     }
@@ -164,7 +191,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
     let mut env_vars = jsys.base_env2();
     // instantiate provider
     let provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
-    
+
     // iterate through package manifests, building environment
     for (name, (root, manifest)) in manifests {
         debug!("name: {}", name);
@@ -179,7 +206,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
             {
                 if let Some(val) = env_vars.get_mut(key) {
                     *val += result;
-                } else {    
+                } else {
                     env_vars.insert(key.clone(), result);
                 }
             }
@@ -188,18 +215,18 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
     let mut c_env_vars: Vec<std::ffi::CString> = Vec::with_capacity(env_vars.len());
     debug!("OUTPUT VARS");
     // construct environment vec<CString> for execve call
-    for (k, v ) in env_vars {
-       
+    for (k, v) in env_vars {
         let existing_paths = v.inner();
-                                //.into_iter()
-                                //.filter(|x| x.exists())
-                                //.map(|x| x.display().to_string())
-                                //.collect::<Vec<_>>();
+        //.into_iter()
+        //.filter(|x| x.exists())
+        //.map(|x| x.display().to_string())
+        //.collect::<Vec<_>>();
         // construct required format for execve
-        let existing_paths = format!("{}={}",k, join(existing_paths, ":")) ;
+        let existing_paths = format!("{}={}", k, join(existing_paths, ":"));
         info!("{}", &existing_paths);
         //let existing_paths : std::ffi::CString = existing_paths.bytes().into();
-        let existing_paths = std::ffi::CString::new(&existing_paths[..]).expect("unable to convert to cstring");
+        let existing_paths =
+            std::ffi::CString::new(&existing_paths[..]).expect("unable to convert to cstring");
         c_env_vars.push(existing_paths);
     }
 
@@ -208,7 +235,7 @@ pub fn launch_shell(solution: SelectedDependencies<String, SemanticVersion>) -> 
     let shell = std::env::var("SHELL").unwrap_or("bash".to_string());
     let shell = Shell::from_str(shell.as_str())?;
     let args = shell.env_args();
-    
+
     // call execve with environment vec
     execve(&env_cmd, &args[..], &c_env_vars[..]).unwrap();
     Ok(())
@@ -228,7 +255,7 @@ impl FromStr for Shell {
             "bash" | "/bin/bash" => Ok(Self::Bash),
             "tcsh" | "-csh" => Ok(Self::Tcsh),
             "sh" => Ok(Self::Sh),
-            _ => Err(PesError::ParsingFailure(format!("Shell::from_str {}",s)))
+            _ => Err(PesError::ParsingFailure(format!("Shell::from_str {}", s))),
         }
     }
 }
@@ -239,15 +266,15 @@ impl Shell {
             Self::Bash => vec![
                 CString::new("-i").expect("Unable to convert -i into CString"),
                 CString::new("bash").expect("unable to convert shell str into CString"),
-                CString::new("--noprofile").expect("unable to convert --noprofile into CString"), 
-                CString::new("--norc").expect("unable to convert --norc into CString")
+                CString::new("--noprofile").expect("unable to convert --noprofile into CString"),
+                CString::new("--norc").expect("unable to convert --norc into CString"),
             ],
             Self::Tcsh => vec![
                 CString::new("-i").expect("Unable to convert -i into CString"),
                 CString::new("tcsh").expect("unable to convert shell str into CString"),
-                CString::new("-f").expect("unable to convert -f into CString"), 
+                CString::new("-f").expect("unable to convert -f into CString"),
             ],
-            _ => panic!("shell not supported")
+            _ => panic!("shell not supported"),
         }
     }
 }

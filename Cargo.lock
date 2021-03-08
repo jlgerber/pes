@@ -389,6 +389,7 @@ checksum = "af8b08b04175473088b46763e51ee54da5f9a164bc162f615b91bc179dbf15a3"
 name = "pes"
 version = "0.2.0"
 dependencies = [
+ "indexmap",
  "itertools",
  "log",
  "nix",

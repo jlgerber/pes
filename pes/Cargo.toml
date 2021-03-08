@@ -4,7 +4,6 @@ version = "0.2.0"
 authors = ["jgerber"]
 edition = "2018"
 
-
 [dependencies]
 itertools = "0.10.0"
 log = "0.4.14"
@@ -14,3 +13,7 @@ pretty_env_logger = "0.4.0"
 structopt = "0.3.21"
 users = "0.11.0"
 prettytable-rs = "0.8"
+
+[dependencies.indexmap]
+version = "^1.6"
+features = ["serde-1"]
