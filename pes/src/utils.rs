@@ -1,7 +1,8 @@
 //! utils command
 use std::{
     cell::RefCell, 
-    collections::HashMap, 
+    collections::HashMap,
+    env, 
     ffi::CString, 
     path::PathBuf, 
     rc::Rc, 
@@ -17,6 +18,7 @@ use peslib::{
     parser::parse_consuming_all_paths_with_provider, 
     prelude::*, 
     SelectedDependencies,
+    constants::MANIFEST_NAME,
 };
 use prettytable::{
     color, 
@@ -33,6 +35,41 @@ pub type DistPathMap = indexmap::IndexMap<String, String>;
 
 /// Tuple returned by perform_solve function
 pub type SolveResult = (DistPathMap, SelectedDependencies<String, SemanticVersion>);
+
+pub fn audit_manifest_file<M: Into<PathBuf>>(manifest: M) -> Result<bool, PesError> {
+    let manifest = Manifest::from_path_unchecked(manifest)?;
+    manifest.validate()?;
+
+    Ok(true)
+}
+
+/// Given the CWD, find the manifest, assuming you are calling from within a package, and then
+/// perform an audit.
+pub fn audit_manifest_for_current_location() -> Result<bool, PesError> {
+    let manifest = find_manifest()?;
+    audit_manifest_file(manifest)
+}
+/// find the manifest 
+pub fn find_manifest() -> Result<PathBuf, PesError> {
+    let mut cwd = env::current_dir()?;
+
+    info!("searching for manifest in {:?}", &cwd);
+    
+    loop {
+        // terminate loop
+        
+        cwd.push(MANIFEST_NAME);
+        if cwd.exists() {
+            info!("Found manifest: {:?}", &cwd);
+            return Ok(cwd);
+        }
+        // pop off manifest name and parent levbel
+        if cwd.pop() == false {break};
+        if cwd.pop() == false {break};
+        debug!("loop. current cwd: {:?}", cwd);
+    }
+    Err(PesError::ManifestNotFound(env::current_dir()?))
+}
 
 // setup the solver, adding package repositories
 fn setup_solver(

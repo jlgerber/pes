@@ -39,11 +39,18 @@ impl Manifest {
     /// Construct a manifest given a path to the manifest. We expect the manifest to be found 
     /// at the root of the distribution. 
     pub fn from_path<P: Into<PathBuf>>(path: P) -> Result<Self, PesError> {
-
         let manifest = path.into();
         let mut root = manifest.clone();
         root.pop();
         let package_manifest = PackageManifest::from_file(manifest)?;
+        Ok(Self::new(root, package_manifest))
+    }
+    /// Construct a manifest but do not apply additional validation
+    pub fn from_path_unchecked<P: Into<PathBuf>>(path: P) -> Result<Self, PesError> {
+        let manifest = path.into();
+        let mut root = manifest.clone();
+        root.pop();
+        let package_manifest = PackageManifest::from_file_unchecked(manifest)?;
         Ok(Self::new(root, package_manifest))
     }
 

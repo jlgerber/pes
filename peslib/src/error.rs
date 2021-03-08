@@ -1,5 +1,5 @@
 //! Custom error types and type aliases for Pes
-
+use std::path::PathBuf;
 use thiserror::Error as ThisError;
 use toml;
 
@@ -51,6 +51,10 @@ pub enum PesError {
     /// Manifests do not exist for distributions
     #[error("Manifests missing for {0:?}")]
     MissingManifests(Vec<String>),
+
+    /// manifest notfound
+    #[error("Manifest Not Found starting here: '{0:?}'")]
+    ManifestNotFound(PathBuf),
 
     /// Distribution not found
     #[error("Distribution not fouhd: {0}")]

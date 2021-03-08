@@ -10,7 +10,7 @@ mod utils;
 
 use cli_opts::*;
 use utils::{
-    init_log, launch_shell, perform_solve, present_solve_results, solve_for_distribution_and_target,
+    init_log, launch_shell, perform_solve, present_solve_results, solve_for_distribution_and_target,audit_manifest_file, audit_manifest_for_current_location
 };
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
@@ -165,6 +165,12 @@ fn _main() -> Result<(), PesError> {
     } = opt;
     init_log(&log_level);
     match subcmd {
+        SubCmds::Audit{
+            manifest: Some(manifest),
+        } => {audit_manifest_file(manifest)?;},
+        SubCmds::Audit{
+            manifest: None,
+        } => {audit_manifest_for_current_location()?;},
         SubCmds::Env { .. } => env_cmd(subcmd)?,
         SubCmds::Shell { .. } => shell_cmd(subcmd)?,
     };

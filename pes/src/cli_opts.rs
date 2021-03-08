@@ -21,6 +21,13 @@ pub struct Opt {
 
 #[derive(Debug, StructOpt)]
 pub enum SubCmds {
+    #[structopt(name = "audit")]
+    /// Audit the manifest, which may either be provided or found
+    Audit {
+        /// Provide an explicit path to a manifest. 
+        #[structopt(short="m", long="manifest", parse(from_os_str))]
+        manifest: Option<PathBuf>,
+    },
     #[structopt(name = "env", group = ArgGroup::with_name("env_action").required(true))]
     /// Solve a dependency closure for the provided constraints, or the provided distribution and target
     Env {
