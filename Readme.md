@@ -124,7 +124,7 @@ bar = "2.0.1"
 somelib = "1.2.3"
 ```
 
-# Running pres
+# Running pes
 
 ```
  env PES_PACKAGE_REPO_PATH=/home/jgerber/src/rust/pes/test_fixtures/repo cargo run --release --bin pes -- shell  bar-1.0.1
