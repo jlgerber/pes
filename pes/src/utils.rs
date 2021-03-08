@@ -10,7 +10,7 @@ use std::{
 };
 
 use itertools::join;
-use log::{debug, info};
+use log::{debug, trace, info};
 use nix::unistd::execve;
 
 use peslib::{
@@ -60,13 +60,13 @@ pub fn find_manifest() -> Result<PathBuf, PesError> {
         
         cwd.push(MANIFEST_NAME);
         if cwd.exists() {
-            info!("Found manifest: {:?}", &cwd);
+            info!("find_manifest() - Found manifest: {:?}", &cwd);
             return Ok(cwd);
         }
         // pop off manifest name and parent levbel
         if cwd.pop() == false {break};
         if cwd.pop() == false {break};
-        debug!("loop. current cwd: {:?}", cwd);
+        trace!("loop. current cwd: {:?}", cwd);
     }
     Err(PesError::ManifestNotFound(env::current_dir()?))
 }
