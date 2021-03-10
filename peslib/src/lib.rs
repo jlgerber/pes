@@ -10,8 +10,13 @@
 #[macro_use]
 extern crate generator;
 
+pub mod aliases;
+pub mod constants;
+pub mod distribution;
 pub mod env;
 pub mod error;
+pub mod jsys;
+pub mod lock;
 pub mod manifest;
 pub mod parser;
 pub mod parser_atoms;
@@ -21,38 +26,37 @@ pub mod solver;
 pub mod traits;
 pub mod utils;
 pub mod versioned_package;
-pub mod constants;
-pub mod jsys;
-pub mod aliases;
-pub mod lock;
 
+pub use aliases::*;
+pub use distribution::Distribution;
+pub use env::BasicVarProvider;
 pub use error::PesError;
+pub use lock::LockFile;
 pub use range::*;
+pub use manifest::Manifest;
+pub use pubgrub::version::SemanticVersion;
+pub use repository::PackageRepository;
+pub use solver::SelectedDependencies;
 pub use solver::Solver;
 pub use traits::{VarProvider, BaseEnv, Repository, ManifestLocator};
 pub use versioned_package::VersionedPackage;
-pub use repository::PackageRepository;
-pub use pubgrub::version::SemanticVersion;
-pub use manifest::Manifest;
-pub use env::BasicVarProvider;
-pub use aliases::*;
-pub use solver::SelectedDependencies;
-pub use lock::LockFile;
 
 pub mod prelude {
     pub use super::{
+        aliases::*,
+        BaseEnv,
         BasicVarProvider,
+        Distribution,
+        LockFile,
+        Manifest,
+        ManifestLocator,
+        PackageRepository,
+        Repository,
         PesError,
+        SemanticVersion,
         Solver, 
         VarProvider, 
-        BaseEnv,
         VersionedPackage, 
-        Repository,
-        SemanticVersion,
-        PackageRepository,
-        ManifestLocator,
-        Manifest,
-        aliases::*,
-        LockFile,
+    
     };
 }
