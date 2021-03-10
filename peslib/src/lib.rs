@@ -10,6 +10,9 @@
 #[macro_use]
 extern crate generator;
 
+// #[macro_use]
+// extern crate lazy_static;
+
 pub mod env;
 pub mod error;
 pub mod manifest;

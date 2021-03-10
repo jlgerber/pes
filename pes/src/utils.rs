@@ -116,7 +116,7 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> 
         .iter()
         .map(|x| VersionedPackage::from_str(x.as_str()))
         .collect::<Result<Vec<_>, PesError>>()?;
-    let repos = PackageRepository::from_env()?;
+    let repos = PackageRepository::from_plugin()?;
     let mut solver = setup_solver(repos)?;
     // calculate the solution
     let mut solution = solver.solve(request)?;
@@ -153,7 +153,7 @@ pub fn solve_for_distribution_and_target(
     target: &str,
 ) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
     debug!("distribution: {} target: {}", distribution, target);
-    let repos = PackageRepository::from_env()?;
+    let repos = PackageRepository::from_plugin()?;
     let mut path = None;
     for repo in &repos {
         let manifest = repo.manifest_for(distribution);
@@ -189,7 +189,7 @@ pub fn launch_shell(
     solution: SelectedDependencies<String, SemanticVersion>,
 ) -> Result<(), PesError> {
     // construct a list of repositories
-    let repos = PackageRepository::from_env()?;
+    let repos = PackageRepository::from_plugin()?;
     // iterate through the solve. For each package version, find it in a repository and store it
     // in a hashmap
     let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();

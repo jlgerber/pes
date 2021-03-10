@@ -2,5 +2,7 @@
 members = [
     "peslib", 
     "pes",
-    "testutils"
+    "testutils",
+    "pes_interface",
+    "dev_repo_finder",
     ]
