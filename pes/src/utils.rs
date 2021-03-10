@@ -1,33 +1,17 @@
 //! utils command
 use std::{
-    cell::RefCell, 
-    collections::HashMap,
-    env, 
-    ffi::CString, 
-    path::PathBuf, 
-    rc::Rc, 
-    str::FromStr
+    cell::RefCell, collections::HashMap, env, ffi::CString, path::PathBuf, rc::Rc, str::FromStr,
 };
 
 use itertools::join;
-use log::{debug, trace, info};
+use log::{debug, info, trace};
 use nix::unistd::execve;
 
 use peslib::{
-    jsys::*, 
-    parser::parse_consuming_all_paths_with_provider, 
-    prelude::*, 
+    constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
     SelectedDependencies,
-    constants::MANIFEST_NAME,
 };
-use prettytable::{
-    color, 
-    format, 
-    Attr, 
-    Cell, 
-    Row, 
-    Table
-};
+use prettytable::{color, format, Attr, Cell, Row, Table};
 
 // Type Aliases
 /// A Map whose key is a distribution and whose value is a version
@@ -49,23 +33,27 @@ pub fn audit_manifest_for_current_location() -> Result<bool, PesError> {
     let manifest = find_manifest()?;
     audit_manifest_file(manifest)
 }
-/// find the manifest 
+/// find the manifest
 pub fn find_manifest() -> Result<PathBuf, PesError> {
     let mut cwd = env::current_dir()?;
 
     info!("searching for manifest in {:?}", &cwd);
-    
+
     loop {
         // terminate loop
-        
+
         cwd.push(MANIFEST_NAME);
         if cwd.exists() {
             info!("find_manifest() - Found manifest: {:?}", &cwd);
             return Ok(cwd);
         }
         // pop off manifest name and parent levbel
-        if cwd.pop() == false {break};
-        if cwd.pop() == false {break};
+        if cwd.pop() == false {
+            break;
+        };
+        if cwd.pop() == false {
+            break;
+        };
         trace!("loop. current cwd: {:?}", cwd);
     }
     Err(PesError::ManifestNotFound(env::current_dir()?))
@@ -114,7 +102,7 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> 
     // construct request from a vector of constraint strings
     let request = constraints
         .iter()
-        .map(|x| VersionedPackage::from_str(x.as_str()))
+        .map(|x| DistributionRange::from_str(x.as_str()))
         .collect::<Result<Vec<_>, PesError>>()?;
     let repos = PackageRepository::from_env()?;
     let mut solver = setup_solver(repos)?;

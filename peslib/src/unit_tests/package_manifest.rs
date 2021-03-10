@@ -4,11 +4,10 @@ use super::*;
 use crate::manifest::package_target::PackageTarget;
 use pubgrub::version::SemanticVersion;
 //use pubgrub::range::Range;
-use crate::VersionedPackage;
-use crate::TargetMap;
+use crate::DistributionRange;
 use crate::EnvMap;
+use crate::TargetMap;
 use std::path::PathBuf;
-
 
 fn get_repo_root() -> PathBuf {
     let mut root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -83,64 +82,49 @@ targets:
 fn from_str_unchecked__succeeds() {
     let manifest = PackageManifest::from_str_unchecked(P1);
     let mut run_target = PackageTarget::new();
-    run_target.requires(
-        "maya-plugins", 
-        "^4.3"
-    );
-    run_target.requires(
-        "maya-core", 
-        "2+<4"
-    );
+    run_target.requires("maya-plugins", "^4.3");
+    run_target.requires("maya-core", "2+<4");
 
     let mut build_target = PackageTarget::new();
     build_target.include("run").unwrap();
-    build_target.requires(
-        "maya", "1.2.3+<4"
-        );
+    build_target.requires("maya", "1.2.3+<4");
     let mut target_map = TargetMap::new();
     target_map.insert("run".into(), run_target);
     target_map.insert("build".into(), build_target);
-    
-    assert_eq!(manifest.unwrap(), 
+
+    assert_eq!(
+        manifest.unwrap(),
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1,2,3),
+            version: SemanticVersion::new(1, 2, 3),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()
         }
     );
 }
-
 
 #[test]
 fn from_str__succeeds_when_given_valid_manifest_str() {
     let manifest = PackageManifest::from_str(P1);
     let mut run_target = PackageTarget::new();
-    run_target.requires(
-        "maya-plugins", 
-        "^4.3"
-    );
-    run_target.requires(
-        "maya-core", 
-        "2+<4"
-    );
+    run_target.requires("maya-plugins", "^4.3");
+    run_target.requires("maya-core", "2+<4");
 
     let mut build_target = PackageTarget::new();
     build_target.include("run").unwrap();
-    build_target.requires(
-        "maya", "1.2.3+<4"
-        );
+    build_target.requires("maya", "1.2.3+<4");
     let mut target_map = TargetMap::new();
     target_map.insert("run".into(), run_target);
     target_map.insert("build".into(), build_target);
 
-    assert_eq!(manifest.unwrap(), 
+    assert_eq!(
+        manifest.unwrap(),
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1,2,3),
+            version: SemanticVersion::new(1, 2, 3),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()
@@ -148,17 +132,17 @@ fn from_str__succeeds_when_given_valid_manifest_str() {
     );
 }
 
-
 #[test]
 fn from_str__succeeds_when_given_valid_manifest_str_without_targets() {
     let manifest = PackageManifest::from_str(P2);
-    let  target_map = TargetMap::new();
-    
-    assert_eq!(manifest.unwrap(), 
+    let target_map = TargetMap::new();
+
+    assert_eq!(
+        manifest.unwrap(),
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1,2,3),
+            version: SemanticVersion::new(1, 2, 3),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()
@@ -188,10 +172,10 @@ fn get_requires__succeeds_when_called_on_target_without_includes() {
     let manifest = PackageManifest::from_str(P1).unwrap();
     let requires = manifest.get_requires("run");
     let expected = vec![
-        VersionedPackage::from_strs("maya-plugins", "^4.3").unwrap(),
-        VersionedPackage::from_strs("maya-core", "2+<4").unwrap(),
+        DistributionRange::from_strs("maya-plugins", "^4.3").unwrap(),
+        DistributionRange::from_strs("maya-core", "2+<4").unwrap(),
     ];
-    assert_eq!(requires.unwrap(), expected );
+    assert_eq!(requires.unwrap(), expected);
 }
 
 // verify that get_requries works when called on target that includes requirements
@@ -201,11 +185,11 @@ fn get_requires__succeeds_when_called_on_target_with_includes() {
     let manifest = PackageManifest::from_str(P1).unwrap();
     let requires = manifest.get_requires("build");
     let expected = vec![
-        VersionedPackage::from_strs("maya-plugins", "^4.3").unwrap(),
-        VersionedPackage::from_strs("maya-core", "2+<4").unwrap(),
-        VersionedPackage::from_strs("maya", "1.2.3+<4").unwrap()
+        DistributionRange::from_strs("maya-plugins", "^4.3").unwrap(),
+        DistributionRange::from_strs("maya-core", "2+<4").unwrap(),
+        DistributionRange::from_strs("maya", "1.2.3+<4").unwrap(),
     ];
-    assert_eq!(requires.unwrap(), expected );
+    assert_eq!(requires.unwrap(), expected);
 }
 
 // validate_manifest() should return Result::Ok when called on a valid manifest instance
@@ -243,5 +227,5 @@ fn distribution__returns_name_version() {
     assert!(manifest.is_ok());
     let manifest = manifest.unwrap();
     let dist = manifest.distribution();
-    assert_eq!(dist.as_str(), "foo-0.1.0");   
+    assert_eq!(dist.as_str(), "foo-0.1.0");
 }
