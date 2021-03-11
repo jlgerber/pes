@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 // extern imports
 use generator::{Generator, Gn};
 // crate imports
-use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
+use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME, REPO_FINDER_VARNAME};
 use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
@@ -138,9 +138,10 @@ impl PackageRepository {
             Ok(repos)
         }
     }
+
     /// Retrieve the locatons of package repositories from the plugin
     pub fn from_plugin() -> Result<Vec<PackageRepository>, PesError> {
-        let repos = Self::find_via_plugin()?;
+        let repos = Self::find_repos_via_plugin()?;
         let repos = repos
             .iter()
             .filter_map(|x| (if x.exists() { Some(x) } else { None }))
@@ -149,19 +150,25 @@ impl PackageRepository {
         Ok(repos)
     }
 
-    fn find_via_plugin() -> Result<Vec<PathBuf>, PesError> {
-           info!("loading library");
-            let lib = unsafe { libloading::Library::new(
-                "target/release/librepo_finder.dylib",
-            )?};
-            info!("loaded library");
-            let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
-                unsafe {lib.get(b"new_finder_service")?};
-            info!("calling service");
-            let service = new_service();
-            
-       
-        info!("service called. callign find_repo");
+    // find the repositories using the RepoFinderService plugin
+    fn find_repos_via_plugin() -> Result<Vec<PathBuf>, PesError> {
+
+        #[cfg(target_os = "macos")]
+        let dso_path = std::env::var(REPO_FINDER_VARNAME).unwrap_or_else(|_| "target/release/librepo_finder.dylib".to_string());
+        
+        #[cfg(target_os = "linux")]
+        let dso_path = std::env::var(REPO_FINDER_VARNAME).unwrap_or_else(|_| "target/release/librepo_finder.dylib".to_string());
+        
+        #[cfg(target_os = "macos")]
+        let lib = unsafe { libloading::Library::new(dso_path.as_str())?};
+        
+        #[cfg(target_os = "linux")]
+        let lib = unsafe { libloading::Library::new("target/release/librepo_finder.so")?};
+
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
+            unsafe {lib.get(b"new_finder_service")?};
+        let service = new_service();
+    
         let repo = service.find_repo();
         info!("found {:?}", &repo);
         Ok(repo)

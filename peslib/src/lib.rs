@@ -13,8 +13,12 @@ extern crate generator;
 // #[macro_use]
 // extern crate lazy_static;
 
+pub mod aliases;
+pub mod constants;
 pub mod env;
 pub mod error;
+pub mod jsys;
+pub mod lock;
 pub mod manifest;
 pub mod parser;
 pub mod parser_atoms;
@@ -24,38 +28,34 @@ pub mod solver;
 pub mod traits;
 pub mod utils;
 pub mod versioned_package;
-pub mod constants;
-pub mod jsys;
-pub mod aliases;
-pub mod lock;
 
+pub use aliases::*;
+pub use env::BasicVarProvider;
 pub use error::PesError;
+pub use lock::LockFile;
+pub use manifest::Manifest;
+pub use pubgrub::version::SemanticVersion;
 pub use range::*;
+pub use repository::PackageRepository;
+pub use solver::SelectedDependencies;
 pub use solver::Solver;
 pub use traits::{VarProvider, BaseEnv, Repository, ManifestLocator};
 pub use versioned_package::VersionedPackage;
-pub use repository::PackageRepository;
-pub use pubgrub::version::SemanticVersion;
-pub use manifest::Manifest;
-pub use env::BasicVarProvider;
-pub use aliases::*;
-pub use solver::SelectedDependencies;
-pub use lock::LockFile;
 
 pub mod prelude {
     pub use super::{
-        BasicVarProvider,
-        PesError,
-        Solver, 
-        VarProvider, 
+        aliases::*,
         BaseEnv,
-        VersionedPackage, 
+        BasicVarProvider,
+        LockFile,
+        Manifest,
+        ManifestLocator,
+        PackageRepository,
+        PesError,
         Repository,
         SemanticVersion,
-        PackageRepository,
-        ManifestLocator,
-        Manifest,
-        aliases::*,
-        LockFile,
+        Solver, 
+        VarProvider, 
+        VersionedPackage, 
     };
 }

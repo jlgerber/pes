@@ -1,0 +1,12 @@
+[package]
+name = "dev_manifest_finder"
+version = "0.1.0"
+authors = ["jlgerber <jlgerber@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+pes_interface = { path = "../pes_interface", version = "*" }
+
+[lib]
+name = "manifest_finder"
+crate-type = ["dylib"]

@@ -7,3 +7,5 @@ pub const MANIFEST_NAME: &str = "manifest.yaml";
 
 /// Name of the root package constructed to 
 pub const ROOT_REQUEST: &str  = "ROOT-REQUEST";
+
+pub const REPO_FINDER_VARNAME: &str = "REPO_FINDER_PLUGIN";

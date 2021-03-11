@@ -8,7 +8,6 @@ pub extern "Rust" fn new_finder_service() -> Box<dyn RepoFinderService> {
 
 pub struct DevRepoFinder;
    
-
 impl DevRepoFinder {
     fn new() -> DevRepoFinder {
         DevRepoFinder
@@ -17,7 +16,6 @@ impl DevRepoFinder {
 
 impl RepoFinderService for DevRepoFinder {
     fn find_repo(&self) -> Vec<PathBuf> {
-       println!("find_repo called");
         vec![PathBuf::from("/Users/jgerber/src/rust/pes/test_fixtures/repo")]
     }
 }

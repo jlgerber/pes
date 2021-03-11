@@ -5,4 +5,5 @@ members = [
     "testutils",
     "pes_interface",
     "dev_repo_finder",
+    "dev_manifest_finder",
     ]

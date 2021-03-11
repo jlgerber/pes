@@ -167,6 +167,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "dev_manifest_finder"
+version = "0.1.0"
+dependencies = [
+ "pes_interface",
+]
+
+[[package]]
 name = "dirs"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
