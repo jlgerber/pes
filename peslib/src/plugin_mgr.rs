@@ -33,7 +33,8 @@ impl PluginMgr {
 
         #[cfg(target_os = "macos")]
         let lib = unsafe { libloading::Library::new(dso_path.as_str())? };
-
+        
+      
         #[cfg(target_os = "linux")]
         let lib = unsafe { libloading::Library::new("target/release/librepo_finder.so")? };
 
