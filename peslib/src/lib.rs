@@ -46,7 +46,7 @@ pub use distribution_range::DistributionRange;
 pub mod prelude {
     pub use super::{
         aliases::*, BaseEnv, BasicVarProvider, Distribution, DistributionRange, LockFile, Manifest,
-        ManifestLocationProvider, PackageRepository, PesError, Repository, SemanticVersion, Solver,
+        ManifestLocationProvider, PackageRepository, PesError, PluginMgr, Repository, SemanticVersion, Solver,
         VarProvider,
     };
 }

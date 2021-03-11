@@ -10,10 +10,12 @@ mod utils;
 
 use cli_opts::*;
 use utils::{
-    init_log, launch_shell, perform_solve, present_solve_results, solve_for_distribution_and_target,audit_manifest_file, audit_manifest_for_current_location
+    audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
+    perform_solve, present_solve_results, solve_for_distribution_and_target,
 };
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
+    let plugin_mgr = PluginMgr::new()?;
     match subcmd {
         // Here the user has specified a specific distribution (eg foo-1.0.1) and a target
         SubCmds::Env {
@@ -22,7 +24,8 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             output,
             ..
         } => {
-            let results = solve_for_distribution_and_target(dist.as_str(), target.as_str())?;
+            let results =
+                solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
             let results = results
                 .iter()
                 .filter(|x| x.0 != "ROOT_REQUEST")
@@ -59,7 +62,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         } => {
             // perform the solve given the constraints, and filter out the ROOT_REQUEST from the
             // results, as we dont want to present that to the end user
-            let (distmap, _results) = perform_solve(constraints)?;
+            let (distmap, _results) = perform_solve(&plugin_mgr, constraints)?;
             //let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
             // print the results
             present_solve_results(distmap);
@@ -75,7 +78,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             ..
         } => {
             // perform the solve given the constraints
-            let (distmap, results) = perform_solve(constraints)?;
+            let (distmap, results) = perform_solve(&plugin_mgr, constraints)?;
 
             // filter out the fake request we build to pass the solver, which only takes a
             // single distribution as input
@@ -102,6 +105,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
 }
 
 fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
+    let plugin_mgr = PluginMgr::new()?;
     match subcmd {
         SubCmds::Shell {
             lockfile: Some(lockfile),
@@ -109,16 +113,16 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         } => {
             let lockfile = LockFile::from_file(lockfile)?;
             let solution = lockfile.selected_dependencies_for("run")?;
-            launch_shell(solution)
+            launch_shell(&plugin_mgr, solution)
         }
         SubCmds::Shell {
             constraints,
             lockfile: None,
             ..
         } => {
-            let (distmap, solution) = perform_solve(constraints)?;
+            let (distmap, solution) = perform_solve(&plugin_mgr, constraints)?;
             present_solve_results(distmap);
-            launch_shell(solution)
+            launch_shell(&plugin_mgr, solution)
         }
         _ => panic!("SubCmd expected to be SubCmds::Shell variant"),
     }?;
@@ -165,12 +169,14 @@ fn _main() -> Result<(), PesError> {
     } = opt;
     init_log(&log_level);
     match subcmd {
-        SubCmds::Audit{
+        SubCmds::Audit {
             manifest: Some(manifest),
-        } => {audit_manifest_file(manifest)?;},
-        SubCmds::Audit{
-            manifest: None,
-        } => {audit_manifest_for_current_location()?;},
+        } => {
+            audit_manifest_file(manifest)?;
+        }
+        SubCmds::Audit { manifest: None } => {
+            audit_manifest_for_current_location()?;
+        }
         SubCmds::Env { .. } => env_cmd(subcmd)?,
         SubCmds::Shell { .. } => shell_cmd(subcmd)?,
     };

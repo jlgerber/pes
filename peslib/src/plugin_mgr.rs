@@ -1,6 +1,7 @@
 use crate::constants::REPO_FINDER_VARNAME;
 use crate::PesError;
 use pes_interface::RepoFinderService;
+use log::info;
 
 pub struct PluginMgr {
     repo_finder: Box<dyn RepoFinderService>,
@@ -9,12 +10,14 @@ pub struct PluginMgr {
 impl PluginMgr {
     /// retrieve an instance of the Plugin Manager
     pub fn new() -> Result<Self, PesError> {
+        info!("building pluginmgr");
         let repo_finder = Self::new_repo_finder_service()?;
         Ok(Self { repo_finder })
     }
 
     /// retrieve a list of paths to package repositories
     pub fn repos(&self) -> Vec<std::path::PathBuf> {
+        info!("calling find_repo");
         let repo = self.repo_finder.find_repo();
         repo
     }
@@ -36,6 +39,7 @@ impl PluginMgr {
 
         let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
             unsafe { lib.get(b"new_finder_service")? };
+        info!("loaded  new finder service");
         Ok(new_service())
     }
 }

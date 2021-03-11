@@ -9,7 +9,7 @@ use nix::unistd::execve;
 
 use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
-    SelectedDependencies,
+    PluginMgr, SelectedDependencies,
 };
 use prettytable::{color, format, Attr, Cell, Row, Table};
 
@@ -96,7 +96,10 @@ pub fn present_solve_results(dpmap: DistPathMap) {
 }
 
 /// given a set of constraints, calculate a solution
-pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> {
+pub fn perform_solve(
+    plugin_mgr: &PluginMgr,
+    constraints: Vec<String>,
+) -> Result<SolveResult, PesError> {
     debug!("user supplied constraints: {:?}.", constraints);
 
     // construct request from a vector of constraint strings
@@ -104,7 +107,7 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> 
         .iter()
         .map(|x| DistributionRange::from_str(x.as_str()))
         .collect::<Result<Vec<_>, PesError>>()?;
-    let repos = PackageRepository::from_plugin()?;
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let mut solver = setup_solver(repos)?;
     // calculate the solution
     let mut solution = solver.solve(request)?;
@@ -137,11 +140,12 @@ pub fn perform_solve(constraints: Vec<String>) -> Result<SolveResult, PesError> 
 
 /// generate a solution for the provided distribution and target
 pub fn solve_for_distribution_and_target(
+    plugin_mgr: &PluginMgr,
     distribution: &str,
     target: &str,
 ) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
     debug!("distribution: {} target: {}", distribution, target);
-    let repos = PackageRepository::from_plugin()?;
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let mut path = None;
     for repo in &repos {
         let manifest = repo.manifest_for(distribution);
@@ -174,10 +178,11 @@ pub fn init_log(level: &str) {
 
 /// launch an interactive shell given a solution
 pub fn launch_shell(
+    plugin_mgr: &PluginMgr,
     solution: SelectedDependencies<String, SemanticVersion>,
 ) -> Result<(), PesError> {
     // construct a list of repositories
-    let repos = PackageRepository::from_plugin()?;
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
     // iterate through the solve. For each package version, find it in a repository and store it
     // in a hashmap
     let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
