@@ -16,6 +16,7 @@ use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME, REPO_FINDER_VA
 use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
+use crate::PluginMgr;
 // use lazy_static::lazy_static;
 
 // lazy_static! {

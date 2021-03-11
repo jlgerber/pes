@@ -1,11 +1,10 @@
-use std::path::PathBuf;
-pub trait RepoFinderService {
-    /// Find repository paths
-    fn find_repo(&self) -> Vec<PathBuf>;
-}
+//! pes_interface crate provides the core traits necessary to implmeent 
+//! dynamic libraries used to define location specific behavior for tasks
+//! such as finding package repositories on disk and finding the manifest
+//! within a distribution. These sorts of tasks tend to be specific to the 
+//! deployment; different jobsystem architects will want to make different
+//! decisions based on pre-existing usage patterns.
 
-pub trait ManifestFinderService {
-    /// assuming the path to the distribution is valid, find_manifest constructs the path to 
-    /// the manifest
-    fn find_manifest(&self, distribution: PathBuf) -> PathBuf;
-}
+pub mod traits;
+
+pub use traits::*;
