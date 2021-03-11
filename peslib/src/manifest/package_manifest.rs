@@ -1,21 +1,18 @@
-//! PackageManifest struct 
+//! PackageManifest struct
+use crate::{EnvMap, TargetMap};
 use std::path::Path;
-use crate::{TargetMap, EnvMap};
 //use indexmap::IndexMap;
-use serde::{
-    Serialize, 
-    Deserialize,
-};
 use pubgrub::version::SemanticVersion;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     error::PesError,
     //manifest::PackageTarget,
-    VersionedPackage,
+    DistributionRange,
 };
 
 /// Models a manifest for package
-#[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageManifest {
     /// schema version of the manifest
     pub schema: u32,
@@ -34,21 +31,19 @@ pub struct PackageManifest {
 }
 
 impl PackageManifest {
-
     /// Construct a PackageManifest from a str
     pub fn from_str_unchecked(value: &str) -> Result<Self, PesError> {
         Ok(serde_yaml::from_str(value)?)
     }
 
     /// Construct a PackageManifest from a readable file
-    pub fn from_file_unchecked<F>(value: F) -> Result<Self, PesError> 
+    pub fn from_file_unchecked<F>(value: F) -> Result<Self, PesError>
     where
-        F: AsRef<Path> 
+        F: AsRef<Path>,
     {
         let manifest = std::fs::read_to_string(value.as_ref())?;
         Ok(Self::from_str_unchecked(&manifest)?)
     }
-
 
     /// Construct a PackageManifest from a str
     pub fn from_str(value: &str) -> Result<Self, PesError> {
@@ -58,19 +53,20 @@ impl PackageManifest {
     }
 
     /// Construct a PackageManifest from a readable file
-    pub fn from_file<F>(value: F) -> Result<Self, PesError> 
+    pub fn from_file<F>(value: F) -> Result<Self, PesError>
     where
-        F: AsRef<Path> 
+        F: AsRef<Path>,
     {
         let manifest = std::fs::read_to_string(value.as_ref())?;
         Ok(serde_yaml::from_str(&manifest)?)
     }
 
     /// Retrieve a vector of SemanticVersion Ranges associated with the provided target
-    pub fn get_requires(&self, target: &str) -> Result<Vec<VersionedPackage>, PesError> {
-        let rtarget = self.targets
-                        .get(target)
-                        .ok_or_else(||PesError::MissingKey(target.into()))?;
+    pub fn get_requires(&self, target: &str) -> Result<Vec<DistributionRange>, PesError> {
+        let rtarget = self
+            .targets
+            .get(target)
+            .ok_or_else(|| PesError::MissingKey(target.into()))?;
 
         let mut results = Vec::new();
 
@@ -90,7 +86,7 @@ impl PackageManifest {
     // pub fn get_version(&self) -> Result<SemanticVersion, PesError> {
     //     parse_consuming_semver(self.name.as_str())
     // }
-    /// Validate the contents of the manifest, making sure that all versions's 
+    /// Validate the contents of the manifest, making sure that all versions's
     /// can parse
     pub fn validate(&self) -> Result<(), PesError> {
         // not needed as self.version is already a SemanticVersion
@@ -98,7 +94,10 @@ impl PackageManifest {
         for (key, target) in self.targets.iter() {
             for include in target.get_includes() {
                 if !self.targets.contains_key(include) {
-                    return Err(PesError::MissingInclude{target: key.into(), include: include.into()})
+                    return Err(PesError::MissingInclude {
+                        target: key.into(),
+                        include: include.into(),
+                    });
                 }
             }
             target.validate_requires()?;
@@ -111,9 +110,7 @@ impl PackageManifest {
     pub fn distribution(&self) -> String {
         format!("{}-{}", self.name, self.version)
     }
-
 }
-
 
 #[cfg(test)]
 #[path = "../unit_tests/package_manifest.rs"]

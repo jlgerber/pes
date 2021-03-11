@@ -1,6 +1,6 @@
-//! pes - The Package Environment System 
-//! 
-//! Provides 
+//! pes - The Package Environment System
+//!
+//! Provides
 //! - A means of defining a semantically versioned package, including target specific package dependency ranges, and target specific environments
 //! - A means of solving a dependency closure given a set of package requirements
 //! - A means of defining a set of environment mutations for a package version
@@ -10,11 +10,9 @@
 #[macro_use]
 extern crate generator;
 
-// #[macro_use]
-// extern crate lazy_static;
-
 pub mod aliases;
 pub mod constants;
+pub mod distribution;
 pub mod env;
 pub mod error;
 pub mod jsys;
@@ -27,9 +25,10 @@ pub mod repository;
 pub mod solver;
 pub mod traits;
 pub mod utils;
-pub mod versioned_package;
+pub mod distribution_range;
 
 pub use aliases::*;
+pub use distribution::Distribution;
 pub use env::BasicVarProvider;
 pub use error::PesError;
 pub use lock::LockFile;
@@ -39,23 +38,13 @@ pub use range::*;
 pub use repository::PackageRepository;
 pub use solver::SelectedDependencies;
 pub use solver::Solver;
-pub use traits::{VarProvider, BaseEnv, Repository, ManifestLocator};
-pub use versioned_package::VersionedPackage;
+pub use traits::{BaseEnv, ManifestLocationProvider, Repository, VarProvider};
+pub use distribution_range::DistributionRange;
 
 pub mod prelude {
     pub use super::{
-        aliases::*,
-        BaseEnv,
-        BasicVarProvider,
-        LockFile,
-        Manifest,
-        ManifestLocator,
-        PackageRepository,
-        PesError,
-        Repository,
-        SemanticVersion,
-        Solver, 
-        VarProvider, 
-        VersionedPackage, 
+        aliases::*, BaseEnv, BasicVarProvider, Distribution, DistributionRange, LockFile, Manifest,
+        ManifestLocationProvider, PackageRepository, PesError, Repository, SemanticVersion, Solver,
+        VarProvider,
     };
 }

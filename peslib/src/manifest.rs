@@ -1,43 +1,35 @@
 //! Components used to create, modify, read, and write  a package's manifest.
 //!
 //! This is achieved primarily through the `PackageManifest` struct
-use std::path::{
-    Path,
-    PathBuf,
-};
-use serde::{
-    Serialize, 
-    Deserialize,
-};
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
-use crate::versioned_package::VersionedPackage;
 use crate::error::PesError;
+use crate::distribution_range::DistributionRange;
 
 pub mod package_manifest;
 pub(crate) mod package_target;
 
 pub use package_manifest::PackageManifest;
 
-
-
 // manifest wraps inner manifest with metadata
-#[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Manifest {
     /// The root directory of the package
     root: PathBuf,
-    inner: PackageManifest
+    inner: PackageManifest,
 }
 
 impl Manifest {
     pub fn new<P: Into<PathBuf>>(package_root: P, package_manifest: PackageManifest) -> Self {
         Self {
             root: package_root.into(),
-            inner: package_manifest
+            inner: package_manifest,
         }
     }
 
-    /// Construct a manifest given a path to the manifest. We expect the manifest to be found 
-    /// at the root of the distribution. 
+    /// Construct a manifest given a path to the manifest. We expect the manifest to be found
+    /// at the root of the distribution.
     pub fn from_path<P: Into<PathBuf>>(path: P) -> Result<Self, PesError> {
         let manifest = path.into();
         let mut root = manifest.clone();
@@ -59,7 +51,7 @@ impl Manifest {
     }
 
     /// retrieve a list of requires for the supplied target
-    pub fn get_requires(&self, target: &str) -> Result<Vec<VersionedPackage>, PesError> {
+    pub fn get_requires(&self, target: &str) -> Result<Vec<DistributionRange>, PesError> {
         self.inner.get_requires(target)
     }
 
@@ -72,19 +64,15 @@ impl Manifest {
         self.root.as_path()
     }
 
-    /// validate the manifest, making sure that the package manifest is valid and that the 
+    /// validate the manifest, making sure that the package manifest is valid and that the
     /// provided root path exists
     pub fn validate(&self) -> Result<(), PesError> {
         let _ = self.inner.validate()?;
         if !self.root.exists() {
-            let Manifest{root, ..} = self;
+            let Manifest { root, .. } = self;
             Err(PesError::MissingPath(root.to_path_buf()))
         } else {
-
             Ok(())
         }
     }
-
 }
-
-

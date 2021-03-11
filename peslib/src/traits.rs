@@ -66,9 +66,9 @@ pub trait Repository: std::fmt::Debug {
 
 /// Locate a manifest given a path to the root of a distribution. This trait allows us to 
 /// define different package layouts. 
-pub trait ManifestLocator: std::fmt::Debug {
+pub trait ManifestLocationProvider: std::fmt::Debug {
     /// locate a manifest within a distribution. 
-    fn locate<P: Into<PathBuf>>(&self, distribution: P) -> PathBuf;
+    fn find<P: Into<PathBuf>>(&self, distribution: P) -> PathBuf;
     /// construct a manifest
     fn manifest<P: Into<PathBuf>>(&self, distribution: P) -> Result<Manifest, PesError>;
 }
