@@ -38,13 +38,13 @@ pub use range::*;
 pub use repository::PackageRepository;
 pub use solver::SelectedDependencies;
 pub use solver::Solver;
-pub use traits::{BaseEnv, ManifestLocator, Repository, VarProvider};
+pub use traits::{BaseEnv, ManifestLocationProvider, Repository, VarProvider};
 pub use distribution_range::DistributionRange;
 
 pub mod prelude {
     pub use super::{
         aliases::*, BaseEnv, BasicVarProvider, Distribution, DistributionRange, LockFile, Manifest,
-        ManifestLocator, PackageRepository, PesError, Repository, SemanticVersion, Solver,
+        ManifestLocationProvider, PackageRepository, PesError, Repository, SemanticVersion, Solver,
         VarProvider,
     };
 }

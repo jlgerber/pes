@@ -8,7 +8,7 @@ use std::path::{
 use crate::{
     BaseEnv,
     error::PesError,
-    ManifestLocator,
+    ManifestLocationProvider,
     constants::MANIFEST_NAME,
     Manifest,
     env::PathMode,
@@ -142,15 +142,15 @@ impl BaseEnv for JsysCleanEnv {
 #[derive(Debug)]
 pub struct ManifestFactory;
 
-impl ManifestLocator for ManifestFactory {
-    fn locate<P: Into<PathBuf>>(&self, distribution: P) -> PathBuf {
+impl ManifestLocationProvider for ManifestFactory {
+    fn find<P: Into<PathBuf>>(&self, distribution: P) -> PathBuf {
         let mut path = distribution.into();
         path.push(MANIFEST_NAME);
         path
     }
 
     fn manifest<P: Into<PathBuf>>(&self, distribution: P) -> Result<Manifest, PesError> {
-        let manifest = self.locate(distribution);
+        let manifest = self.find(distribution);
         Manifest::from_path(manifest)
     }
 }
