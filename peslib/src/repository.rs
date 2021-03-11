@@ -150,18 +150,17 @@ impl PackageRepository {
     }
 
     fn find_via_plugin() -> Result<Vec<PathBuf>, PesError> {
-       let service =  unsafe {
            info!("loading library");
-            let lib = libloading::Library::new(
+            let lib = unsafe { libloading::Library::new(
                 "target/release/librepo_finder.dylib",
-            )?;
+            )?};
             info!("loaded library");
-            let new_service: libloading::Symbol<'_, extern "Rust" fn() -> Box<dyn RepoFinderService>> =
-                lib.get(b"new_finder_service")?;
+            let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
+                unsafe {lib.get(b"new_finder_service")?};
             info!("calling service");
-            new_service()
+            let service = new_service();
             
-        };
+       
         info!("service called. callign find_repo");
         let repo = service.find_repo();
         info!("found {:?}", &repo);

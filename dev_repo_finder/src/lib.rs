@@ -18,6 +18,6 @@ impl DevRepoFinder {
 impl RepoFinderService for DevRepoFinder {
     fn find_repo(&self) -> Vec<PathBuf> {
        println!("find_repo called");
-        vec![PathBuf::from("/Users/jgerber/src/rust/pes/src/rust/test_fixtures/repo")]
+        vec![PathBuf::from("/Users/jgerber/src/rust/pes/test_fixtures/repo")]
     }
 }
