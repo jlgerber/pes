@@ -1,6 +1,5 @@
 use pes_interface::RepoFinderService;
 use std::path::PathBuf;
-use log::debug;
 
 #[no_mangle]
 pub fn new_finder_service() -> Box<dyn RepoFinderService> {

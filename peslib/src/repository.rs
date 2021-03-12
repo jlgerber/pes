@@ -6,24 +6,17 @@
 //! ```ignore
 //! /repo/foo/0.1.0/METADATA/manifest.yaml
 //! ```
-use pes_interface::RepoFinderService;
-use log::{info,debug};
+
 use std::path::{Path, PathBuf};
 // extern imports
 use generator::{Generator, Gn};
 // crate imports
-use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME, REPO_FINDER_VARNAME};
+use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
 use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
 use crate::PluginMgr;
-// use lazy_static::lazy_static;
 
-// lazy_static! {
-//     /// This is an example for using doc comment attributes
-//     static ref LIB: libloading::Library::new("target/debug/my_plugin.dll")
-//     .expect("load library");
-// }
 /// A collection of package distributions
 #[derive(Debug, PartialEq, Eq)]
 pub struct PackageRepository {
@@ -152,56 +145,7 @@ impl PackageRepository {
         Ok(repos)
     }
 
-    // // find the repositories using the RepoFinderService plugin
-    fn find_repos_via_plugin() -> Result<Vec<PathBuf>, PesError> {
-        #[cfg(target_os = "macos")]
-        let dso_path = std::env::var(REPO_FINDER_VARNAME)
-            .unwrap_or_else(|_| {
-                let mut path = std::env::current_exe().expect("cannot get current executable from env");
-                path.pop();
-                path.push("../lib");
-                path.push("librepo_finder.dylib");
-                path.into_os_string().into_string().expect("cannot convert path to string")
-            });
-
-        #[cfg(target_os = "linux")]
-        let dso_path = std::env::var(REPO_FINDER_VARNAME)
-            .unwrap_or_else(|_| {
-                let mut path = std::env::current_exe().expect("cannot get current executable from env");
-                path.pop();
-                path.push("../lib");
-                path.push("librepo_finder.so");
-                path.into_os_string().into_string().expect("cannot convert path to string")
-            });
-
-     
-        let lib = unsafe { libloading::Library::new(dso_path.as_str())?};
-        
-        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
-            unsafe {lib.get(b"new_finder_service")?};
-        let service = new_service();
-    
-        let repo = service.find_repo();
-        info!("found {:?}", &repo);
-        Ok(repo)
-    }
 }
-
-// using generator instead
-//
-// /// Iterator for the Packagerepository
-// pub struct PackageRepositoryIterator<'a> {
-//         root: &'a std::path::Path,
-//         package: Option<std::fs::ReadDir>, //<std::path::Iter<'a>>,
-//         versions: Option<std::fs::ReadDir>
-// }
-// impl<'a> Iterator for PackageRepositoryIterator<'a> {
-//     type Item = PathBuf;
-
-//     fn next(&mut self) -> Option<PathBuf> {
-// ... using generators instead. far simpler. wish that they would
-// stabilize generators....
-// }
 
 #[cfg(test)]
 #[path = "./unit_tests/repository.rs"]
