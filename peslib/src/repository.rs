@@ -154,19 +154,29 @@ impl PackageRepository {
 
     // // find the repositories using the RepoFinderService plugin
     fn find_repos_via_plugin() -> Result<Vec<PathBuf>, PesError> {
+        #[cfg(target_os = "macos")]
+        let dso_path = std::env::var(REPO_FINDER_VARNAME)
+            .unwrap_or_else(|_| {
+                let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                path.push("librepo_finder.dylib");
+                path.into_os_string().into_string().expect("cannot convert path to string")
+            });
 
-        #[cfg(target_os = "macos")]
-        let dso_path = std::env::var(REPO_FINDER_VARNAME).unwrap_or_else(|_| "target/release/librepo_finder.dylib".to_string());
-        
         #[cfg(target_os = "linux")]
-        let dso_path = std::env::var(REPO_FINDER_VARNAME).unwrap_or_else(|_| "target/release/librepo_finder.dylib".to_string());
-        
-        #[cfg(target_os = "macos")]
+        let dso_path = std::env::var(REPO_FINDER_VARNAME)
+            .unwrap_or_else(|_| {
+                let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                path.push("librepo_finder.so");
+                path.into_os_string().into_string().expect("cannot convert path to string")
+            });
+
+     
         let lib = unsafe { libloading::Library::new(dso_path.as_str())?};
         
-        #[cfg(target_os = "linux")]
-        let lib = unsafe { libloading::Library::new("target/release/librepo_finder.so")?};
-
         let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
             unsafe {lib.get(b"new_finder_service")?};
         let service = new_service();
