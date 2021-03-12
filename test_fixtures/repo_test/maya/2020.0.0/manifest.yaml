@@ -1,0 +1,9 @@
+---
+schema: 1
+name: maya
+version: 2020.0.0 
+description: Maya executable
+environment: 
+  PATH: "prepend({root}/bin)"
+  PYTHONPATH: "prepend({root}/python)"
+  MAYA_SCRIPT_PATH: "prepend({root}/scripts)"

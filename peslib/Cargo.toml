@@ -25,3 +25,8 @@ features = ["serde-1"]
 
 [dev-dependencies]
 testutils = {path = "../testutils" }
+
+[features]
+default = []
+
+segfault = []

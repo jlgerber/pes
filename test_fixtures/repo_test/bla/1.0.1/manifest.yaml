@@ -1,0 +1,13 @@
+---
+schema: 1
+name: bla
+version: 1.0.1
+description: This is the bla package
+
+targets:
+  run:
+    requires:
+      bar: 0.2+<2
+environment: 
+  PATH: "prepend( {root}/bin )"
+  PYTHONPATH: "prepend( {root}/python )"

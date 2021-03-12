@@ -640,6 +640,7 @@ dependencies = [
 name = "repo_finder"
 version = "0.1.0"
 dependencies = [
+ "log",
  "pes_interface",
 ]
 

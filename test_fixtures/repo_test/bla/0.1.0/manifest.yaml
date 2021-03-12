@@ -1,8 +1,8 @@
 ---
 schema: 1
-name: foo
+name: bla
 version: 0.1.0
-description: This is the foo package
+description: This is the bla package
 environment: 
   PATH: "prepend({root}/bin)"
   PYTHONPATH: "prepend({root}/python)"

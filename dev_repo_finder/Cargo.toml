@@ -5,6 +5,7 @@ authors = ["jlgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
 [dependencies]
+log = "0.4.14"
 pes_interface = { path = "../pes_interface", version = "*" }
 
 [lib]

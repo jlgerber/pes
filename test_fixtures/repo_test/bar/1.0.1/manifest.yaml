@@ -1,0 +1,13 @@
+---
+schema: 1
+name: bar
+version: 1.0.1
+description: This is the bar package
+
+targets:
+  run:
+    requires:
+      foo: 0.2+<0.3
+environment: 
+  PATH: "prepend( {root}/bin )"
+  PYTHONPATH: "prepend( {root}/python )"
