@@ -30,6 +30,46 @@ impl PluginMgr {
         Ok(Self { repo_finder, manifest_finder })
     }
 
+    #[cfg(feature="segfault")]
+    fn new_repo_finder_service() -> Result<Box<dyn RepoFinderService>, PesError> {
+        let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                
+                #[cfg(target_os = "macos")]
+                path.push("librepo_finder.dylib");
+
+                #[cfg(target_os = "linux")]
+                path.push("librepo_finder.so");
+        
+        let lib = unsafe { libloading::Library::new(path.as_str())? };
+
+        let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
+            unsafe { lib.get(b"new_finder_service")? };
+        Ok(new_service())
+    }
+
+    #[cfg(feature="segfault")]
+    fn new_manifest_finder_service() -> Result<Box<dyn ManifestFinderService>, PesError> {
+        let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                
+                #[cfg(target_os = "macos")]
+                path.push("libmanifest_finder.dylib");
+
+                #[cfg(target_os = "linux")]
+                path.push("libmanifest_finder.so");
+
+        
+        let lib = unsafe { libloading::Library::new(path.as_str())? };
+
+        let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
+            unsafe { lib.get(b"new_finder_service")? };
+        Ok(new_service())
+    }
+
+
     /// retrieve a manifest given a distribution
     pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
         
