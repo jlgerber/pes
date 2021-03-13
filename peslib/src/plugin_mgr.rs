@@ -11,6 +11,7 @@ pub struct PluginMgr {}
 #[cfg(feature="segfault")]
 pub struct PluginMgr {
     repo_finder: Box<dyn RepoFinderService>,
+    manifest_finder: Box<dyn ManifestFinderService>
  }
 
 impl PluginMgr {
@@ -25,7 +26,8 @@ impl PluginMgr {
     pub fn new() -> Result<Self, PesError> {
         info!("building pluginmgr");
         let repo_finder = Self::new_repo_finder_service()?;
-        Ok(Self { repo_finder })
+        let manifest_finder = Self::new_manifest_finder_service()?;
+        Ok(Self { repo_finder, manifest_finder })
     }
 
     /// retrieve a manifest given a distribution
