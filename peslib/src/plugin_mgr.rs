@@ -1,6 +1,8 @@
-use crate::constants::REPO_FINDER_VARNAME;
+use crate::constants::{ MANIFEST_FINDER_VARNAME, REPO_FINDER_VARNAME };
 use crate::PesError;
-use pes_interface::RepoFinderService;
+use pes_interface::{ RepoFinderService, ManifestFinderService };
+use std::path::PathBuf;
+
 use log::info;
 
 #[cfg(not(feature="segfault"))]
@@ -28,6 +30,38 @@ impl PluginMgr {
         Ok(Self { repo_finder })
     }
 
+    /// retrieve a manifest given a distribution
+    pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
+        #[cfg(target_os = "macos")]
+        let dso_path = std::env::var(MANIFEST_FINDER_VARNAME)
+            .unwrap_or_else(|_| {
+                let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                path.push("libmanifest_finder.dylib");
+                path.into_os_string().into_string().expect("cannot convert path to string")
+            });
+
+        #[cfg(target_os = "linux")]
+        let dso_path = std::env::var(MANIFEST_FINDER_VARNAME)
+            .unwrap_or_else(|_| {
+                let mut path = std::env::current_exe().expect("cannot get current executable from env");
+                path.pop();
+                path.push("../lib");
+                path.push("libmanifest_finder.so");
+                path.into_os_string().into_string().expect("cannot convert path to string")
+            });
+        info!("loading {:?}", &dso_path);
+        let lib = unsafe { libloading::Library::new(dso_path.as_str()).expect("unable to load lib") };
+        
+        let new_service: libloading::Symbol<fn() -> Box<dyn ManifestFinderService>> =
+            unsafe { lib.get(b"new_finder_service").expect("unable to get service") };
+        info!("loaded  new finder service");
+        let service = new_service();
+        let distribution = distribution.into();
+        service.find_manifest(distribution)
+    }
+
     /// retrieve a list of paths to package repositories
     #[cfg(feature="segfault")]
     pub fn repos(&self) -> Vec<std::path::PathBuf> {
@@ -38,6 +72,7 @@ impl PluginMgr {
         repo
     }
 
+    /// retrieve a list of paths to package repositories
     #[cfg(not(feature="segfault"))]
     pub fn repos(&self) -> Vec<std::path::PathBuf> {
         #[cfg(target_os = "macos")]

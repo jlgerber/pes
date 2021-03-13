@@ -8,7 +8,8 @@ else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
         EXTENSION := so
-		LIBFIDDLE := patchelf --set-rpath '$$ORIGIN/../lib' $(BINROOT)/bin/pes &&  patchelf --set-rpath '$$ORIGIN' $(LIBROOT)/lib/librepo_finder.so
+		LIBFIDDLE := patchelf --set-rpath '$$ORIGIN/../lib' $(BINROOT)/bin/pes &&  patchelf --set-rpath '$$ORIGIN' $(LIBROOT)/lib/librepo_finder.so \
+		&& patchelf --set-rpath  '$$ORIGIN' $(LIBROOT)/lib/libmanifest_finder.so
     endif
     ifeq ($(UNAME_S),Darwin)
         EXTENSION := dylib
@@ -21,6 +22,7 @@ build:
 	
 	cp target/$(BTYPE)/pes $(BINROOT)/bin/.
 	cp target/$(BTYPE)/librepo_finder.$(EXTENSION) $(LIBROOT)/lib/.
+	cp target/$(BTYPE)/libmanifest_finder.$(EXTENSION) $(LIBROOT)/lib/.
 	cp $$(rustc --print sysroot)/lib/libstd-*.$(EXTENSION) $(LIBROOT)/lib/.
 	- $(LIBFIDDLE)
 
