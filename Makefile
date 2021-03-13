@@ -18,7 +18,7 @@ else
 endif
 
 build:
-	cargo build --release 
+	cargo build --release
 	
 	cp target/$(BTYPE)/pes $(BINROOT)/bin/.
 	cp target/$(BTYPE)/librepo_finder.$(EXTENSION) $(LIBROOT)/lib/.

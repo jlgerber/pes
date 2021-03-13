@@ -42,9 +42,9 @@ impl PluginMgr {
                 #[cfg(target_os = "linux")]
                 path.push("librepo_finder.so");
         
-        let lib = unsafe { libloading::Library::new(path.as_str())? };
+        let lib = unsafe { libloading::Library::new(path)? };
 
-        let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
             unsafe { lib.get(b"new_finder_service")? };
         Ok(new_service())
     }
@@ -62,18 +62,18 @@ impl PluginMgr {
                 path.push("libmanifest_finder.so");
 
         
-        let lib = unsafe { libloading::Library::new(path.as_str())? };
+        let lib = unsafe { libloading::Library::new(path)? };
 
-        let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
             unsafe { lib.get(b"new_finder_service")? };
         Ok(new_service())
     }
 
 
     /// retrieve a manifest given a distribution
+    #[cfg(not(feature="segfault"))]
     pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
-        
-        let dso_path = std::env::var(MANIFEST_FINDER_VARNAME)
+        let dso_path = std::env::var(MANIFEST_FINDER_VARNAME).map(|v| PathBuf::from(v))
             .unwrap_or_else(|_| {
                 let mut path = std::env::current_exe().expect("cannot get current executable from env");
                 path.pop();
@@ -84,19 +84,28 @@ impl PluginMgr {
 
                 #[cfg(target_os = "linux")]
                 path.push("libmanifest_finder.so");
-                
-                path.into_os_string().into_string().expect("cannot convert path to string")
+                path
             });
 
         info!("loading {:?}", &dso_path);
-        let lib = unsafe { libloading::Library::new(dso_path.as_str()).expect("unable to load lib") };
+        let lib = unsafe { libloading::Library::new(dso_path).expect("unable to load lib") };
         
-        let new_service: libloading::Symbol<fn() -> Box<dyn ManifestFinderService>> =
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
             unsafe { lib.get(b"new_finder_service").expect("unable to get service") };
-        info!("loaded  new finder service");
+        
+            info!("loaded  new finder service");
+
         let service = new_service();
         let distribution = distribution.into();
         service.find_manifest(distribution)
+    }
+
+    /// retrieve a manifest given a distribution
+    #[cfg(feature="segfault")]
+    pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
+        
+        let distribution = distribution.into();
+        self.manifest_finder.find_manifest(distribution)
     }
 
     /// retrieve a list of paths to package repositories
@@ -129,7 +138,7 @@ impl PluginMgr {
         info!("loading {:?}", &dso_path);
         let lib = unsafe { libloading::Library::new(dso_path.as_str()).expect("unable to load lib") };
         
-        let new_service: libloading::Symbol<fn() -> Box<dyn RepoFinderService>> =
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
             unsafe { lib.get(b"new_finder_service").expect("unable to get service") };
         info!("loaded  new finder service");
         let service = new_service();
