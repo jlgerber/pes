@@ -1,4 +1,3 @@
-//use crate::constants::{ MANIFEST_FINDER_VARNAME, REPO_FINDER_VARNAME };
 use crate::PesError;
 
 use libloading::Library;
@@ -25,15 +24,16 @@ impl PluginMgr {
 
     fn new_repo_finder_service() -> Result<Library, PesError> {
         let mut path = std::env::current_exe().expect("cannot get current executable from env");
-                path.pop();
-                path.push("../lib");
-                
-                #[cfg(target_os = "macos")]
-                path.push("librepo_finder.dylib");
-
-                #[cfg(target_os = "linux")]
-                path.push("librepo_finder.so");
+        path.pop();
+        path.push("../lib");
         
+        #[cfg(target_os = "macos")]
+        path.push("librepo_finder.dylib");
+
+        #[cfg(target_os = "linux")]
+        path.push("librepo_finder.so");
+
+        info!("Loading RepoFinder Library: {:?}", &path);
         let lib = unsafe { libloading::Library::new(path)? };
         
         Ok(lib)
@@ -41,20 +41,20 @@ impl PluginMgr {
 
     fn new_manifest_finder_service() -> Result<Library, PesError> {
         let mut path = std::env::current_exe().expect("cannot get current executable from env");
-                path.pop();
-                path.push("../lib");
-                
-                #[cfg(target_os = "macos")]
-                path.push("libmanifest_finder.dylib");
+        path.pop();
+        path.push("../lib");
+        
+        #[cfg(target_os = "macos")]
+        path.push("libmanifest_finder.dylib");
 
-                #[cfg(target_os = "linux")]
-                path.push("libmanifest_finder.so");
+        #[cfg(target_os = "linux")]
+        path.push("libmanifest_finder.so");
 
+        info!("Loading ManifestFinder Library: {:?}", &path);
         let lib = unsafe { libloading::Library::new(path)? };
 
         Ok(lib)
     }
-
 
     /// retrieve a manifest given a distribution
     pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
@@ -71,7 +71,6 @@ impl PluginMgr {
         let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
         unsafe { self.repo_finder.get(b"new_finder_service").expect("unable to get finder service from plugin") };
         let repo_finder = new_service();
-        info!("calling find_repo");
         let repo = repo_finder.find_repo();
         repo
     }
