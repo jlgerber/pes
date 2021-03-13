@@ -27,6 +27,6 @@ features = ["serde-1"]
 testutils = {path = "../testutils" }
 
 [features]
-default = []
+default = ["segfault"]
 
 segfault = []

@@ -2,6 +2,7 @@ use crate::constants::{ MANIFEST_FINDER_VARNAME, REPO_FINDER_VARNAME };
 use crate::PesError;
 use pes_interface::{ RepoFinderService, ManifestFinderService };
 use std::path::PathBuf;
+use libloading::Library;
 
 use log::info;
 
@@ -10,8 +11,8 @@ pub struct PluginMgr {}
 
 #[cfg(feature="segfault")]
 pub struct PluginMgr {
-    repo_finder: Box<dyn RepoFinderService>,
-    manifest_finder: Box<dyn ManifestFinderService>
+    repo_finder: Library,
+    manifest_finder: Library
  }
 
 impl PluginMgr {
@@ -31,7 +32,7 @@ impl PluginMgr {
     }
 
     #[cfg(feature="segfault")]
-    fn new_repo_finder_service() -> Result<Box<dyn RepoFinderService>, PesError> {
+    fn new_repo_finder_service() -> Result<Library, PesError> {
         let mut path = std::env::current_exe().expect("cannot get current executable from env");
                 path.pop();
                 path.push("../lib");
@@ -43,14 +44,12 @@ impl PluginMgr {
                 path.push("librepo_finder.so");
         
         let lib = unsafe { libloading::Library::new(path)? };
-
-        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
-            unsafe { lib.get(b"new_finder_service")? };
-        Ok(new_service())
+        
+        Ok(lib)
     }
 
     #[cfg(feature="segfault")]
-    fn new_manifest_finder_service() -> Result<Box<dyn ManifestFinderService>, PesError> {
+    fn new_manifest_finder_service() -> Result<Library, PesError> {
         let mut path = std::env::current_exe().expect("cannot get current executable from env");
                 path.pop();
                 path.push("../lib");
@@ -64,9 +63,10 @@ impl PluginMgr {
         
         let lib = unsafe { libloading::Library::new(path)? };
 
-        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
-            unsafe { lib.get(b"new_finder_service")? };
-        Ok(new_service())
+        // let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
+        //     unsafe { lib.get(b"new_finder_service")? };
+        // Ok(new_service())
+        Ok(lib)
     }
 
 
@@ -104,15 +104,21 @@ impl PluginMgr {
     #[cfg(feature="segfault")]
     pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
         
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
+            unsafe { self.manifest_finder.get(b"new_finder_service").expect("unable to load finder service") };
+        let manifest_finder = new_service();
         let distribution = distribution.into();
-        self.manifest_finder.find_manifest(distribution)
+        manifest_finder.find_manifest(distribution)
     }
 
     /// retrieve a list of paths to package repositories
     #[cfg(feature="segfault")]
     pub fn repos(&self) -> Vec<std::path::PathBuf> {
+        let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn RepoFinderService>> =
+        unsafe { self.repo_finder.get(b"new_finder_service").expect("unable to get finder service from plugin") };
+        let repo_finder = new_service();
         info!("calling find_repo");
-        let repo = self.repo_finder.find_repo();
+        let repo = repo_finder.find_repo();
         repo
     }
 
