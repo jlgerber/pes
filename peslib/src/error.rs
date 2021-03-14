@@ -54,8 +54,12 @@ pub enum PesError {
     ManifestNotFound(PathBuf),
 
     /// Distribution not found
-    #[error("Distribution not fouhd: {0}")]
+    #[error("Distribution not found: {0}")]
     DistributionNotFound(String),
+
+    /// The path associated with a distribution was not found
+    #[error("Distribution path not found for distribution: {0}")]
+    DistributionPathNotFound(String),
 
     /// Indicates an include specified in the manifest does not
     /// map to a target
