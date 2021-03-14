@@ -39,8 +39,6 @@ fn expected_manifests_for(
     returns
 }
 
-// default name of manifest
-const MANI: &'static str = "manifest.yaml";
 
 //------------//
 //   TESTS    //
@@ -48,13 +46,16 @@ const MANI: &'static str = "manifest.yaml";
 
 #[test]
 fn get_root__returns_path() {
-   let package_repo = PackageRepository::new(get_repo_root(), MANI);
-   assert_eq!(package_repo.root(), get_repo_root().as_path());
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+    let package_repo = PackageRepository::new(get_repo_root(), &plugin_mgr);
+    assert_eq!(package_repo.root(), get_repo_root().as_path());
 }
 
 #[test]
 fn manifest__returns_manifest_when_provided_with_extant_package_and_version() {
-    let package_repo = PackageRepository::new(get_repo_root(), MANI);
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+
+    let package_repo = PackageRepository::new(get_repo_root(), &plugin_mgr);
     let manifest = package_repo.manifest("foo", "0.1.0");
     assert!(manifest.is_ok());
     let mut expect = get_repo_root();
@@ -64,29 +65,32 @@ fn manifest__returns_manifest_when_provided_with_extant_package_and_version() {
 
 #[test]
 fn manifest__returns_err_when_provided_with_a_nonextant_package_and_version() {
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+    
     // invalid package
-    let package_repo = PackageRepository::new(get_repo_root(), MANI);
+    let package_repo = PackageRepository::new(get_repo_root(), &plugin_mgr);
     let manifest = package_repo.manifest("dontexist", "0.1.0");
     assert!(manifest.is_err());
     // invalid version
-    let package_repo = PackageRepository::new(get_repo_root(), MANI);
+    let package_repo = PackageRepository::new(get_repo_root(), &plugin_mgr);
     let manifest = package_repo.manifest("foo", "10000.0.0");
     assert!(manifest.is_err());
     // invalid package and version
-    let package_repo = PackageRepository::new(get_repo_root(), MANI);
+    let package_repo = PackageRepository::new(get_repo_root(), &plugin_mgr);
     let manifest = package_repo.manifest("dontexist", "10000000.1.0");
     assert!(manifest.is_err());
 }
 
 #[test]
 fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
     let root = get_repo_root();
-    let package_repo = PackageRepository::new(root.clone(), MANI);
+    let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
     let manifests = package_repo.manifests_for("foo").unwrap();
     // list of versions in ROOT/test_fixtures/repo/foo
     let versions = vec!["0.1.0", "0.2.0", "0.2.1"];
     // 
-    let expected = expected_manifests_for(&["foo"], &[versions], MANI);
+    let expected = expected_manifests_for(&["foo"], &[versions], "manifest.yaml");
     assert_eq!(expected.len(), manifests.len());
     for manifest in manifests {
         assert!(expected.iter().any(|x| &manifest == x));
@@ -96,29 +100,15 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
 #[test]
 fn manifests__returns_vec_of_pathbuf_to_manifest_files() {
     let root = get_repo_root();
-    let package_repo = PackageRepository::new(root.clone(), MANI);
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+
+    let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
     let manifests: Vec<PathBuf> = package_repo.manifests().filter_map(|x| x.ok()).collect();
     // list of versions in ROOT/test_fixtures/repo/foo
     let packs = &["foo", "bar"];
     let versions = &[vec!["0.1.0", "0.2.0", "0.2.1"], vec!["0.1.0", "1.0.1"]];
     
-    let expected = expected_manifests_for(packs, versions, MANI);
-    assert_eq!(expected.len(), manifests.len());
-    for manifest in manifests {
-        assert!(expected.iter().any(|x| &manifest == x));
-    }
-}
-
-#[test]
-fn manifests__returns_vec_of_pathbuf_to_manifest_files_when_provided_manifest_path() {
-    let root = get_repo_root();
-    let package_repo = PackageRepository::new(root.clone(), "metadata/mani.yaml");
-    let manifests: Vec<PathBuf> = package_repo.manifests().filter_map(|x| x.ok()).collect();
-    // list of versions in ROOT/test_fixtures/repo/foo
-    let packs = &["foo", "bar"];
-    let versions = &[vec!["0.1.0", "0.2.1"], vec!["0.1.0"]];
-    
-    let expected = expected_manifests_for(packs, versions, "metadata/mani.yaml");
+    let expected = expected_manifests_for(packs, versions, "manifest.yaml");
     assert_eq!(expected.len(), manifests.len());
     for manifest in manifests {
         assert!(expected.iter().any(|x| &manifest == x));

@@ -32,16 +32,39 @@ impl PluginMgr {
         Ok(Self { repo_finder, manifest_finder })
     }
 
-    fn new_repo_finder_service() -> Result<Library, PesError> {
-        let mut path = std::env::current_exe().expect("cannot get current executable from env");
+    // in the test version, we build the path to the plugins using target/<debug|release>/
+    #[cfg(test)]
+    fn plugin_dir(plugin_name: &str) -> Result<std::path::PathBuf, PesError> {
+        let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.pop();
+        path.push("target");
+        #[cfg(debug_assertions)]
+        path.push("debug");
+        #[cfg(not(debug_assertions))]
+        path.push("release");
+        path.push(plugin_name);
+        Ok(path)
+    }
+
+    /// in the non-test version, we build the path to the plugins, assuming that they
+    /// are in a lib directory which is a peer of the parent directory. Of course, this 
+    /// is terribly brittle. TODO: fetch the path to the plugin via a path lookup
+    #[cfg(not(test))]
+    fn plugin_dir(plugin_name: &str) -> Result<std::path::PathBuf, PesError> {
+        let mut path = std::env::current_exe()?;
         path.pop();
         path.push("../lib");
-        
+        path.push(plugin_name);
+
+        Ok(path)
+    }
+
+    fn new_repo_finder_service() -> Result<Library, PesError> {
         #[cfg(target_os = "macos")]
-        path.push("librepo_finder.dylib");
+        let path = Self::plugin_dir("librepo_finder.dylib")?;
 
         #[cfg(target_os = "linux")]
-        path.push("librepo_finder.so");
+        let path = Self::plugin_dir("librepo_finder.so")?;
 
         info!("Loading RepoFinder Library: {:?}", &path);
         let lib = unsafe { libloading::Library::new(path)? };
@@ -50,15 +73,11 @@ impl PluginMgr {
     }
 
     fn new_manifest_finder_service() -> Result<Library, PesError> {
-        let mut path = std::env::current_exe().expect("cannot get current executable from env");
-        path.pop();
-        path.push("../lib");
-        
         #[cfg(target_os = "macos")]
-        path.push("libmanifest_finder.dylib");
+        let path = Self::plugin_dir("libmanifest_finder.dylib")?;
 
         #[cfg(target_os = "linux")]
-        path.push("libmanifest_finder.so");
+        let path = Self::plugin_dir("libmanifest_finder.so")?;
 
         info!("Loading ManifestFinder Library: {:?}", &path);
         let lib = unsafe { libloading::Library::new(path)? };
@@ -68,7 +87,6 @@ impl PluginMgr {
 
     /// retrieve a manifest given a distribution
     pub fn manifest_path_from_distribution<D: Into<PathBuf>>(&self, distribution: D) -> PathBuf {
-        
         let new_service: libloading::Symbol<extern "Rust" fn() -> Box<dyn ManifestFinderService>> =
             unsafe { self.manifest_finder.get(b"new_finder_service").expect("unable to load finder service") };
         let manifest_finder = new_service();

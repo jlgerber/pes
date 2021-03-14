@@ -3,6 +3,8 @@
 use super::*;
 use crate::repository::PackageRepository;
 use crate::distribution_range::DistributionRange;
+use crate::plugin_mgr::PluginMgr;
+
 use std::path::PathBuf;
 
 //-------------//
@@ -16,15 +18,15 @@ fn get_repo_root(repo_name: &str) -> PathBuf {
     root
 }
 
-const MANI: &'static str = "manifest.yaml";
-
 //-------------//
 //    TESTS    //
 //-------------//
 
 #[test]
 fn add_repository__given_a_repository_with_a_package_without_run_target__succeeds() {
-    let pkg_repo = PackageRepository::new(get_repo_root("repo2"), MANI);
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+
+    let pkg_repo = PackageRepository::new(get_repo_root("repo2"), &plugin_mgr);
     let mut solver = Solver::new();
     solver
         .add_repository(&pkg_repo)
@@ -51,7 +53,8 @@ fn convert_request_str__given_space_separated_list__succeeds() {
 
 #[test]
 fn solve_from_str__given_a_valid_distribution__succeeds() {
-    let package_repo = PackageRepository::new(get_repo_root("repo"), MANI);
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+    let package_repo = PackageRepository::new(get_repo_root("repo"), &plugin_mgr);
     let mut solver = Solver::new();
     solver
         .add_repository(&package_repo)

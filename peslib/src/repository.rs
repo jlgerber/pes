@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 // extern imports
 use generator::{Generator, Gn};
 // crate imports
-use crate::constants::{MANIFEST_NAME, /*PACKAGE_REPO_PATH_VAR_NAME*/ };
+//use crate::constants::{MANIFEST_NAME, /*PACKAGE_REPO_PATH_VAR_NAME*/ };
 use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
