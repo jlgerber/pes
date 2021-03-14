@@ -32,12 +32,15 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             output,
             ..
         } => {
-            let results =
+            let (distmap, results) =
                 perform_solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
-            let results = results
-                .iter()
-                .filter(|x| x.0 != "ROOT_REQUEST")
-                .collect::<Vec<_>>();
+            
+            // I dont think we need to do this
+            // let results = results
+            //     .iter()
+            //     .filter(|x| x.0 != "ROOT_REQUEST")
+            //     .collect::<Vec<_>>();
+
             if let Some(output) = output {
                 // get the user from the current process
                 let user = get_user_by_uid(get_current_uid()).unwrap();
@@ -55,10 +58,16 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 }
                 lockfile.to_file(output, true)?;
             } else {
-                println!("{}", dist.as_str());
-                for result in results {
-                    println!("{}-{}", result.0, result.1);
-                }
+                present_solve_results_tree(
+                    PresentationInput::Target{distribution: dist.as_str(), target: target.as_str()},
+                    &(&distmap, &results),
+                    &plugin_mgr
+                ).expect("present_solve_resutls_tree failed");
+
+                // println!("{}", dist.as_str());
+                // for result in results {
+                //     println!("{}-{}", result.0, result.1);
+                // }
             }
         }
         // here the user has specified a set of constraints instead of a specific distribution. This is
@@ -76,7 +85,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             //present_solve_results(distmap);
             present_solve_results_tree(
                 PresentationInput::Constraints(constraints),
-                &(distmap, results),
+                &(&distmap, &results),
                 &plugin_mgr
             ).expect("present_solve_resutls_tree failed");
             
@@ -92,11 +101,6 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             // perform the solve given the constraints
             let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
 
-            // filter out the fake request we build to pass the solver, which only takes a
-            // single distribution as input
-            // we should not need to do this now, as we are deleting this in perform_solve
-            //let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
-
             // calculate the request string
             let request = std::env::args().collect::<Vec<_>>().join(" ");
             // extract the user's login from the current process
@@ -104,11 +108,17 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             let user = user.name();
             // create a new lockfile
             let mut lockfile = LockFile::new(request, user.to_string_lossy());
-            for result in results {
+            for result in &results {
                 let dist = format!("{}-{}", result.0, result.1);
                 lockfile.add_dist("run", dist.as_str())?;
             }
-            present_solve_results(distmap);
+            //present_solve_results(distmap);
+            present_solve_results_tree(
+                PresentationInput::Constraints(constraints),
+                &(&distmap, &results),
+                &plugin_mgr
+            ).expect("present_solve_resutls_tree failed");
+
             lockfile.to_file(output, true)?;
         }
         _ => println!("Unsupported argument combination for pes env"),
@@ -134,7 +144,13 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         } => {
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
             let (distmap, solution) = perform_solve(&plugin_mgr, &constraints)?;
-            present_solve_results(distmap);
+            //present_solve_results(distmap);
+            present_solve_results_tree(
+                PresentationInput::Constraints(constraints),
+                &(&distmap, &solution),
+                &plugin_mgr
+            ).expect("present_solve_resutls_tree failed");
+
             launch_shell(&plugin_mgr, solution)
         }
         _ => panic!("SubCmd expected to be SubCmds::Shell variant"),

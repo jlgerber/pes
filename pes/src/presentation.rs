@@ -1,4 +1,4 @@
-use crate::aliases::{DistPathMap, SolveResult, PackageDistMap};
+use crate::aliases::{DistPathMap, SolveResult, SolveRefResult, PackageDistMap};
 use peslib::{PluginMgr, Manifest, PesError};
 use prettytable::{color, format, Attr, Cell, Row, Table};
 use std::{
@@ -44,7 +44,7 @@ pub fn present_solve_results_tree<'a> (
      // vector of one or more requested packages as fed to the solver
      requirements: PresentationInput<'a>,
      // see alises.rs
-     solve: &SolveResult,
+     solve: &SolveRefResult,
      // used to find the manifest given the distribution (from solve above)
      plugin_mgr: &PluginMgr,
 ) -> Result<(), PesError>  {
@@ -58,7 +58,7 @@ pub fn present_solve_results_tree<'a> (
         // request
         target: &str,
         // see aliases.rs
-        solve: &SolveResult, 
+        solve: &SolveRefResult, 
         // keep track of visited packages
         mut memo: HashSet<String>, 
         // the number of tabstops to present at
@@ -79,7 +79,7 @@ pub fn present_solve_results_tree<'a> (
                 memo.insert(distribution.to_string());
                 println!("{}{}", &indent, &distribution);
                 // get manifest and list of constraints
-                let distpath = solve.0.get(&distribution).expect("unable to get path to distribution from DistPathMap");
+                let distpath = solve.0.get(&distribution).expect(format!("unable to get path to distribution {} from DistPathMap", &distribution).as_str());
                 let  distpath = PathBuf::from(distpath.as_str());
                 // get the manifest from the distribution path via the plugin manager
                 let manifest_path = plugin_mgr.manifest_path_from_distribution(distpath);
@@ -146,7 +146,7 @@ pub fn present_solve_results_tree<'a> (
             // split the package from the distribution
             //let package = package_from_dist(distribution);
             // look up the distribution path from the solve.0
-            let distpath = solve.0.get(distribution).expect("unable to get path to distribution from DistPathMap");
+            let distpath = solve.0.get(distribution).expect(format!("unable to get path to distribution {} from DistPathMap", distribution).as_str());
             let  distpath = PathBuf::from(distpath.as_str());
            // let mut distpath = distpath.to_path_buf();
             // get the manifest from the distribution path via the plugin manager

@@ -85,17 +85,7 @@ pub fn perform_solve(
     debug!("Solver solution:\n{:#?}", solution);
 
     let mut distpathmap = DistPathMap::new();
-    // let mut table = Table::new();
-    // table.set_format(*format::consts::FORMAT_CLEAN);
-    // table.add_row(Row::new(vec![
-    //     Cell::new("DISTRIBUTION")
-    //         .with_style(Attr::Bold)
-    //         .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-    //     Cell::new("LOCATION")
-    //         .with_style(Attr::Bold)
-    //         .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-    // ]));
-
+    
     for (name, version) in &solution {
         let dist = format!("{}-{}", name, version);
         if let Some(value) = solver.dist_path(&dist) {
@@ -129,8 +119,22 @@ pub fn perform_solve_for_distribution_and_target(
     let request = manifest.get_requires(target)?;
     let mut solver = setup_solver(repos)?;
     let solution = solver.solve(request)?;
-    debug!("Solver solution:\n{:#?}", solution);
-    Ok(solution)
+    // store a mapping between distributions and their paths on disk
+    let mut distpathmap = DistPathMap::new();
+    // get the path to the requested distribution and then insert requested distribution and its path into the map
+    let dist_path = solver.dist_path(distribution).ok_or(PesError::DistributionNotFound(distribution.to_string()))?;
+    distpathmap.insert(distribution.to_string(), dist_path.to_string_lossy().to_string());
+    // iterate over solution, filtering out ROOT_REQUEST, and inserting the rest into the distpathmap
+    solution
+        .iter()
+        .filter(|(ref name,_)| name.as_str() != "ROOT_REQUEST")
+        .map(|(ref name, ref version)|{
+            let dist = format!("{}-{}", name, version);
+            let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+            distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+            Ok(())
+        }).collect::<Result<(), PesError>>()?; 
+    Ok((distpathmap, solution))
 }
 
 /// Initialize the log given the provided level
