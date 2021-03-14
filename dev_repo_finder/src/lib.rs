@@ -23,9 +23,3 @@ impl RepoFinderService for DevRepoFinder {
         PathBuf::from( "/home/jgerber/src/rust/pes/test_fixtures/repo_test")]
     }
 }
-
-// impl Drop for DevRepoFinder {
-//     fn drop(&mut self) {
-//         println!("\tDROPPING DevRepoFinder");
-//     }
-// }
