@@ -6,13 +6,21 @@ use users::{get_current_uid, get_user_by_uid};
 use peslib::prelude::*;
 
 mod cli_opts;
-mod utils;
+pub mod utils;
+mod presentation;
+pub mod aliases;
 
 use cli_opts::*;
-use utils::{
+pub use utils::{
     audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
-    perform_solve, present_solve_results, perform_solve_for_distribution_and_target,
+    perform_solve, perform_solve_for_distribution_and_target,
 };
+
+use presentation::{
+    PresentationInput,
+    present_solve_results, present_solve_results_tree
+};
+
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
@@ -62,13 +70,16 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         } => {
             // perform the solve given the constraints, and filter out the ROOT_REQUEST from the
             // results, as we dont want to present that to the end user
-            let (distmap, _results) = perform_solve(&plugin_mgr, constraints)?;
-            //let results = results.iter().filter(|x| x.0 != "ROOT_REQUEST").collect::<Vec<_>>();
-            // print the results
-            present_solve_results(distmap);
-            // for result in results {
-            //     println!("{}-{}", result.0, result.1);
-            // }
+            let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
+            let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
+            
+            //present_solve_results(distmap);
+            present_solve_results_tree(
+                PresentationInput::Constraints(constraints),
+                &(distmap, results),
+                &plugin_mgr
+            ).expect("present_solve_resutls_tree failed");
+            
         }
         // here the user has specified a set of constraints as well as an output lockfile. Rather
         // than display the results, we write them to a file.
@@ -77,8 +88,9 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             output: Some(output),
             ..
         } => {
+            let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
             // perform the solve given the constraints
-            let (distmap, results) = perform_solve(&plugin_mgr, constraints)?;
+            let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
 
             // filter out the fake request we build to pass the solver, which only takes a
             // single distribution as input
@@ -120,7 +132,8 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             lockfile: None,
             ..
         } => {
-            let (distmap, solution) = perform_solve(&plugin_mgr, constraints)?;
+            let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
+            let (distmap, solution) = perform_solve(&plugin_mgr, &constraints)?;
             present_solve_results(distmap);
             launch_shell(&plugin_mgr, solution)
         }

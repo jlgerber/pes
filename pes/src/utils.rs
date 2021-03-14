@@ -6,19 +6,11 @@ use std::{
 use itertools::join;
 use log::{debug, info, trace};
 use nix::unistd::execve;
-
+use crate::aliases::{DistPathMap, SolveResult};
 use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
     PluginMgr, SelectedDependencies,
 };
-use prettytable::{color, format, Attr, Cell, Row, Table};
-
-// Type Aliases
-/// A Map whose key is a distribution and whose value is a version
-pub type DistPathMap = indexmap::IndexMap<String, String>;
-
-/// Tuple returned by perform_solve function
-pub type SolveResult = (DistPathMap, SelectedDependencies<String, SemanticVersion>);
 
 pub fn audit_manifest_file<M: Into<PathBuf>>(manifest: M) -> Result<bool, PesError> {
     let manifest = Manifest::from_path_unchecked(manifest)?;
@@ -70,42 +62,18 @@ fn setup_solver(
     Ok(solver)
 }
 
-/// print the provided solver results as a pretty table of distribution, paths
-pub fn present_solve_results(dpmap: DistPathMap) {
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_CLEAN);
-    table.add_row(Row::new(vec![
-        Cell::new("DISTRIBUTION")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-        Cell::new("LOCATION")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-    ]));
-
-    for (dist, version) in dpmap.iter() {
-        table.add_row(Row::new(vec![
-            Cell::new(dist.as_str())
-                .with_style(Attr::Bold)
-                .with_style(Attr::ForegroundColor(color::GREEN)),
-            Cell::new(version),
-        ]));
-    }
-    eprintln!("");
-    table.printstd();
-}
-
 /// given a set of constraints, calculate a solution
 pub fn perform_solve(
     plugin_mgr: &PluginMgr,
-    constraints: Vec<String>,
+    constraints: &Vec<&str>, //Vec<String>,
 ) -> Result<SolveResult, PesError> {
     debug!("user supplied constraints: {:?}.", constraints);
 
-    // construct request from a vector of constraint strings
+    // // construct request from a vector of constraint strings
     let request = constraints
         .iter()
-        .map(|x| DistributionRange::from_str(x.as_str()))
+        //.map(|x| DistributionRange::from_str(x.as_str()))
+        .map(|x| DistributionRange::from_str(x))
         .collect::<Result<Vec<_>, PesError>>()?;
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let mut solver = setup_solver(repos)?;
@@ -117,16 +85,16 @@ pub fn perform_solve(
     debug!("Solver solution:\n{:#?}", solution);
 
     let mut distpathmap = DistPathMap::new();
-    let mut table = Table::new();
-    table.set_format(*format::consts::FORMAT_CLEAN);
-    table.add_row(Row::new(vec![
-        Cell::new("DISTRIBUTION")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-        Cell::new("LOCATION")
-            .with_style(Attr::Bold)
-            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
-    ]));
+    // let mut table = Table::new();
+    // table.set_format(*format::consts::FORMAT_CLEAN);
+    // table.add_row(Row::new(vec![
+    //     Cell::new("DISTRIBUTION")
+    //         .with_style(Attr::Bold)
+    //         .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+    //     Cell::new("LOCATION")
+    //         .with_style(Attr::Bold)
+    //         .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+    // ]));
 
     for (name, version) in &solution {
         let dist = format!("{}-{}", name, version);
