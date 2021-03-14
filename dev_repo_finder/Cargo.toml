@@ -5,8 +5,10 @@ authors = ["jlgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-log = "0.4.14"
+dirs = "3.0"
+log = "0.4"
 pes_interface = { path = "../pes_interface", version = "*" }
+users = "0.11"
 
 [lib]
 name = "repo_finder"
