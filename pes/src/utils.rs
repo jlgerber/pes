@@ -111,7 +111,7 @@ pub fn perform_solve_for_distribution_and_target(
     plugin_mgr: &PluginMgr,
     distribution: &str,
     target: &str,
-) -> Result<SelectedDependencies<String, SemanticVersion>, PesError> {
+) -> Result<SolveResult, PesError> {
     debug!("distribution: {} target: {}", distribution, target);
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let mut path = None;
