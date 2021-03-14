@@ -16,3 +16,4 @@ pub type SolveDistributions = SelectedDependencies<String, SemanticVersion>;
 
 /// Tuple returned by perform_solve function
 pub type SolveResult = (DistPathMap, SolveDistributions);
+pub type SolveRefResult<'a> = (&'a DistPathMap, &'a SolveDistributions);
