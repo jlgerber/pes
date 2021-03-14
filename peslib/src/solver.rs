@@ -27,7 +27,6 @@ use crate::{
     manifest::PackageManifest, PesError, Repository,
 };
 
-// todo: add hashmap to store full paths to dependencies
 #[derive(Debug)]
 pub struct Solver<P: Package, V: Version> {
     pub dependency_provider: OfflineDependencyProvider<P, V>,

@@ -7,10 +7,20 @@ use std::path::PathBuf;
 
 
 /// Load and store plugins
+#[derive(Debug)]
 pub struct PluginMgr {
     repo_finder: Library,
     manifest_finder: Library
  }
+
+
+
+impl PartialEq for PluginMgr {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+impl Eq for PluginMgr {}
 
 impl PluginMgr {
     

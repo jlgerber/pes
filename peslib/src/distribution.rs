@@ -2,11 +2,12 @@
 
 use std::fmt;
 
-use pubgrub::version::SemanticVersion;
+use pubgrub::{range::Range, version::SemanticVersion};
 
 use crate::{
     error::PesError,
     parser::{parse_consuming_package_version, parse_consuming_semver},
+    distribution_range::DistributionRange,
 };
 
 /// Simple representation of a versioned package
@@ -40,6 +41,12 @@ impl<'a> Distribution<'a> {
     /// given two different distributions, do they share the same package name?
     pub fn package_eq(&self, other: &Distribution) -> bool {
         self.name == other.name
+    }
+
+    /// Convert self to a DistributionRange instance
+    pub fn to_distribution_range(self) -> DistributionRange<'a> {
+        let Distribution{ name, version} = self;
+        DistributionRange::new(name, Range::exact(version))
     }
 }
 

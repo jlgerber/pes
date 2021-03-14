@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 // extern imports
 use generator::{Generator, Gn};
 // crate imports
-use crate::constants::{MANIFEST_NAME, PACKAGE_REPO_PATH_VAR_NAME};
+use crate::constants::{MANIFEST_NAME, /*PACKAGE_REPO_PATH_VAR_NAME*/ };
 use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
@@ -19,18 +19,19 @@ use crate::PluginMgr;
 
 /// A collection of package distributions
 #[derive(Debug, PartialEq, Eq)]
-pub struct PackageRepository {
+pub struct PackageRepository<'a> {
     // we expect the repository to be laid out like so:
     // /root/<package>/<version>/manifest.yaml
     root: PathBuf,
     /// the manifest name, including any subdirectories under the version
     manifest: String,
+    plugin_mgr: &'a PluginMgr,
 }
 
 // todo: Repository should be responsible for finding the path to a distribution (specific package
 // version), not the manifest itself. a ManifestLocator should be responsible for taking a pathbuf
 // to a distribution and producing a pathbuf pointing at a manifest
-impl Repository for PackageRepository {
+impl<'a> Repository for PackageRepository<'a> {
     type Manifest = PathBuf;
     type Err = PesError;
 
@@ -46,7 +47,7 @@ impl Repository for PackageRepository {
         let mut manifest = self.root.clone();
         manifest.push(package.as_ref());
         manifest.push(version.as_ref());
-        manifest.push(MANIFEST_NAME);
+        let manifest = self.plugin_mgr.manifest_path_from_distribution(manifest);
 
         if manifest.exists() {
             Ok(manifest)
@@ -69,9 +70,9 @@ impl Repository for PackageRepository {
         let mut manifests = Vec::new();
         for entry in manifest_path.read_dir()? {
             let entry = entry?;
-            let mut newpath = entry.path();
-            newpath.push(&self.manifest);
-            manifests.push(newpath);
+            let manifest_path = self.plugin_mgr.manifest_path_from_distribution(entry.path());
+           
+            manifests.push(manifest_path);
         }
         Ok(manifests)
     }
@@ -84,13 +85,13 @@ impl Repository for PackageRepository {
                 let path = dir.unwrap().path();
                 if path.is_dir() {
                     for dir2 in path.read_dir().unwrap() {
-                        let mut path2 = dir2.unwrap().path();
+                        let path2 = dir2.unwrap().path();
                         if path2.is_dir() {
-                            path2.push(&self.manifest);
-                            if path2.is_file() {
-                                s.yield_(Ok(path2));
+                            let manifest_path = self.plugin_mgr.manifest_path_from_distribution(path2);
+                            if manifest_path.is_file() {
+                                s.yield_(Ok(manifest_path));
                             } else {
-                                s.yield_(Err(PesError::MissingPath(path2)));
+                                s.yield_(Err(PesError::MissingPath(manifest_path)));
                             }
                         }
                     }
@@ -101,12 +102,13 @@ impl Repository for PackageRepository {
     }
 }
 
-impl PackageRepository {
+impl<'a> PackageRepository<'a> {
     /// construct a new PackageRepository instance
-    pub fn new<P: Into<PathBuf>, M: Into<String>>(root: P, manifest: M) -> Self {
+    pub fn new<P: Into<PathBuf>, M: Into<String>>(root: P, manifest: M, plugin_mgr: &'a PluginMgr) -> Self {
         Self {
             root: root.into(),
             manifest: manifest.into(),
+            plugin_mgr
         }
     }
     /// return the root of the repository
@@ -114,33 +116,33 @@ impl PackageRepository {
         return &self.root.as_path();
     }
 
-    /// Retrieve the location(s) of package repositories from the environment and
-    /// return a vector of them, assuming they exist. If no repos are found, then
-    /// return an Error.
-    pub fn from_env() -> Result<Vec<PackageRepository>, PesError> {
-        let repos_env = std::env::var(PACKAGE_REPO_PATH_VAR_NAME)?;
-        // construct a vector of repos
-        let repos = repos_env
-            .split(":")
-            .map(|x| Path::new(x))
-            .filter_map(|x| (if x.exists() { Some(x) } else { None }))
-            .map(|x| Self::new(x, MANIFEST_NAME))
-            .collect::<Vec<_>>();
-        if repos.len() == 0 {
-            Err(PesError::NoRepositories(repos_env))
-        } else {
-            Ok(repos)
-        }
-    }
+    // /// Retrieve the location(s) of package repositories from the environment and
+    // /// return a vector of them, assuming they exist. If no repos are found, then
+    // /// return an Error.
+    // pub fn from_env() -> Result<Vec<PackageRepository>, PesError> {
+    //     let repos_env = std::env::var(PACKAGE_REPO_PATH_VAR_NAME)?;
+    //     // construct a vector of repos
+    //     let repos = repos_env
+    //         .split(":")
+    //         .map(|x| Path::new(x))
+    //         .filter_map(|x| (if x.exists() { Some(x) } else { None }))
+    //         .map(|x| Self::new(x, MANIFEST_NAME))
+    //         .collect::<Vec<_>>();
+    //     if repos.len() == 0 {
+    //         Err(PesError::NoRepositories(repos_env))
+    //     } else {
+    //         Ok(repos)
+    //     }
+    // }
 
     /// Retrieve the locatons of package repositories from the plugin
-    pub fn from_plugin(plugin_mgr: &PluginMgr) -> Result<Vec<PackageRepository>, PesError> {
+    pub fn from_plugin(plugin_mgr: &'a PluginMgr) -> Result<Vec<PackageRepository>, PesError> {
         //let repos = Self::find_repos_via_plugin()?;
         let repos = plugin_mgr.repos();
         let repos = repos
             .iter()
             .filter_map(|x| (if x.exists() { Some(x) } else { None }))
-            .map(|x| Self::new(x, MANIFEST_NAME))
+            .map(|x| Self::new(x, MANIFEST_NAME, &plugin_mgr))
             .collect::<Vec<_>>();
         Ok(repos)
     }
