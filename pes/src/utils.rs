@@ -139,7 +139,7 @@ pub fn perform_solve(
 }
 
 /// generate a solution for the provided distribution and target
-pub fn solve_for_distribution_and_target(
+pub fn perform_solve_for_distribution_and_target(
     plugin_mgr: &PluginMgr,
     distribution: &str,
     target: &str,

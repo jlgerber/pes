@@ -11,7 +11,7 @@ mod utils;
 use cli_opts::*;
 use utils::{
     audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
-    perform_solve, present_solve_results, solve_for_distribution_and_target,
+    perform_solve, present_solve_results, perform_solve_for_distribution_and_target,
 };
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
@@ -25,7 +25,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             ..
         } => {
             let results =
-                solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
+                perform_solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
             let results = results
                 .iter()
                 .filter(|x| x.0 != "ROOT_REQUEST")
