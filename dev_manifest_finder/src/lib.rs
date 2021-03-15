@@ -1,4 +1,4 @@
-use pes_interface::ManifestFinderService;
+use pes_core::ManifestFinderService;
 use std::path::PathBuf;
 
 #[no_mangle]

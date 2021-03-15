@@ -17,7 +17,7 @@ serde_yaml = "0.8.*"
 generator = "0.6.*"
 log = "0.4.*"
 libloading = "0.7"
-pes_interface = { path = "../pes_interface", version = "*" }
+pes_core = { path = "../pes_core", version = "*" }
 
 [dependencies.indexmap]
 version = "^1.6"

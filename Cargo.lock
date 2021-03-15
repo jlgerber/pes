@@ -170,7 +170,7 @@ dependencies = [
 name = "dev_manifest_finder"
 version = "0.1.0"
 dependencies = [
- "pes_interface",
+ "pes_core",
 ]
 
 [[package]]
@@ -438,7 +438,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pes_interface"
+name = "pes_core"
 version = "0.1.0"
 
 [[package]]
@@ -450,7 +450,7 @@ dependencies = [
  "libloading",
  "log",
  "nom",
- "pes_interface",
+ "pes_core",
  "pubgrub",
  "serde",
  "serde_yaml",
@@ -662,7 +662,7 @@ version = "0.1.0"
 dependencies = [
  "dirs 3.0.1",
  "log",
- "pes_interface",
+ "pes_core",
  "users",
 ]
 

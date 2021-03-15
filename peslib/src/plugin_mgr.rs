@@ -2,7 +2,7 @@ use crate::PesError;
 
 use libloading::Library;
 use log::info;
-use pes_interface::{ RepoFinderService, ManifestFinderService };
+use pes_core::{ RepoFinderService, ManifestFinderService };
 use std::path::PathBuf;
 
 

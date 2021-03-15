@@ -1,4 +1,4 @@
-use pes_interface::RepoFinderService;
+use pes_core::RepoFinderService;
 use std::path::PathBuf;
 use std::env;
 
@@ -18,7 +18,7 @@ impl DevRepoFinder {
 
 impl RepoFinderService for DevRepoFinder {
     // TODO: change this to return a Result. This will mean moving PesError into pes_interace 
-    // TODO: and perhaps renaming pes_interface to pes_base or pes_core
+    // TODO: and perhaps renaming pes_core to pes_base or pes_core
     fn find_repo(&self) -> Vec<PathBuf> {
 
         let repo_path = 

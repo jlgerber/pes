@@ -3,7 +3,7 @@ members = [
     "peslib", 
     "pes",
     "testutils",
-    "pes_interface",
+    "pes_core",
     "dev_repo_finder",
     "dev_manifest_finder",
     ]
