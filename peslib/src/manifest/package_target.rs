@@ -4,7 +4,7 @@ use indexmap::IndexMap;
 use pubgrub::{range::Range, version::SemanticVersion};
 use serde::{Deserialize, Serialize};
 
-use crate::{error::PesError, parser::parse_consuming_semver_range, DistributionRange};
+use crate::{PesError, parser::parse_consuming_semver_range, DistributionRange};
 
 /// Struct used to simplify serialization & deserialization of manifest
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]

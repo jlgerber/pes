@@ -5,7 +5,7 @@ use std::fmt;
 use pubgrub::{range::Range, version::SemanticVersion};
 
 use crate::{
-    error::PesError,
+    PesError,
     parser::{parse_consuming_package_version, parse_consuming_semver},
     distribution_range::DistributionRange,
 };

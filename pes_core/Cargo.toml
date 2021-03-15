@@ -6,3 +6,8 @@ edition = "2018"
 
 
 [dependencies]
+libloading = "0.7"
+nom = "6.1"
+toml = "0.5.*"
+thiserror = "1"
+serde_yaml = "0.8.*"

@@ -6,7 +6,7 @@ use pubgrub::version::SemanticVersion;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::PesError,
+    PesError,
     //manifest::PackageTarget,
     DistributionRange,
 };

@@ -7,7 +7,7 @@ use std::path::{
 
 use crate::{
     BaseEnv,
-    error::PesError,
+    PesError,
     ManifestLocationProvider,
     constants::MANIFEST_NAME,
     Manifest,

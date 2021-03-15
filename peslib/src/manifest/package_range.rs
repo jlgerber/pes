@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 use pubgrub::range::Range;
 use pubgrub::version::SemanticVersion;
 
-use crate::error::PesError;
+use crate::PesError;
 //use crate::manifest::PackageTarget;
 
 

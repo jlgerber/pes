@@ -22,7 +22,7 @@ use nom::{
     },
 };
 
-use crate::error::PNResult;
+use crate::PNResult;
 
 
 /// Parse a str that starts with a letter, followed by zero or more

@@ -10,7 +10,7 @@ use std::path::{
 };
 
 use crate::{
-    error::PesError,
+    PesError,
     VarProvider,
 };
 

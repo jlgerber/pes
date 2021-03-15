@@ -6,5 +6,11 @@
 //! decisions based on pre-existing usage patterns.
 
 pub mod traits;
+pub mod error;
 
+pub use error::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub use traits::*;
+
+pub mod prelude {
+    pub use super::*;
+}

@@ -9,12 +9,12 @@
 //! - A means of invoking a runtime within a specific environment, either solved on the fly or via a cache
 #[macro_use]
 extern crate generator;
+pub use pes_core::{PesError, PNResult, PesNomError, PNCompleteResult};
 
 pub mod aliases;
 pub mod constants;
 pub mod distribution;
 pub mod env;
-pub mod error;
 pub mod jsys;
 pub mod lock;
 pub mod manifest;
@@ -31,7 +31,6 @@ pub mod distribution_range;
 pub use aliases::*;
 pub use distribution::Distribution;
 pub use env::BasicVarProvider;
-pub use error::PesError;
 pub use lock::LockFile;
 pub use manifest::Manifest;
 pub use plugin_mgr::PluginMgr;

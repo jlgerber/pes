@@ -440,6 +440,13 @@ dependencies = [
 [[package]]
 name = "pes_core"
 version = "0.1.0"
+dependencies = [
+ "libloading",
+ "nom",
+ "serde_yaml",
+ "thiserror",
+ "toml",
+]
 
 [[package]]
 name = "peslib"

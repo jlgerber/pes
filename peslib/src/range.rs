@@ -1,5 +1,5 @@
 //! Provides an implementation of the `FrmStr` trait for `Range<SematicVersion>`
-use crate::error::PesError;
+use crate::PesError;
 use crate::parser::parse_consuming_semver_range;
 use crate::traits::FrmStr;
 

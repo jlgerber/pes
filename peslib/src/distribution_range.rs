@@ -5,7 +5,7 @@
 use pubgrub::{range::Range, version::SemanticVersion};
 
 use crate::{
-    error::PesError,
+    PesError,
     parser::{parse_consuming_package_range, parse_consuming_semver_range},
 };
 

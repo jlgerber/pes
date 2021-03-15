@@ -38,7 +38,7 @@ use nom::{
     },
 };
 
-use crate::error::{PNResult, PesNomError, PNCompleteResult, PesError};
+use crate::{PNResult, PesNomError, PNCompleteResult, PesError};
 use crate::env::{PathToken, PathMode};
 use crate::parser_atoms::{alphaword_many0_underscore_word, ws};
 pub use crate::traits::VarProvider;

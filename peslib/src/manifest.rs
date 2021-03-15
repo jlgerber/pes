@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-use crate::error::PesError;
+use crate::PesError;
 use crate::distribution_range::DistributionRange;
 
 pub mod package_manifest;
