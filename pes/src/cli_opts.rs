@@ -28,6 +28,21 @@ pub enum SubCmds {
         #[structopt(short="m", long="manifest", parse(from_os_str))]
         manifest: Option<PathBuf>,
     },
+    #[structopt(name = "dist", group = ArgGroup::with_name("dist_action").required(true))]
+    /// Explore information about distributions
+    Dist {
+        /// Check to see if a distribution exists
+        #[structopt(short="c", long="check")]
+        check: bool,
+
+        /// list all distributions
+        #[structopt(short="l", long="list-all", group="dist_action")]
+        list_dists: bool,
+
+        /// distribution name 
+        #[structopt(group="dist_action")]
+        dist: Option<String>,
+    },
     #[structopt(name = "env", group = ArgGroup::with_name("env_action").required(true))]
     /// Solve a dependency closure for the provided constraints, or the provided distribution and target
     Env {

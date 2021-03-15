@@ -53,6 +53,10 @@ pub enum PesError {
     #[error("Manifest Not Found starting here: '{0:?}'")]
     ManifestNotFound(PathBuf),
 
+    /// Error converting from OsStr to Str
+    #[error("unable to convert {0:?} to string")]
+    ConversionError(std::ffi::OsString),
+
     /// Distribution not found
     #[error("Distribution not found: {0}")]
     DistributionNotFound(String),
@@ -74,6 +78,10 @@ pub enum PesError {
     /// Indicates that an io::Error has taken place
     #[error("io::Error {0:?}")]
     IoError(#[from] std::io::Error),
+    
+    /// Error parsing cli args
+    #[error("CliArgError - error parsing cli arguments: {0}")]
+    CliArgError(String),
 
     /// Wraps an opaque error type
     #[error("PesError {0}")]

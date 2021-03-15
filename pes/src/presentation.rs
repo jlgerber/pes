@@ -1,4 +1,8 @@
-use crate::aliases::{DistPathMap, SolveResult, SolveRefResult, PackageDistMap};
+use crate::{aliases::{
+        DistPathMap, SolveResult, SolveRefResult, PackageDistMap
+    },
+    utils::get_distpathmap,
+};
 use peslib::{PluginMgr, Manifest, PesError};
 use prettytable::{color, format, Attr, Cell, Row, Table};
 use std::{
@@ -7,6 +11,39 @@ use std::{
         PathBuf,
     },
 };
+
+pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
+    // setup the table
+    let mut table = Table::new();
+    table.set_format(*format::consts::FORMAT_CLEAN);
+    table.add_row(Row::new(vec![
+        Cell::new("DISTRIBUTION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+        Cell::new("LOCATION")
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
+    ]));
+    // initialize the DistPathMap
+    let dist_path_map = get_distpathmap(&plugin_mgr)?;
+    // retrieve the distributions and paths from the map and store in a vector
+    // so that we may sort it (and lets sort it)
+    let mut dists = dist_path_map.iter().collect::<Vec<_>>();
+    dists.sort_by(|a,b| a.0.cmp(&b.0));
+    // add distributions and paths into table
+    dists.iter().for_each(|(dist, path)| {
+        table.add_row(Row::new(vec![
+        Cell::new(dist.as_str())
+            .with_style(Attr::Bold)
+            .with_style(Attr::ForegroundColor(color::GREEN)),
+        Cell::new(path),
+        ]));}
+    );
+    // presentation time
+    eprintln!("");
+    table.printstd();
+    Ok(())
+}
 
 /// print the provided solver results as a pretty table of distribution, paths
 pub fn present_solve_results(dpmap: DistPathMap) {

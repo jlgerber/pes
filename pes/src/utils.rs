@@ -1,6 +1,6 @@
 //! utils command
 use std::{
-    cell::RefCell, collections::HashMap, env, ffi::CString, path::PathBuf, rc::Rc, str::FromStr,
+    cell::RefCell, collections::HashMap, env, ffi::CString, path::{Path, PathBuf}, rc::Rc, str::FromStr,
 };
 
 use itertools::join;
@@ -11,6 +11,17 @@ use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
     PluginMgr, SelectedDependencies,
 };
+
+pub fn check_distribution<D: AsRef<str>>(plugin_mgr: &PluginMgr, dist: D) -> Result<bool, PesError> {
+    let dist = dist.as_ref();
+    
+    for repo in PackageRepository::from_plugin(&plugin_mgr)? {
+        if repo.has_distribution(dist)? {
+            return Ok(true);
+        }
+    }
+    Err(PesError::DistributionNotFound(dist.to_string()))
+}
 
 pub fn audit_manifest_file<M: Into<PathBuf>>(manifest: M) -> Result<bool, PesError> {
     let manifest = Manifest::from_path_unchecked(manifest)?;
@@ -25,6 +36,7 @@ pub fn audit_manifest_for_current_location() -> Result<bool, PesError> {
     let manifest = find_manifest()?;
     audit_manifest_file(manifest)
 }
+
 /// find the manifest
 pub fn find_manifest() -> Result<PathBuf, PesError> {
     let mut cwd = env::current_dir()?;
@@ -79,7 +91,8 @@ pub fn perform_solve(
     let mut solver = setup_solver(repos)?;
     // calculate the solution
     let mut solution = solver.solve(request)?;
-    // remove the root request from the solution as that is not a valid package
+
+    // remove the root request from the solution as that is not a real package
     solution.remove("ROOT_REQUEST");
 
     debug!("Solver solution:\n{:#?}", solution);
@@ -94,6 +107,28 @@ pub fn perform_solve(
     }
 
     Ok((distpathmap, solution))
+}
+
+/// retrieve a map that maps distributions to paths
+pub fn get_distpathmap(plugin_mgr: &PluginMgr) -> Result<DistPathMap, PesError> {
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
+    let mut distpathmap = DistPathMap::new();
+    // just using this to build list of distributions
+    for repo in &repos {
+       for dist in repo.distributions() {
+           let dist = dist?;
+           let version = dist.file_name().unwrap();
+           let package = dist.parent().unwrap();
+           let package = package.file_name().unwrap();
+           let dist_name = format!(
+               "{}-{}", 
+                package.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?, 
+                version.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?
+            );
+           distpathmap.insert(dist_name, dist.to_string_lossy().to_string());
+       }
+    }
+    Ok(distpathmap)
 }
 
 /// generate a solution for the provided distribution and target
@@ -256,6 +291,7 @@ enum Shell {
     Tcsh,
     Sh,
 }
+
 impl FromStr for Shell {
     type Err = PesError;
 

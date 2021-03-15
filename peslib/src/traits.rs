@@ -47,6 +47,7 @@ pub trait BaseEnv {
 
 pub trait Repository: std::fmt::Debug {
     type Manifest: AsRef<Path>;
+    type Distribution: AsRef<Path>;
     type Err: std::error::Error;
 
     fn root(&self) -> &Path;
@@ -62,6 +63,12 @@ pub trait Repository: std::fmt::Debug {
 
     /// retrieve a generator over all of the manifests in a repository
     fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
+
+    /// Retrieve generator over distributions in repository
+    fn distributions(&self)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> ;
+
+    /// determine whether the repository has the distribution
+    fn has_distribution<D: AsRef<str>>(&self, distribution: D) -> Result<bool,Self::Err>;
 }
 
 /// Locate a manifest given a path to the root of a distribution. This trait allows us to 

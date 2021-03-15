@@ -31,6 +31,7 @@ pub struct PackageRepository<'a> {
 
 impl<'a> Repository for PackageRepository<'a> {
     type Manifest = PathBuf;
+    type Distribution = PathBuf;
     type Err = PesError;
 
     fn root(&self) -> &Path {
@@ -98,6 +99,38 @@ impl<'a> Repository for PackageRepository<'a> {
             done!();
         })
     }
+
+    fn distributions(&self)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> {
+        let root = self.root.clone();
+        Gn::new_scoped(move |mut s| {
+            for dir in root.read_dir().unwrap() {
+                let package = dir.unwrap().path();
+                if package.is_dir() {
+                    for version in package.read_dir().unwrap() {
+                        let version = version.unwrap().path();
+                        if version.is_dir() {
+                            
+                            s.yield_(Ok(version));
+                        } else {
+                            s.yield_(Err(PesError::MissingPath(version)));
+                        }
+
+                    }
+                }
+            }
+            done!();
+        })
+    }
+
+    fn has_distribution<D: AsRef<str>>(&self, distribution: D) -> Result<bool, Self::Err> {
+        let (name, version) = parse_consuming_package_version(distribution.as_ref())?;
+        let mut root = self.root.clone();
+        root.push(name);
+        let version = version.to_string();
+        root.push(version.as_str());
+        Ok(root.exists())
+    }
+
 }
 
 impl<'a> PackageRepository<'a> {
@@ -125,6 +158,18 @@ impl<'a> PackageRepository<'a> {
         Ok(repos)
     }
 
+    pub fn packages(&self) -> Generator<'_, (), Result<PathBuf, PesError>> {
+        let root = self.root.clone();
+        Gn::new_scoped(move |mut s| {
+            for dir in root.read_dir().unwrap() {
+                let path = dir.unwrap().path();
+                if path.is_dir() {
+                    s.yield_(Ok(path));
+                }
+            }
+            done!();
+        })
+    }
 }
 
 #[cfg(test)]

@@ -13,14 +13,41 @@ pub mod aliases;
 use cli_opts::*;
 pub use utils::{
     audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
-    perform_solve, perform_solve_for_distribution_and_target,
+    perform_solve, perform_solve_for_distribution_and_target, get_distpathmap, check_distribution
 };
 
 use presentation::{
     PresentationInput,
-    present_solve_results, present_solve_results_tree
+    present_solve_results, present_solve_results_tree, present_distributions
 };
 
+fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
+    let plugin_mgr = PluginMgr::new()?;
+
+    match subcmd {
+        SubCmds::Dist{ check, dist, list_dists } => {
+            if list_dists {
+                present_distributions(&plugin_mgr)?;
+            } else if check {
+                match dist {
+                    Some(ref dist) => {
+                        if check_distribution(&plugin_mgr, dist)? {
+                            
+                            println!("\n\tDistribution: {} is valid\n", dist);
+                        } else {
+                            
+                            println!("\nWARNING:\n\n\tDistribution: {} does not exist\n", dist);
+                        }
+                },
+                    None => return Err(PesError::CliArgError("Must supply a distribution when using --check".into()))
+                } 
+            }
+            
+            Ok(())
+        }
+        _ => panic!("dist_cmd received unexpected input")
+    }
+}
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
@@ -181,7 +208,7 @@ fn main() {
         }
         Err(e) => {
             eprintln!("\nError\n");
-            eprintln!("{}", e);
+            eprintln!("\t{}", e);
             eprintln!("");
         }
     };
@@ -203,6 +230,7 @@ fn _main() -> Result<(), PesError> {
         } => {
             audit_manifest_file(manifest)?;
         }
+        SubCmds::Dist { .. } => dist_cmd(subcmd)?,
         SubCmds::Audit { manifest: None } => {
             audit_manifest_for_current_location()?;
         }
