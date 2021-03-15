@@ -1,9 +1,19 @@
-//! pes_core crate provides the core traits necessary to implmeent 
-//! dynamic libraries used to define location specific behavior for tasks
-//! such as finding package repositories on disk and finding the manifest
-//! within a distribution. These sorts of tasks tend to be specific to the 
-//! deployment; different jobsystem architects will want to make different
-//! decisions based on pre-existing usage patterns.
+//! The pes_core crate provides the core traits and modules necessary to implmeent 
+//! plugins for peslib.
+//! 
+//! ## Plugins
+//! There are currently two types of plugins:
+//! - A *repo_finder*, which is responsible for locating package repositories
+//! - A *manifest_finder*, which is responsible for finding the manifest within a distribution. 
+//!
+//! Both of these tasks are highly dependent upon a particular organization's designs, and the 
+//! plugin system affords the most flexibility in terms of adapting the system to a given 
+//! organization's needs without having to fork the core.
+//!
+//! ## Other modules 
+//! In addition to the traits provided by the crate, *pes_core* also provides the error types
+//! used throughout. While it should be noted that *peslib* re-exports all of the error types,
+//! one should prefer using the error types from the *pes_core* crate when authoring a plugin.
 
 pub mod traits;
 pub mod error;
