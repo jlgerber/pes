@@ -4,7 +4,7 @@ use super::*;
 use nom::combinator::complete;
 use nom::error::ErrorKind;
 use nom::Err::Error as NomErr;
-use crate::error::PesNomError;
+use crate::PesNomError;
 
 mod alphaword {
     use super::*;

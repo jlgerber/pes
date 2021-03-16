@@ -18,7 +18,8 @@ pub use utils::{
 
 use presentation::{
     PresentationInput,
-    present_solve_results, present_solve_results_tree, present_distributions
+    present_solve_results_tree, 
+    present_distributions
 };
 
 fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {

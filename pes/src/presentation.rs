@@ -1,5 +1,5 @@
 use crate::{aliases::{
-        DistPathMap, SolveResult, SolveRefResult, PackageDistMap
+        DistPathMap, SolveRefResult
     },
     utils::get_distpathmap,
 };
@@ -45,7 +45,9 @@ pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
     Ok(())
 }
 
+
 /// print the provided solver results as a pretty table of distribution, paths
+#[allow(dead_code)]
 pub fn present_solve_results(dpmap: DistPathMap) {
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_CLEAN);

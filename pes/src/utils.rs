@@ -1,6 +1,6 @@
 //! utils command
 use std::{
-    cell::RefCell, collections::HashMap, env, ffi::CString, path::{Path, PathBuf}, rc::Rc, str::FromStr,
+    cell::RefCell, collections::HashMap, env, ffi::CString, path::PathBuf, rc::Rc, str::FromStr,
 };
 
 use itertools::join;
