@@ -143,7 +143,7 @@ pub fn present_solve_results_tree<'a> (
 
     fn package_from_dist(dist: &str) -> &str {
         dist
-            .split("-")
+            .splitn(1, "-")
             .next()
             .unwrap_or_else(|| dist)
     }
