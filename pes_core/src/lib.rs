@@ -17,6 +17,8 @@
 
 pub mod traits;
 pub mod error;
+pub mod semantic_version;
+pub mod parser_atoms;
 
 pub use error::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub use traits::*;

@@ -104,6 +104,22 @@ pub enum PesError {
 
     #[error("Toml::ser::Error {0:#?}")]
     TomlSerializeError(#[from] toml::ser::Error),
+
+    #[error("Unknown ReleaseType {0}")]
+    UnknownReleaseType(String),
+
+    #[error("invalid semantic Version {0}")]
+    InvalidSemanticVersion(String),
+    #[error("cannot parse '{version_part}' in '{full_version}' as u32: {parse_error}")]
+    ParseIntError {
+        /// [SemanticVersion] that was being parsed.
+        full_version: String,
+        /// A version part where parsing failed.
+        version_part: String,
+        /// A specific error resulted from parsing a part of the version as [u32].
+        parse_error: String,
+    }
+    
 }
 
 /// Custom Nom Error for the `pes` crate, implementing the required `nom::error::ParseError` trait.

@@ -443,6 +443,8 @@ version = "0.1.0"
 dependencies = [
  "libloading",
  "nom",
+ "pubgrub",
+ "serde",
  "serde_yaml",
  "thiserror",
  "toml",

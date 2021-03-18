@@ -30,7 +30,7 @@ pub mod jsys;
 pub mod lock;
 pub mod manifest;
 pub mod parser;
-pub mod parser_atoms;
+//pub mod parser_atoms;
 pub mod plugin_mgr;
 pub mod range;
 pub mod repository;
@@ -38,6 +38,8 @@ pub mod solver;
 pub mod traits;
 pub mod utils;
 pub mod distribution_range;
+
+pub use pes_core::parser_atoms;
 
 pub use aliases::*;
 pub use distribution::Distribution;
