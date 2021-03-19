@@ -1,41 +1,13 @@
 
 //! Traits and implementations to create and compare versions.
 
-use std::fmt::{self, Debug, Display};
-use std::str::FromStr;
+use std::{
+    fmt::{self, Debug, Display},
+    str::FromStr
+};
 use crate::error::PesError;
-//use thiserror::Error;
 use pubgrub::version::Version;
 
-// /// Versions have a minimal version (a "0" version)
-// /// and are ordered such that every version has a next one.
-// pub trait Version: Clone + Ord + Debug + Display {
-//     /// Returns the lowest version.
-//     fn lowest() -> Self;
-//     /// Returns the next version, the smallest strictly higher version.
-//     fn bump(&self) -> Self;
-// }
-
-// /// Error creating [SemanticVersion] from [String].
-// #[derive(Error, Debug, PartialEq)]
-// pub enum VersionParseError {
-//     /// [SemanticVersion] must contain major, minor, patch versions.
-//     #[error("version {full_version} must contain 3 numbers separated by dot")]
-//     NotThreeParts {
-//         /// [SemanticVersion] that was being parsed.
-//         full_version: String,
-//     },
-//     /// Wrapper around [ParseIntError](core::num::ParseIntError).
-//     #[error("cannot parse '{version_part}' in '{full_version}' as u32: {parse_error}")]
-//     ParseIntError {
-//         /// [SemanticVersion] that was being parsed.
-//         full_version: String,
-//         /// A version part where parsing failed.
-//         version_part: String,
-//         /// A specific error resulted from parsing a part of the version as [u32].
-//         parse_error: String,
-//     },
-// }
 
 /// The `ReleaseType`, as the name suggestgs, defines the type of release,
 /// which is generally either a release, or some form of pre-release.
@@ -46,6 +18,7 @@ pub enum ReleaseType {
     ReleaseCandidate,
     Release,
 }
+
 
 impl FromStr for ReleaseType {
     type Err = PesError;
@@ -73,7 +46,10 @@ impl Display for ReleaseType {
     }
 }
 
-/// Type for semantic versions: major.minor.patch.
+/// Type for semantic versions: major.minor.patch or major.minor,patch-release_type
+/// Examples:
+/// - 1.2.3-beta
+/// - 1.2.3 (implicitly releast type Release)
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SemanticVersion {
     major: u32,
@@ -118,6 +94,8 @@ impl SemanticVersion {
     
     /// Version 0.0.0.
     pub fn zero() -> Self {
+        // technically one could argue that this should be an alpha
+        // pre-release, but...
         Self::new(0, 0, 0, ReleaseType::Release)
     }
 
@@ -164,6 +142,7 @@ impl Into<(u32, u32, u32, ReleaseType)> for SemanticVersion {
 
 // Bump versions.
 impl SemanticVersion {
+    /// Bump up the ReleaseType. If the current ReleaseType is Release, then bump the patch
     pub fn bump_release_type(self) -> Self {
         match self.release_type {
             ReleaseType::Release => Self::new(self.major, self.minor, self.patch + 1, self.release_type),

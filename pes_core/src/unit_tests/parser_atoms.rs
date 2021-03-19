@@ -1,9 +1,11 @@
 #![allow(non_snake_case)]
 
 use super::*;
-use nom::combinator::complete;
-use nom::error::ErrorKind;
-use nom::Err::Error as NomErr;
+use nom::{
+    combinator::complete,
+    error::ErrorKind,
+    Err::Error as NomErr,
+};
 use crate::PesNomError;
 
 mod alphaword {
