@@ -1,0 +1,14 @@
+---
+schema: 1
+name: animpipeline
+version: 1.0.0-beta
+description: root anim pipeline
+targets:
+  run:
+    requires:
+      maya: "2018+<2019"
+      bla: "0.1.0+<3"
+environment: 
+  PATH: "prepend({root}/bin)"
+  PYTHONPATH: "prepend({root}/python)"
+  MAYA_SCRIPT_PATH: "prepend({root}/scripts)"

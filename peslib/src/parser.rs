@@ -10,11 +10,13 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::VecDeque;
+use std::str::FromStr;
 
 use pubgrub::{
     range::Range,
-    version::SemanticVersion,
+    //version::SemanticVersion,
 };
+
 
 use nom::{
     branch::alt,
@@ -38,7 +40,7 @@ use nom::{
     },
 };
 
-use crate::{PNResult, PesNomError, PNCompleteResult, PesError};
+use crate::{PNResult, PesNomError, PNCompleteResult, PesError, SemanticVersion, ReleaseType};
 use crate::env::{PathToken, PathMode};
 use crate::parser_atoms::{alphaword_many0_underscore_word, ws};
 pub use crate::traits::VarProvider;
@@ -134,14 +136,14 @@ pub fn parse_consuming_all_paths_with_provider(provider: Rc<RefCell<BasicVarProv
 /// 
 /// # Example
 /// ```
-/// # use peslib::parser::parse_semver_range;
-/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # use peslib::{parser::parse_semver_range, SemanticVersion, ReleaseType};
+/// # use pubgrub::range::Range;
 /// # fn main()  {
 /// let range = parse_semver_range("1.2.3+<3.0.0");
 /// assert_eq!(
 ///     range, 
 ///     Ok(
-///         ("", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0)))
+///         ("", Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release)))
 ///     )
 /// );
 /// # }
@@ -157,11 +159,12 @@ pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 /// Furthermore, note that the parsre consumes any whitespace surounding the version range str.
 ///
 /// # Example
-/// ```PathMode
+/// ```ignore
 ///     range.unwrap(), 
-///     Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))
+///     Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release))
 /// );
 /// # }
+/// ```
 pub fn parse_consuming_semver_range(s: &str) 
     -> Result<Range<SemanticVersion>, PesError>     
 {
@@ -181,13 +184,14 @@ pub fn parse_consuming_semver_range(s: &str)
 /// # Example
 /// ```
 /// # use peslib::parser::parse_package_version;
-/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # use pubgrub::{range::Range};
+/// # use peslib::{SemanticVersion, ReleaseType};
 /// # fn main()  {
 /// let range = parse_package_version("maya-1.2.3");
 /// assert_eq!(
 ///    range, 
 ///    Ok(
-///         ("", ("maya", SemanticVersion::new(1,2,3)))
+///         ("", ("maya", SemanticVersion::new(1,2,3,ReleaseType::Release)))
 ///      )
 /// );
 /// # }
@@ -216,9 +220,9 @@ pub fn parse_consuming_package_version(input: &str) -> Result <(&str, SemanticVe
 /// - maya-1.2.3+<4 
 /// - maya-^3.2
 ///PathMode
-/// assert_eq!(range, Ok(("",("maya", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))))));
+/// assert_eq!(range, Ok(("",("maya", Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release))))));
 /// # }
-/// ```
+/// 
 pub fn parse_package_range(input: &str) -> PNResult<&str, (&str, Range<SemanticVersion>)> {
     alt((separated_pair(alphaword_many0_underscore_word, tag("-"), parse_semver_range), parse_package_any))(input)
 }
@@ -228,15 +232,15 @@ pub fn parse_package_range(input: &str) -> PNResult<&str, (&str, Range<SemanticV
 ///
 /// # Example
 /// ```
-/// # use peslib::parser::parse_consuming_package_range;
-/// # use pubgrub::{version::SemanticVersion, range::Range};
+/// # use peslib::{parser::parse_consuming_package_range, SemanticVersion, ReleaseType };
+/// # use pubgrub:: range::Range;
 /// # fn main()  {
 /// let range = parse_consuming_package_range("maya-1.2.3+<3");
 /// assert_eq!(
 ///                range.unwrap(), 
 ///                (
 ///                   "maya", 
-///                    Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))
+///                    Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release))
 ///                )
 ///           );
 /// # }
@@ -271,15 +275,37 @@ fn parse_package_any(s: &str) -> PNResult<&str, (&str, Range<SemanticVersion>)> 
     Ok((leftover,(name, Range::<SemanticVersion>::any())))
 }
 
+fn parse_prerelease(s: &str) -> PNResult<&str, ReleaseType> {
+    let (leftover, release_type) = alt((tag("rc"), tag("releaseCandidate"), tag("release_candidate"), tag("alpha"), tag("beta")))(s)?;
+    Ok((leftover, ReleaseType::from_str(release_type)?))
+}
+
+fn parse_semver(s: &str) -> PNResult<&str, SemanticVersion> {
+    let results = alt((  parse_semver_prerelease, parse_semver_release))(s)?;
+    Ok(results)
+}
 
 // Given a string that represents a semantic version, that is an unsigned int,  followed by 
 // zero to two period delimited unsigned ints, return a SemanticVersion instance
-fn parse_semver(s: &str) -> PNResult<&str, SemanticVersion> {
+fn parse_semver_release(s: &str) -> PNResult<&str, SemanticVersion> {
     let (leftover,(first, rest)) = tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1))))(s)?;
     let semver = SemanticVersion::new(
         first.parse::<u32>().unwrap(),
         rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
-        rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap()
+        rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+        ReleaseType::Release
+    );
+
+    Ok((leftover,semver))
+}
+
+fn parse_semver_prerelease(s: &str) -> PNResult<&str, SemanticVersion> {
+    let (leftover,(first, rest, release_type)) = tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)),preceded(tag("-"), parse_prerelease) ))(s)?;
+    let semver = SemanticVersion::new(
+        first.parse::<u32>().unwrap(),
+        rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+        rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+       release_type
     );
 
     Ok((leftover,semver))
@@ -304,12 +330,13 @@ fn parse_semver_carrot(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
         major,
         minor,
         patch,
+        ReleaseType::Release
     );
    
     let semver2 = match rest.len() {
-        0 => SemanticVersion::new(major+1, 0, 0),
-        1 => SemanticVersion::new(major, minor+1, 0),
-        2 => SemanticVersion::new(major, minor, patch+1),
+        0 => SemanticVersion::new(major+1, 0, 0, ReleaseType::Release),
+        1 => SemanticVersion::new(major, minor+1, 0, ReleaseType::Release),
+        2 => SemanticVersion::new(major, minor, patch+1, ReleaseType::Release),
         _ => panic!("invalid semantic version")
     };
 

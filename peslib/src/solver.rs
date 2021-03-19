@@ -17,14 +17,14 @@ use pubgrub::{
     report::{DefaultStringReporter, Reporter},
     solver::{resolve, OfflineDependencyProvider},
     //type_aliases::SelectedDependencies,
-    version::{SemanticVersion, Version},
+    version::{Version},
 };
 
 pub use pubgrub::type_aliases::SelectedDependencies;
 
 use crate::{
     aliases::DistMap, distribution_range::DistributionRange, manifest::Manifest,
-    manifest::PackageManifest, PesError, Repository,
+    manifest::PackageManifest, PesError, Repository,SemanticVersion, ReleaseType,
 };
 
 #[derive(Debug)]
@@ -106,13 +106,13 @@ impl Solver<String, SemanticVersion> {
         // create a fake package to house the requested version constraints
         self.dependency_provider.add_dependencies(
             ROOT.to_string(),
-            SemanticVersion::new(1, 0, 0),
+            SemanticVersion::new(1, 0, 0, ReleaseType::Release),
             requires,
         );
         match resolve(
             &self.dependency_provider,
             ROOT.to_string(),
-            SemanticVersion::new(1, 0, 0),
+            SemanticVersion::new(1, 0, 0, ReleaseType::Release),
         ) {
             Ok(solution) => Ok(solution),
             Err(PubGrubError::NoSolution(mut derivation_tree)) => {

@@ -2,7 +2,7 @@
 //!
 //! A `DistributionRange` has a package name, and a range of versions. (Perhaps it should be called a PackageRange?)
 
-use pubgrub::{range::Range, version::SemanticVersion};
+use pubgrub::{range::Range};
 
 use crate::{
     PesError,
@@ -15,12 +15,12 @@ pub struct DistributionRange<'a> {
     /// Name of the package
     pub name: &'a str,
     /// Version Range for the package
-    pub range: Range<SemanticVersion>,
+    pub range: Range<pes_core::SemanticVersion>,
 }
 
 impl<'a> DistributionRange<'a> {
     /// Construct a versioned package from a name and range
-    pub fn new(name: &'a str, range: Range<SemanticVersion>) -> Self {
+    pub fn new(name: &'a str, range: Range<pes_core::SemanticVersion>) -> Self {
         Self { name, range }
     }
 
@@ -44,12 +44,12 @@ pub struct VersionedPackageOwning {
     /// Name of the package
     pub name: String,
     /// Version Range for the package
-    pub range: Range<SemanticVersion>,
+    pub range: Range<pes_core::SemanticVersion>,
 }
 
 impl VersionedPackageOwning {
     /// Construct a versioned package from a name and range
-    pub fn new<N: Into<String>>(name: N, range: Range<SemanticVersion>) -> Self {
+    pub fn new<N: Into<String>>(name: N, range: Range<pes_core::SemanticVersion>) -> Self {
         Self {
             name: name.into(),
             range,
@@ -65,7 +65,7 @@ impl VersionedPackageOwning {
         })
     }
 
-    pub fn to_tuple(self) -> (String, Range<SemanticVersion>) {
+    pub fn to_tuple(self) -> (String, Range<pes_core::SemanticVersion>) {
         let Self { name, range } = self;
         (name, range)
     }

@@ -5,6 +5,7 @@ use toml;
 use serde_yaml;
 use libloading;
 use nom::error::{ErrorKind, ParseError};
+use nom;
 
 /// The pes crate error type - a standard enum error which wraps other error types as well as providing custom pes specific variants.
 #[derive(Debug, ThisError)]
@@ -126,6 +127,7 @@ pub enum PesError {
 #[derive(Debug, PartialEq)]
 pub enum PesNomError<I> {
     InvalidKey(String),
+    PesError(String),
     Nom(I, ErrorKind),
 }
 
@@ -154,6 +156,13 @@ impl<'a> From<PesNomError<&'a str>> for nom::Err<PesNomError<&'a str>> {
 impl<'a> From<nom::Err<PesNomError<&'a str>>> for PesError {
     fn from(err: nom::Err<PesNomError<&'a str>>) -> Self {
         PesError::PesNomError(err.to_string())
+    }
+}
+
+
+impl<'a> From<PesError> for nom::Err<PesNomError<&'a str>> {
+    fn from(err: PesError) -> Self {
+        nom::Err::Error(PesNomError::PesError(err.to_string()))
     }
 }
 //From<nom::Err<PesNomError<&str>>>` is not implemented for `PesError

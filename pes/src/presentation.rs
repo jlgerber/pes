@@ -106,8 +106,10 @@ pub fn present_solve_results_tree<'a> (
     ) -> HashSet<String> {
         let indent = String::from_utf8(vec![b' '; depth*3]).expect("unable to construct string");
         for pkg in packages {
+            // extract package from distribution if provided with distribution
+            let pkg = pkg.split('-').next().unwrap();
             // get the distribution from the solve results
-            let version = solve.1.get(pkg).expect("distribution not available in solve results");
+            let version = solve.1.get(pkg).expect(format!("distribution {} not available in solve results  {:#?}",pkg, solve.1).as_str());
             let distribution = format!("{}-{}", pkg, version);
             if memo.contains(&distribution) {
                 // if it is in the memo, simply present with a ":" in front 

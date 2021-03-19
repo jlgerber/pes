@@ -2,7 +2,7 @@
 
 use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
-
+use log::info;
 use peslib::prelude::*;
 
 mod cli_opts;
@@ -108,8 +108,9 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             // perform the solve given the constraints, and filter out the ROOT_REQUEST from the
             // results, as we dont want to present that to the end user
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
+            info!("perfoming solve with constraints: {:?}", &constraints);
             let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
-            
+            info!("solve returned: {:#?}", &results);
             //present_solve_results(distmap);
             present_solve_results_tree(
                 PresentationInput::Constraints(constraints),

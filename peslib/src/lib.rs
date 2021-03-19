@@ -39,7 +39,7 @@ pub mod traits;
 pub mod utils;
 pub mod distribution_range;
 
-pub use pes_core::parser_atoms;
+pub use pes_core::{SemanticVersion, ReleaseType, parser_atoms};
 
 pub use aliases::*;
 pub use distribution::Distribution;
@@ -47,7 +47,6 @@ pub use env::BasicVarProvider;
 pub use lock::LockFile;
 pub use manifest::Manifest;
 pub use plugin_mgr::PluginMgr;
-pub use pubgrub::version::SemanticVersion;
 pub use range::*;
 pub use repository::PackageRepository;
 pub use solver::SelectedDependencies;

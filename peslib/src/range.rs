@@ -2,9 +2,10 @@
 use crate::PesError;
 use crate::parser::parse_consuming_semver_range;
 use crate::traits::FrmStr;
+use crate::SemanticVersion;
 
 use pubgrub::range::Range;
-use pubgrub::version::SemanticVersion;
+//use pubgrub::version::SemanticVersion;
 
 pub type SemVerRange = Range<SemanticVersion>;
 

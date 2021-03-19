@@ -31,7 +31,7 @@ use crate::PNResult;
 /// # Example
 ///
 /// ```
-/// use peslib::parser_atoms::alphaword;
+/// use pes_core::parser_atoms::alphaword;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(alphaword)("a123a5");
@@ -46,7 +46,7 @@ pub fn alphaword(input: &str) -> PNResult<&str, &str> {
 /// # Example
 ///
 /// ```
-/// use peslib::parser_atoms::underscore_word;
+/// use pes_core::parser_atoms::underscore_word;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(underscore_word)("_1foo1");
@@ -62,7 +62,7 @@ pub fn underscore_word(input: &str) -> PNResult<&str, &str> {
 /// # Examples
 ///
 /// ```
-/// use peslib::parser_atoms::alphaword_many0_underscore_word;
+/// use pes_core::parser_atoms::alphaword_many0_underscore_word;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(alphaword_many0_underscore_word)("fred1_1bla_foobar");
@@ -82,7 +82,7 @@ pub fn alphaword_many0_underscore_word(input: &str) -> PNResult<&str, &str> {
 ///
 /// ## Comment
 /// ```
-/// use peslib::parser_atoms::space0_eol;
+/// use pes_core::parser_atoms::space0_eol;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(space0_eol)("# this is an example");
@@ -90,7 +90,7 @@ pub fn alphaword_many0_underscore_word(input: &str) -> PNResult<&str, &str> {
 /// ```
 /// ## spaces
 /// ```
-/// use peslib::parser_atoms::space0_eol;
+/// use pes_core::parser_atoms::space0_eol;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(space0_eol)("    ").unwrap();
@@ -99,7 +99,7 @@ pub fn alphaword_many0_underscore_word(input: &str) -> PNResult<&str, &str> {
 ///
 /// ## comment with newline
 /// ```
-/// use peslib::parser_atoms::space0_eol;
+/// use pes_core::parser_atoms::space0_eol;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(space0_eol)("# this is an example\n");
@@ -107,7 +107,7 @@ pub fn alphaword_many0_underscore_word(input: &str) -> PNResult<&str, &str> {
 /// ```
 /// ## spaces with newline
 /// ```
-/// use peslib::parser_atoms::space0_eol;
+/// use pes_core::parser_atoms::space0_eol;
 /// use nom::combinator::complete;
 ///
 /// let result = complete(space0_eol)("    \n").unwrap();

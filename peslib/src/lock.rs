@@ -5,7 +5,7 @@ use std::{
 };
 use indexmap::IndexMap;
 use indexmap::map::{Keys, Iter};
-use pubgrub::{version::SemanticVersion};
+//use pubgrub::{version::SemanticVersion};
 use serde::{Serialize, Deserialize};
 use toml;
 
@@ -13,6 +13,7 @@ use crate::{
     PesError,
     parser::parse_consuming_package_version,
     SelectedDependencies,
+    SemanticVersion,
 };
 
 pub type VersionMap = IndexMap<String, SemanticVersion>;

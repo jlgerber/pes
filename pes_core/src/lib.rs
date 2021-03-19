@@ -22,6 +22,8 @@ pub mod parser_atoms;
 
 pub use error::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub use traits::*;
+pub use semantic_version::{SemanticVersion, ReleaseType};
+
 
 pub mod prelude {
     pub use super::*;

@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::manifest::package_target::PackageTarget;
-use pubgrub::version::SemanticVersion;
+use crate::{SemanticVersion, ReleaseType};
 //use pubgrub::range::Range;
 use crate::DistributionRange;
 use crate::EnvMap;
@@ -97,7 +97,7 @@ fn from_str_unchecked__succeeds() {
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1, 2, 3),
+            version: SemanticVersion::new(1, 2, 3,ReleaseType::Release),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()
@@ -124,7 +124,7 @@ fn from_str__succeeds_when_given_valid_manifest_str() {
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1, 2, 3),
+            version: SemanticVersion::new(1, 2, 3,ReleaseType::Release),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()
@@ -142,7 +142,7 @@ fn from_str__succeeds_when_given_valid_manifest_str_without_targets() {
         PackageManifest {
             schema: 1,
             name: "mypackage".into(),
-            version: SemanticVersion::new(1, 2, 3),
+            version: SemanticVersion::new(1, 2, 3,ReleaseType::Release),
             description: "this is the description".into(),
             targets: target_map,
             environment: EnvMap::new()

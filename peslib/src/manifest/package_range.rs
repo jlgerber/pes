@@ -3,11 +3,12 @@
 //use indexmap::IndexMap;
 use serde::{Serialize, Deserialize};
 use pubgrub::range::Range;
-use pubgrub::version::SemanticVersion;
+//use pubgrub::version::SemanticVersion;
 
 use crate::PesError;
 //use crate::manifest::PackageTarget;
 
+use crate::SemanticVersion;
 
 #[derive(Debug,  Serialize, Deserialize, PartialEq, Eq)]
 pub struct PackageRange {

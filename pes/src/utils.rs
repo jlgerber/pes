@@ -9,7 +9,7 @@ use nix::unistd::execve;
 use crate::aliases::{DistPathMap, SolveResult};
 use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
-    PluginMgr, SelectedDependencies,
+    PluginMgr, SelectedDependencies, SemanticVersion, ReleaseType
 };
 
 pub fn check_distribution<D: AsRef<str>>(plugin_mgr: &PluginMgr, dist: D) -> Result<bool, PesError> {
@@ -90,6 +90,7 @@ pub fn perform_solve(
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let mut solver = setup_solver(repos)?;
     // calculate the solution
+    debug!("calling solver.solve with request {:?}", &request);
     let mut solution = solver.solve(request)?;
 
     // remove the root request from the solution as that is not a real package

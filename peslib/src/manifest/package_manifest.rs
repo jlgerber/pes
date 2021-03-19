@@ -2,12 +2,13 @@
 use crate::{EnvMap, TargetMap};
 use std::path::Path;
 //use indexmap::IndexMap;
-use pubgrub::version::SemanticVersion;
+//use pubgrub::version::SemanticVersion;
 use serde::{Deserialize, Serialize};
 
 use crate::{
     PesError,
     //manifest::PackageTarget,
+    SemanticVersion,
     DistributionRange,
 };
 

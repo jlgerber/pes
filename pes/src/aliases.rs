@@ -1,7 +1,7 @@
 
 use peslib::{
     prelude::*,
-    SelectedDependencies,
+    SelectedDependencies, SemanticVersion
 };
 
 // Type Aliases

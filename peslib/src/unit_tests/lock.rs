@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 
 use super::*;
+use crate::ReleaseType;
 use testutils::{rand_file, tempfile};
 use std::fs::File;
 //use std::io::prelude::*;
@@ -47,7 +48,7 @@ fn add_dist__when_given_a_new_target_and_dist__succeeds() {
     // build up expected
     let mut lock = LockMap::new();
     let mut versionmap = VersionMap::new();
-    versionmap.insert("maya".to_string(), SemanticVersion::new(1,0,0));
+    versionmap.insert("maya".to_string(), SemanticVersion::new(1,0,0,ReleaseType::Release));
     lock.insert("run".to_string(), versionmap);
 
     let expect = LockFile {
@@ -67,7 +68,7 @@ fn add_dist__when_given_a_existing_target_and_dist__succeeds() {
     // build up expected
     let mut lock = LockMap::new();
     let mut versionmap = VersionMap::new();
-    versionmap.insert("maya".to_string(), SemanticVersion::new(2,0,0));
+    versionmap.insert("maya".to_string(), SemanticVersion::new(2,0,0,ReleaseType::Release));
     lock.insert("run".to_string(), versionmap);
 
     let expect = LockFile {
@@ -86,7 +87,7 @@ fn version__when_given_extant_target_and_package__returns_some_version() {
     lockfile.add_dist("run", "nuke-2.4.0").unwrap();
 
     let version = lockfile.version("run", "nuke");
-    let expected = SemanticVersion::new(2,4,0);
+    let expected = SemanticVersion::new(2,4,0,ReleaseType::Release);
     assert_eq!(version, Some(&expected));
 
 }
@@ -124,9 +125,9 @@ fn dists_for__when_given_valid_target__returns_some_iter_preserving_insertion_or
     let result = result.map(|(n,v)| (n.to_string(), v.clone())).collect::<Vec<(String, SemanticVersion)>>();
 
     let expected = vec![
-        ("zebra".to_string(), SemanticVersion::new(0,2,3)),
-        ("maya".to_string(), SemanticVersion::new(1,0,0)),
-        ("nuke".to_string(), SemanticVersion::new(2,4,0))
+        ("zebra".to_string(), SemanticVersion::new(0,2,3,ReleaseType::Release)),
+        ("maya".to_string(), SemanticVersion::new(1,0,0,ReleaseType::Release)),
+        ("nuke".to_string(), SemanticVersion::new(2,4,0,ReleaseType::Release))
     ];
 
     assert_eq!(result, expected);

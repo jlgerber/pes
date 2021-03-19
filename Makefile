@@ -29,3 +29,6 @@ build:
 
 clean:
 	rm  -f target/$(BTYPE)/libpes* && rm -f target/$(BTYPE)/librepo* && rm -f target/$(BTYPE)/pes*
+
+test:
+	cargo test --release

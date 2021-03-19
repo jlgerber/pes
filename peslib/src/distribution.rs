@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use pubgrub::{range::Range, version::SemanticVersion};
+use pubgrub::{range::Range};
 
 use crate::{
     PesError,
@@ -16,12 +16,12 @@ pub struct Distribution<'a> {
     /// Name of the package
     pub name: &'a str,
     /// Version Range for the package
-    pub version: SemanticVersion,
+    pub version: pes_core::SemanticVersion,
 }
 
 impl<'a> Distribution<'a> {
     /// Construct a versioned package from a name and range
-    pub fn new(name: &'a str, version: SemanticVersion) -> Self {
+    pub fn new(name: &'a str, version: pes_core::SemanticVersion) -> Self {
         Self { name, version }
     }
 

@@ -41,10 +41,10 @@ use pubgrub::version::Version;
 /// which is generally either a release, or some form of pre-release.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ReleaseType {
-    Release,
-    ReleaseCandidate,
+    Alpha,
     Beta,
-    Alpha
+    ReleaseCandidate,
+    Release,
 }
 
 impl FromStr for ReleaseType {
@@ -164,6 +164,14 @@ impl Into<(u32, u32, u32, ReleaseType)> for SemanticVersion {
 
 // Bump versions.
 impl SemanticVersion {
+    pub fn bump_release_type(self) -> Self {
+        match self.release_type {
+            ReleaseType::Release => Self::new(self.major, self.minor, self.patch + 1, self.release_type),
+            ReleaseType::ReleaseCandidate => Self::new(self.major, self.minor, self.patch , ReleaseType::Release),
+            ReleaseType::Beta  => Self::new(self.major, self.minor, self.patch , ReleaseType::ReleaseCandidate),
+            ReleaseType::Alpha => Self::new(self.major, self.minor, self.patch , ReleaseType::Beta),
+        }
+    }
     /// Bump the patch number of a version.
     pub fn bump_patch(self) -> Self {
         Self::new(self.major, self.minor, self.patch + 1, self.release_type)
@@ -256,6 +264,11 @@ impl Version for SemanticVersion {
         Self::zero()
     }
     fn bump(&self) -> Self {
-        self.bump_patch()
+        self.bump_release_type()
     }
 }
+
+
+#[cfg(test)]
+#[path = "./unit_tests/semantic_version.rs"]
+mod unit_tests;

@@ -1,10 +1,10 @@
 //! Component modeling a specific target within the package manifest
 
 use indexmap::IndexMap;
-use pubgrub::{range::Range, version::SemanticVersion};
+use pubgrub::{range::Range};
 use serde::{Deserialize, Serialize};
 
-use crate::{PesError, parser::parse_consuming_semver_range, DistributionRange};
+use crate::{PesError, parser::parse_consuming_semver_range, DistributionRange, SemanticVersion};
 
 /// Struct used to simplify serialization & deserialization of manifest
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
