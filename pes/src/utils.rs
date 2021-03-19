@@ -9,7 +9,7 @@ use nix::unistd::execve;
 use crate::aliases::{DistPathMap, SolveResult};
 use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
-    PluginMgr, SelectedDependencies, SemanticVersion, ReleaseType
+    PluginMgr, SelectedDependencies, SemanticVersion
 };
 
 pub fn check_distribution<D: AsRef<str>>(plugin_mgr: &PluginMgr, dist: D) -> Result<bool, PesError> {
