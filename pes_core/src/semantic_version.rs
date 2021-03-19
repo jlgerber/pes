@@ -37,7 +37,8 @@ use pubgrub::version::Version;
 //     },
 // }
 
-
+/// The `ReleaseType`, as the name suggestgs, defines the type of release,
+/// which is generally either a release, or some form of pre-release.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ReleaseType {
     Release,
