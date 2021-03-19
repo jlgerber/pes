@@ -15,7 +15,6 @@ pub enum ReleaseType {
     Release,
 }
 
-
 impl FromStr for ReleaseType {
     type Err = PesError;
 
@@ -29,7 +28,6 @@ impl FromStr for ReleaseType {
         }
     }
 }
-
 
 impl Display for ReleaseType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
