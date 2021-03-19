@@ -1,3 +1,13 @@
+//! The release type enumerates the types of releases supported by the system
+//! and their relative precedence. While semver2.0 spec seemingly allows aribtrary 
+//! prerelease designators, we define a number of specific variants of a ReleaseType enum:
+//! - alpha
+//! - beta
+//! - release candidate (rc)
+//! - release
+//! These variants are listed in sort order. 
+//! 
+//! We also provide conversions from and to strings
 use std::{
     fmt::{self, Debug, Display},
     str::FromStr
@@ -5,8 +15,10 @@ use std::{
 use crate::error::PesError;
 
 
-/// The `ReleaseType`, as the name suggestgs, defines the type of release,
-/// which is generally either a release, or some form of pre-release.
+/// The `ReleaseType`, as the name suggests, defines the type of release,
+/// which is either a release, or some form of pre-release. This is more restrictive
+/// than the full 2.0 semanticversion spec, but in practice, covers prelease names,
+/// and has the further advanctage of specifying an explicit order.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum ReleaseType {
     Alpha,
@@ -39,3 +51,4 @@ impl Display for ReleaseType {
         }
     }
 }
+
