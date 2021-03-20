@@ -29,7 +29,11 @@ pub enum SubCmds {
         manifest: Option<PathBuf>,
     },
     #[structopt(name = "dist", group = ArgGroup::with_name("dist_action").required(true))]
-    /// Explore information about distributions
+    /// Explore information about distributions. 
+    /// 
+    /// You can check the integrity of a distribution (pes dist -c <distribution>),
+    /// list all of the distributions and their repositories ( pes dist --list-all ),
+    /// display information about distributions which match a provided package name (pes dist <package>)
     Dist {
         /// Check to see if a distribution exists
         #[structopt(short="c", long="check")]

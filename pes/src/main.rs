@@ -18,9 +18,11 @@ pub use utils::{
 
 use presentation::{
     PresentationInput,
-    Presenter
+    Presenter,
+    DistributionFilter,
 };
 
+// handle the dist subcommand
 fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
     let presenter = Presenter::new(&plugin_mgr);
@@ -28,7 +30,7 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     match subcmd {
         SubCmds::Dist{ check, dist, list_dists } => {
             if list_dists {
-                presenter.distributions()?;
+                presenter.distributions(DistributionFilter::All)?;
             } else if check {
                 match dist {
                     Some(ref dist) => {
@@ -42,6 +44,12 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 },
                     None => return Err(PesError::CliArgError("Must supply a distribution when using --check".into()))
                 } 
+            } else {
+                match dist {
+                    Some(ref dist) =>  presenter.distributions(DistributionFilter::Package(dist))?,
+                    None => return Err(PesError::CliArgError("Must supply a distribution".into()))
+                }
+               
             }
             
             Ok(())
@@ -212,7 +220,6 @@ fn _main() -> Result<(), PesError> {
     if opt.debug {
         println!("{:?}", opt);
     }
-
     let Opt {
         log_level, subcmd, ..
     } = opt;

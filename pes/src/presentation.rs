@@ -21,6 +21,14 @@ pub enum PresentationInput<'a> {
     Target{distribution: &'a str, target: &'a str}
 }
 
+/// specify a filter for the presenter
+#[allow(dead_code)]
+pub enum DistributionFilter<'a> {
+    All,
+    Range(&'a str),
+    Package(&'a str)
+}
+
 pub struct Presenter<'a> {
     plugin_mgr: &'a PluginMgr
 }
@@ -31,7 +39,10 @@ impl<'a> Presenter<'a> {
     }
 
     /// present a list of distributions and their location in a pretty table
-    pub fn distributions(&self) -> Result<(), PesError> {
+    pub fn distributions(&self, filter: DistributionFilter<'a>) -> Result<(), PesError> {
+        // TODO: implement different strategies for filtering
+        let _ = filter;
+
         let dist_path_map = self.plugin_mgr.get_distpathmap()?;
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_CLEAN);
@@ -48,7 +59,17 @@ impl<'a> Presenter<'a> {
         let mut dists = dist_path_map.iter().collect::<Vec<_>>();
         dists.sort_by(|a,b| a.0.cmp(&b.0));
         // add distributions and paths into table
-        dists.iter().for_each(|(dist, path)| {
+        dists.iter()
+        .filter(|x| {
+            match filter {
+                DistributionFilter::All => true,
+                // in splitn n is the number of pieces to split into. you would think that it would
+                // be the number of occurances of the delimiter...
+                DistributionFilter::Package(pkg) => x.0.splitn(2, '-').next().unwrap() == pkg,
+                _ => true
+            }
+        })
+        .for_each(|(dist, path)| {
             table.add_row(Row::new(vec![
             Cell::new(dist.as_str())
                 .with_style(Attr::Bold)
