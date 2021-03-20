@@ -12,7 +12,7 @@ use std::{
 };
 
 /// Present distributions from all of the repositories identified by the repo_finder plugin in a tidy table, 
-pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
+pub fn present_distributions(dist_path_map: DistPathMap)  {
     // setup the table
     let mut table = Table::new();
     table.set_format(*format::consts::FORMAT_CLEAN);
@@ -24,8 +24,6 @@ pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
             .with_style(Attr::Bold)
             .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
     ]));
-    // initialize the DistPathMap
-    let dist_path_map = plugin_mgr.get_distpathmap()?;//get_distpathmap(&plugin_mgr)?;
     // retrieve the distributions and paths from the map and store in a vector
     // so that we may sort it (and lets sort it)
     let mut dists = dist_path_map.iter().collect::<Vec<_>>();
@@ -42,7 +40,6 @@ pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
     // presentation time
     eprintln!("");
     table.printstd();
-    Ok(())
 }
 
 
@@ -72,6 +69,7 @@ pub fn present_solve_results(dpmap: DistPathMap) {
     table.printstd();
 }
 
+#[derive(Debug)]
 pub enum PresentationInput<'a> {
     Constraints(Vec<&'a str>),
     Target{distribution: &'a str, target: &'a str}
@@ -150,27 +148,7 @@ pub fn present_solve_results_tree<'a> (
             .next()
             .unwrap_or_else(|| dist)
     }
-    // I didnt end up needing this map. May in the future though...
-    /*
-    fn new_package_dist_map(dist_path_map: &DistPathMap) -> PackageDistMap {
-        // construct a PackageDistMap from a DistPathMap
-        let mut package_dist_map = PackageDistMap::new();
-        dist_path_map
-            .keys()
-            // construct a tuple of (package, distribution)
-            .map(|dist| 
-                {
-                    let pkg = dist
-                    .split("-")
-                    .next()
-                    .unwrap_or_else(|| dist);
-                    (pkg, dist)
-                }
-            ).for_each(|(pkg, dist)| {package_dist_map.insert(pkg.to_string(), dist.to_string()); });
-
-        package_dist_map 
-    }
-    */
+   
     // create the memo
     let  memo = HashSet::new();
     // create the package_distribution_map used to associate the package name with the distribution

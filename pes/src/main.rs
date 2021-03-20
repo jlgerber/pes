@@ -28,7 +28,8 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     match subcmd {
         SubCmds::Dist{ check, dist, list_dists } => {
             if list_dists {
-                present_distributions(&plugin_mgr)?;
+                let dmap = plugin_mgr.get_distpathmap()?;
+                present_distributions(dmap);
             } else if check {
                 match dist {
                     Some(ref dist) => {
