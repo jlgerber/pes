@@ -1,7 +1,6 @@
 use crate::{aliases::{
         DistPathMap, SolveRefResult
     },
-    utils::get_distpathmap,
 };
 use peslib::{PluginMgr, Manifest, PesError};
 use prettytable::{color, format, Attr, Cell, Row, Table};
@@ -25,7 +24,7 @@ pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
             .with_style(Attr::ForegroundColor(color::BRIGHT_CYAN)),
     ]));
     // initialize the DistPathMap
-    let dist_path_map = get_distpathmap(&plugin_mgr)?;
+    let dist_path_map = plugin_mgr.get_distpathmap()?;//get_distpathmap(&plugin_mgr)?;
     // retrieve the distributions and paths from the map and store in a vector
     // so that we may sort it (and lets sort it)
     let mut dists = dist_path_map.iter().collect::<Vec<_>>();

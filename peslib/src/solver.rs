@@ -9,6 +9,7 @@
 // package
 
 use std::path::Path;
+use log::*;
 
 use pubgrub::{
     error::PubGrubError,
@@ -23,10 +24,90 @@ use pubgrub::{
 pub use pubgrub::type_aliases::SelectedDependencies;
 
 use crate::{
-    aliases::DistMap, distribution_range::DistributionRange, manifest::Manifest,
-    manifest::PackageManifest, PesError, Repository,SemanticVersion, ReleaseType,PackageRepository
+    aliases::{DistMap, SolveResult, DistPathMap}, PluginMgr,
+    distribution_range::DistributionRange, manifest::Manifest,
+    manifest::PackageManifest, PesError, Repository, SemanticVersion, ReleaseType,PackageRepository
 };
 
+/// Given a set of constraints and an instance of the plugin manager, performa solve
+pub fn perform_solve(
+    plugin_mgr: &PluginMgr,
+    constraints: &Vec<&str>, 
+) -> Result<SolveResult, PesError> {
+    debug!("user supplied constraints: {:?}.", constraints);
+
+    // construct request from a vector of constraint strings
+    let request = constraints
+        .iter()
+        .map(|x| DistributionRange::from_str(x))
+        .collect::<Result<Vec<_>, PesError>>()?;
+
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
+    
+    let mut solver = Solver::new_from_repos(repos)?;
+    // calculate the solution
+    debug!("Calling solver.solve with request {:?}", &request);
+    let mut solution = solver.solve(request)?;
+
+    // remove the root request from the solution as that is not a real package
+    solution.remove("ROOT_REQUEST");
+
+    trace!("Solver solution:\n{:#?}", solution);
+
+    let mut distpathmap = DistPathMap::new();
+    
+    for (name, version) in &solution {
+        let dist = format!("{}-{}", name, version);
+        if let Some(value) = solver.dist_path(&dist) {
+            distpathmap.insert(dist, value.as_os_str().to_str().unwrap_or("").to_string());
+        }
+    }
+
+    Ok((distpathmap, solution))
+}
+
+/// Generate a solution for the provided distribution and target
+pub fn perform_solve_for_distribution_and_target(
+    plugin_mgr: &PluginMgr,
+    distribution: &str,
+    target: &str,
+) -> Result<SolveResult, PesError> {
+    debug!("distribution: {} target: {}", distribution, target);
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
+    let mut path = None;
+    for repo in &repos {
+        let manifest = repo.manifest_for(distribution);
+        if manifest.is_ok() {
+            path = Some(manifest.unwrap());
+            break;
+        }
+    }
+    if path.is_none() {
+        return Err(PesError::DistributionNotFound(distribution.to_string()));
+    }
+    let manifest = Manifest::from_path(path.unwrap())?;
+    let request = manifest.get_requires(target)?;
+    let mut solver = Solver::new_from_repos(repos)?;
+    let solution = solver.solve(request)?;
+    // store a mapping between distributions and their paths on disk
+    let mut distpathmap = DistPathMap::new();
+    // get the path to the requested distribution and then insert requested distribution and its path into the map
+    let dist_path = solver.dist_path(distribution).ok_or(PesError::DistributionNotFound(distribution.to_string()))?;
+    distpathmap.insert(distribution.to_string(), dist_path.to_string_lossy().to_string());
+    // iterate over solution, filtering out ROOT_REQUEST, and inserting the rest into the distpathmap
+    solution
+        .iter()
+        .filter(|(ref name,_)| name.as_str() != "ROOT_REQUEST")
+        .map(|(ref name, ref version)|{
+            let dist = format!("{}-{}", name, version);
+            let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+            distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+            Ok(())
+        }).collect::<Result<(), PesError>>()?; 
+    Ok((distpathmap, solution))
+}
+
+/// Solver holds needed state to perform dependency closure solve
 #[derive(Debug)]
 pub struct Solver<P: Package, V: Version> {
     pub dependency_provider: OfflineDependencyProvider<P, V>,

@@ -13,7 +13,7 @@ pub mod aliases;
 use cli_opts::*;
 pub use utils::{
     audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
-    perform_solve, perform_solve_for_distribution_and_target, get_distpathmap, check_distribution
+    check_distribution
 };
 
 use presentation::{

@@ -1,4 +1,4 @@
-use crate::PesError;
+use crate::{aliases::DistPathMap, PesError, PackageRepository, traits::Repository};
 
 use libloading::Library;
 use log::info;
@@ -103,4 +103,27 @@ impl PluginMgr {
         repo
     }
 
+    /// retrieve a map that maps distributions to paths
+    pub fn get_distpathmap(&self) -> Result<DistPathMap, PesError> {
+        let repos = PackageRepository::from_plugin(self)?;
+        let mut distpathmap = DistPathMap::new();
+        // just using this to build list of distributions
+        for repo in &repos {
+        for dist in repo.distributions() {
+            let dist = dist?;
+            let version = dist.file_name().unwrap();
+            let package = dist.parent().unwrap();
+            let package = package.file_name().unwrap();
+            let dist_name = format!(
+                "{}-{}", 
+                    package.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?, 
+                    version.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?
+                );
+            distpathmap.insert(dist_name, dist.to_string_lossy().to_string());
+        }
+        }
+        Ok(distpathmap)
+    }
+
 }
+

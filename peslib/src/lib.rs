@@ -50,14 +50,28 @@ pub use plugin_mgr::PluginMgr;
 pub use range::*;
 pub use repository::PackageRepository;
 pub use solver::SelectedDependencies;
-pub use solver::Solver;
+pub use solver::{Solver, perform_solve, perform_solve_for_distribution_and_target};
 pub use traits::{BaseEnv, ManifestLocationProvider, Repository, VarProvider};
 pub use distribution_range::DistributionRange;
 
 pub mod prelude {
     pub use super::{
-        aliases::*, BaseEnv, BasicVarProvider, Distribution, DistributionRange, LockFile, Manifest,
-        ManifestLocationProvider, PackageRepository, PesError, PluginMgr, Repository, SemanticVersion, Solver,
-        VarProvider,
+        aliases::*, 
+        BaseEnv, 
+        BasicVarProvider, 
+        Distribution, 
+        DistributionRange, 
+        LockFile, 
+        Manifest,
+        ManifestLocationProvider, 
+        PackageRepository, 
+        PesError, 
+        PluginMgr, 
+        Repository, 
+        SemanticVersion, 
+        Solver,
+        VarProvider, 
+        perform_solve, 
+        perform_solve_for_distribution_and_target
     };
 }

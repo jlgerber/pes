@@ -6,12 +6,12 @@ use std::{
 use itertools::join;
 use log::{debug, info, trace};
 use nix::unistd::execve;
-use crate::aliases::{DistPathMap, SolveResult};
 use peslib::{
     constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
     PluginMgr, SelectedDependencies, SemanticVersion
 };
 
+/// validate that a distribution exists
 pub fn check_distribution<D: AsRef<str>>(plugin_mgr: &PluginMgr, dist: D) -> Result<bool, PesError> {
     let dist = dist.as_ref();
     
@@ -23,6 +23,7 @@ pub fn check_distribution<D: AsRef<str>>(plugin_mgr: &PluginMgr, dist: D) -> Res
     Err(PesError::DistributionNotFound(dist.to_string()))
 }
 
+/// audit manifest file for issues
 pub fn audit_manifest_file<M: Into<PathBuf>>(manifest: M) -> Result<bool, PesError> {
     let manifest = Manifest::from_path_unchecked(manifest)?;
     manifest.validate()?;
@@ -61,105 +62,6 @@ pub fn find_manifest() -> Result<PathBuf, PesError> {
         trace!("loop. current cwd: {:?}", cwd);
     }
     Err(PesError::ManifestNotFound(env::current_dir()?))
-}
-
-/// given a set of constraints, calculate a solution
-pub fn perform_solve(
-    plugin_mgr: &PluginMgr,
-    constraints: &Vec<&str>, //Vec<String>,
-) -> Result<SolveResult, PesError> {
-    debug!("user supplied constraints: {:?}.", constraints);
-
-    // // construct request from a vector of constraint strings
-    let request = constraints
-        .iter()
-        //.map(|x| DistributionRange::from_str(x.as_str()))
-        .map(|x| DistributionRange::from_str(x))
-        .collect::<Result<Vec<_>, PesError>>()?;
-    let repos = PackageRepository::from_plugin(plugin_mgr)?;
-    let mut solver = Solver::new_from_repos(repos)?;
-    // calculate the solution
-    debug!("calling solver.solve with request {:?}", &request);
-    let mut solution = solver.solve(request)?;
-
-    // remove the root request from the solution as that is not a real package
-    solution.remove("ROOT_REQUEST");
-
-    debug!("Solver solution:\n{:#?}", solution);
-
-    let mut distpathmap = DistPathMap::new();
-    
-    for (name, version) in &solution {
-        let dist = format!("{}-{}", name, version);
-        if let Some(value) = solver.dist_path(&dist) {
-            distpathmap.insert(dist, value.as_os_str().to_str().unwrap_or("").to_string());
-        }
-    }
-
-    Ok((distpathmap, solution))
-}
-
-/// retrieve a map that maps distributions to paths
-pub fn get_distpathmap(plugin_mgr: &PluginMgr) -> Result<DistPathMap, PesError> {
-    let repos = PackageRepository::from_plugin(plugin_mgr)?;
-    let mut distpathmap = DistPathMap::new();
-    // just using this to build list of distributions
-    for repo in &repos {
-       for dist in repo.distributions() {
-           let dist = dist?;
-           let version = dist.file_name().unwrap();
-           let package = dist.parent().unwrap();
-           let package = package.file_name().unwrap();
-           let dist_name = format!(
-               "{}-{}", 
-                package.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?, 
-                version.to_str().ok_or_else(|| PesError::ConversionError(package.to_os_string()))?
-            );
-           distpathmap.insert(dist_name, dist.to_string_lossy().to_string());
-       }
-    }
-    Ok(distpathmap)
-}
-
-/// generate a solution for the provided distribution and target
-pub fn perform_solve_for_distribution_and_target(
-    plugin_mgr: &PluginMgr,
-    distribution: &str,
-    target: &str,
-) -> Result<SolveResult, PesError> {
-    debug!("distribution: {} target: {}", distribution, target);
-    let repos = PackageRepository::from_plugin(plugin_mgr)?;
-    let mut path = None;
-    for repo in &repos {
-        let manifest = repo.manifest_for(distribution);
-        if manifest.is_ok() {
-            path = Some(manifest.unwrap());
-            break;
-        }
-    }
-    if path.is_none() {
-        return Err(PesError::DistributionNotFound(distribution.to_string()));
-    }
-    let manifest = Manifest::from_path(path.unwrap())?;
-    let request = manifest.get_requires(target)?;
-    let mut solver = Solver::new_from_repos(repos)?;
-    let solution = solver.solve(request)?;
-    // store a mapping between distributions and their paths on disk
-    let mut distpathmap = DistPathMap::new();
-    // get the path to the requested distribution and then insert requested distribution and its path into the map
-    let dist_path = solver.dist_path(distribution).ok_or(PesError::DistributionNotFound(distribution.to_string()))?;
-    distpathmap.insert(distribution.to_string(), dist_path.to_string_lossy().to_string());
-    // iterate over solution, filtering out ROOT_REQUEST, and inserting the rest into the distpathmap
-    solution
-        .iter()
-        .filter(|(ref name,_)| name.as_str() != "ROOT_REQUEST")
-        .map(|(ref name, ref version)|{
-            let dist = format!("{}-{}", name, version);
-            let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
-            distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
-            Ok(())
-        }).collect::<Result<(), PesError>>()?; 
-    Ok((distpathmap, solution))
 }
 
 /// Initialize the log given the provided level
@@ -251,10 +153,6 @@ pub fn launch_shell(
     // construct environment vec<CString> for execve call
     for (k, v) in env_vars {
         let existing_paths = v.inner();
-        //.into_iter()
-        //.filter(|x| x.exists())
-        //.map(|x| x.display().to_string())
-        //.collect::<Vec<_>>();
         // construct required format for execve
         let existing_paths = format!("{}={}", k, join(existing_paths, ":"));
         info!("{}", &existing_paths);
