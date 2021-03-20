@@ -24,7 +24,7 @@ pub use pubgrub::type_aliases::SelectedDependencies;
 
 use crate::{
     aliases::DistMap, distribution_range::DistributionRange, manifest::Manifest,
-    manifest::PackageManifest, PesError, Repository,SemanticVersion, ReleaseType,
+    manifest::PackageManifest, PesError, Repository,SemanticVersion, ReleaseType,PackageRepository
 };
 
 #[derive(Debug)]
@@ -48,7 +48,20 @@ impl Solver<String, SemanticVersion> {
     pub fn new() -> Self {
         Self::default()
     }
-
+    /// Construct a new Solver instacne from a vec of repositories. All of the 
+    /// distributions within each repository will be appropriately registered with
+    /// the solver so that they may be considered in calculating the dependency
+    /// closure when `solve` is later invoked.
+    pub fn new_from_repos(
+        repos: Vec<PackageRepository>,
+    ) -> Result<Solver<String, SemanticVersion>, PesError> {
+        let mut solver = Solver::new();
+        for repo in repos {
+            solver.add_repository(&repo)?;
+        }
+        Ok(solver)
+    }
+    
     /// Retrieve an iterator over package names that have been registered via ```add_repository```
     pub fn packages(&self) -> impl Iterator<Item = &str> {
         self.dependency_provider.packages().map(|x| x.as_str())

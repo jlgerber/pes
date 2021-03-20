@@ -63,17 +63,6 @@ pub fn find_manifest() -> Result<PathBuf, PesError> {
     Err(PesError::ManifestNotFound(env::current_dir()?))
 }
 
-// setup the solver, adding package repositories
-fn setup_solver(
-    repos: Vec<PackageRepository>,
-) -> Result<Solver<String, SemanticVersion>, PesError> {
-    let mut solver = Solver::new();
-    for repo in repos {
-        solver.add_repository(&repo)?;
-    }
-    Ok(solver)
-}
-
 /// given a set of constraints, calculate a solution
 pub fn perform_solve(
     plugin_mgr: &PluginMgr,
@@ -88,7 +77,7 @@ pub fn perform_solve(
         .map(|x| DistributionRange::from_str(x))
         .collect::<Result<Vec<_>, PesError>>()?;
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
-    let mut solver = setup_solver(repos)?;
+    let mut solver = Solver::new_from_repos(repos)?;
     // calculate the solution
     debug!("calling solver.solve with request {:?}", &request);
     let mut solution = solver.solve(request)?;
@@ -153,7 +142,7 @@ pub fn perform_solve_for_distribution_and_target(
     }
     let manifest = Manifest::from_path(path.unwrap())?;
     let request = manifest.get_requires(target)?;
-    let mut solver = setup_solver(repos)?;
+    let mut solver = Solver::new_from_repos(repos)?;
     let solution = solver.solve(request)?;
     // store a mapping between distributions and their paths on disk
     let mut distpathmap = DistPathMap::new();
