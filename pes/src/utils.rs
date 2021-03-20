@@ -45,8 +45,6 @@ pub fn find_manifest() -> Result<PathBuf, PesError> {
     info!("searching for manifest in {:?}", &cwd);
 
     loop {
-        // terminate loop
-
         cwd.push(MANIFEST_NAME);
         if cwd.exists() {
             info!("find_manifest() - Found manifest: {:?}", &cwd);
@@ -84,42 +82,48 @@ pub fn launch_shell(
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
     // iterate through the solve. For each package version, find it in a repository and store it
     // in a hashmap
-    let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
-    // define a var to hold a list of distributions for which we cannot find manifests
-    let mut missing_manifests = Vec::new();
-    // solution is a HashMap of (package,version) pairs
-    for (package, version) in solution.iter() {
-        // search through repositories for registered manifests
-        let mut manifest_path = None;
-        for repo in &repos {
-            let version_str = version.to_string();
-            // let distribution = PathBuf::from("")
-            match repo.manifest(package, &version_str) {
-                Ok(path) => manifest_path = Some(path),
-                Err(_) => (),
+    fn build_manifest_hashmap(solution: SelectedDependencies<String, SemanticVersion>, repos: &Vec<PackageRepository>) 
+    -> Result< HashMap::<String, (PathBuf, Manifest)>, PesError> {
+        let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
+        // define a var to hold a list of distributions for which we cannot find manifests
+        let mut missing_manifests = Vec::new();
+        // solution is a HashMap of (package,version) pairs
+        for (package, version) in solution.iter() {
+            // search through repositories for registered manifests
+            let mut manifest_path = None;
+            for repo in repos {
+                let version_str = version.to_string();
+                // let distribution = PathBuf::from("")
+                match repo.manifest(package, &version_str) {
+                    Ok(path) => manifest_path = Some(path),
+                    Err(_) => (),
+                }
+            }
+    
+            // if we found a manifest path, construct the actual manifest and
+            // add it to the hashmap tracking manifests
+            if let Some(mut path) = manifest_path {
+                let distribution = format!("{}-{}", package, version);
+                let mani = Manifest::from_path(&path)?;
+                // remove manifest from path
+                // todo: introduce abstraction for finding manifest & root of package
+                path.pop();
+                manifests.insert(distribution, (path, mani));
+            } else if package.as_str() != "ROOT_REQUEST" {
+                let distribution = format!("{}-{}", package, version);
+                // if we were unable to find the manifest, add it to the list of missing manifests
+                missing_manifests.push(distribution);
             }
         }
-
-        // if we found a manifest path, construct the actual manifest and
-        // add it to the hashmap tracking manifests
-        if let Some(mut path) = manifest_path {
-            let distribution = format!("{}-{}", package, version);
-            let mani = Manifest::from_path(&path)?;
-            // remove manifest from path
-            // todo: introduce abstraction for finding manifest & root of package
-            path.pop();
-            manifests.insert(distribution, (path, mani));
-        } else if package.as_str() != "ROOT_REQUEST" {
-            let distribution = format!("{}-{}", package, version);
-            // if we were unable to find the manifest, add it to the list of missing manifests
-            missing_manifests.push(distribution);
+    
+        if missing_manifests.len() > 0 {
+            Err(PesError::MissingManifests(missing_manifests))
+        } else {
+            Ok(manifests)
         }
     }
-
-    if missing_manifests.len() > 0 {
-        return Err(PesError::MissingManifests(missing_manifests));
-    }
-
+    let manifests = build_manifest_hashmap(solution, &repos)?;
+    
     // hashmap to store env vars
     //let mut env_vars = HashMap::new();
     let jsys = JsysCleanEnv::new();
