@@ -6,7 +6,7 @@ pub const PACKAGE_REPO_PATH_VAR_NAME: &str = "PES_PACKAGE_REPO_PATH";
 pub const MANIFEST_NAME: &str = "manifest.yaml";
 
 /// Name of the root package constructed to 
-pub const ROOT_REQUEST: &str  = "ROOT-REQUEST";
+pub const ROOT_REQUEST: &str  = "ROOT_REQUEST";
 
 pub const REPO_FINDER_VARNAME: &str = "REPO_FINDER_PLUGIN";
 pub const MANIFEST_FINDER_VARNAME: &str = "MANIFEST_FINDER_PLUGIN";

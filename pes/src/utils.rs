@@ -7,7 +7,8 @@ use itertools::join;
 use log::{debug, info, trace};
 use nix::unistd::execve;
 use peslib::{
-    constants::MANIFEST_NAME, jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
+    constants::{MANIFEST_NAME, ROOT_REQUEST},
+    jsys::*, parser::parse_consuming_all_paths_with_provider, prelude::*,
     PluginMgr, SelectedDependencies, SemanticVersion
 };
 
@@ -78,12 +79,13 @@ pub fn launch_shell(
     plugin_mgr: &PluginMgr,
     solution: SelectedDependencies<String, SemanticVersion>,
 ) -> Result<(), PesError> {
-    // construct a list of repositories
-    let repos = PackageRepository::from_plugin(plugin_mgr)?;
+    
     // iterate through the solve. For each package version, find it in a repository and store it
     // in a hashmap
-    fn build_manifest_hashmap(solution: SelectedDependencies<String, SemanticVersion>, repos: &Vec<PackageRepository>) 
-    -> Result< HashMap::<String, (PathBuf, Manifest)>, PesError> {
+    fn build_manifest_hashmap(
+        solution: SelectedDependencies<String, SemanticVersion>, 
+        repos: &Vec<PackageRepository>
+    ) -> Result< HashMap::<String, (PathBuf, Manifest)>, PesError> {
         let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
         // define a var to hold a list of distributions for which we cannot find manifests
         let mut missing_manifests = Vec::new();
@@ -99,7 +101,6 @@ pub fn launch_shell(
                     Err(_) => (),
                 }
             }
-    
             // if we found a manifest path, construct the actual manifest and
             // add it to the hashmap tracking manifests
             if let Some(mut path) = manifest_path {
@@ -109,7 +110,7 @@ pub fn launch_shell(
                 // todo: introduce abstraction for finding manifest & root of package
                 path.pop();
                 manifests.insert(distribution, (path, mani));
-            } else if package.as_str() != "ROOT_REQUEST" {
+            } else if package.as_str() != ROOT_REQUEST {
                 let distribution = format!("{}-{}", package, version);
                 // if we were unable to find the manifest, add it to the list of missing manifests
                 missing_manifests.push(distribution);
@@ -122,6 +123,9 @@ pub fn launch_shell(
             Ok(manifests)
         }
     }
+
+    // construct a list of repositories
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
     let manifests = build_manifest_hashmap(solution, &repos)?;
     
     // hashmap to store env vars

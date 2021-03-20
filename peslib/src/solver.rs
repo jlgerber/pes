@@ -17,17 +17,19 @@ use pubgrub::{
     range::Range,
     report::{DefaultStringReporter, Reporter},
     solver::{resolve, OfflineDependencyProvider},
-    //type_aliases::SelectedDependencies,
     version::{Version},
 };
 
 pub use pubgrub::type_aliases::SelectedDependencies;
 
 use crate::{
-    aliases::{DistMap, SolveResult, DistPathMap}, PluginMgr,
+    aliases::{DistMap, SolveResult, DistPathMap}, 
+    constants::ROOT_REQUEST,
     distribution_range::DistributionRange, manifest::Manifest,
-    manifest::PackageManifest, PesError, Repository, SemanticVersion, ReleaseType,PackageRepository
+    manifest::PackageManifest, PesError, Repository, SemanticVersion, ReleaseType,PackageRepository,
+    PluginMgr,
 };
+
 
 /// Given a set of constraints and an instance of the plugin manager, performa solve
 pub fn perform_solve(
@@ -50,7 +52,7 @@ pub fn perform_solve(
     let mut solution = solver.solve(request)?;
 
     // remove the root request from the solution as that is not a real package
-    solution.remove("ROOT_REQUEST");
+    solution.remove(ROOT_REQUEST);
 
     trace!("Solver solution:\n{:#?}", solution);
 
@@ -97,7 +99,7 @@ pub fn perform_solve_for_distribution_and_target(
     // iterate over solution, filtering out ROOT_REQUEST, and inserting the rest into the distpathmap
     solution
         .iter()
-        .filter(|(ref name,_)| name.as_str() != "ROOT_REQUEST")
+        .filter(|(ref name,_)| name.as_str() != ROOT_REQUEST)
         .map(|(ref name, ref version)|{
             let dist = format!("{}-{}", name, version);
             let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
@@ -114,7 +116,6 @@ pub struct Solver<P: Package, V: Version> {
     dist_cache: DistMap,
 }
 
-const ROOT: &str = "ROOT_REQUEST";
 
 impl Default for Solver<String, SemanticVersion> {
     fn default() -> Self {
@@ -199,13 +200,13 @@ impl Solver<String, SemanticVersion> {
             .collect();
         // create a fake package to house the requested version constraints
         self.dependency_provider.add_dependencies(
-            ROOT.to_string(),
+            ROOT_REQUEST.to_string(),
             SemanticVersion::new(1, 0, 0, ReleaseType::Release),
             requires,
         );
         match resolve(
             &self.dependency_provider,
-            ROOT.to_string(),
+            ROOT_REQUEST.to_string(),
             SemanticVersion::new(1, 0, 0, ReleaseType::Release),
         ) {
             Ok(solution) => Ok(solution),

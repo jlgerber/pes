@@ -63,12 +63,6 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             let (distmap, results) =
                 perform_solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
             
-            // I dont think we need to do this
-            // let results = results
-            //     .iter()
-            //     .filter(|x| x.0 != "ROOT_REQUEST")
-            //     .collect::<Vec<_>>();
-
             if let Some(output) = output {
                 // get the user from the current process
                 let user = get_user_by_uid(get_current_uid()).unwrap();
@@ -91,11 +85,6 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                     &(&distmap, &results),
                     &plugin_mgr
                 ).expect("present_solve_resutls_tree failed");
-
-                // println!("{}", dist.as_str());
-                // for result in results {
-                //     println!("{}-{}", result.0, result.1);
-                // }
             }
         }
         // here the user has specified a set of constraints instead of a specific distribution. This is
