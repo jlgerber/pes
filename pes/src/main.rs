@@ -18,18 +18,17 @@ pub use utils::{
 
 use presentation::{
     PresentationInput,
-    present_solve_results_tree, 
-    present_distributions
+    Presenter
 };
 
 fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
+    let presenter = Presenter::new(&plugin_mgr);
 
     match subcmd {
         SubCmds::Dist{ check, dist, list_dists } => {
             if list_dists {
-                let dmap = plugin_mgr.get_distpathmap()?;
-                present_distributions(dmap);
+                presenter.distributions()?;
             } else if check {
                 match dist {
                     Some(ref dist) => {
@@ -53,6 +52,8 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
 
 fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
+    let presenter = Presenter::new(&plugin_mgr);
+
     match subcmd {
         // Here the user has specified a specific distribution (eg foo-1.0.1) and a target
         SubCmds::Env {
@@ -81,11 +82,12 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 }
                 lockfile.to_file(output, true)?;
             } else {
-                present_solve_results_tree(
+
+                presenter.solve_results_tree(
                     PresentationInput::Target{distribution: dist.as_str(), target: target.as_str()},
                     &(&distmap, &results),
-                    &plugin_mgr
                 ).expect("present_solve_resutls_tree failed");
+                
             }
         }
         // here the user has specified a set of constraints instead of a specific distribution. This is
@@ -101,13 +103,12 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             info!("perfoming solve with constraints: {:?}", &constraints);
             let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
             info!("solve returned: {:#?}", &results);
-            //present_solve_results(distmap);
-            present_solve_results_tree(
+
+            presenter.solve_results_tree(
                 PresentationInput::Constraints(constraints),
                 &(&distmap, &results),
-                &plugin_mgr
             ).expect("present_solve_resutls_tree failed");
-            
+
         }
         // here the user has specified a set of constraints as well as an output lockfile. Rather
         // than display the results, we write them to a file.
@@ -131,11 +132,10 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 let dist = format!("{}-{}", result.0, result.1);
                 lockfile.add_dist("run", dist.as_str())?;
             }
-            //present_solve_results(distmap);
-            present_solve_results_tree(
+
+            presenter.solve_results_tree(
                 PresentationInput::Constraints(constraints),
                 &(&distmap, &results),
-                &plugin_mgr
             ).expect("present_solve_resutls_tree failed");
 
             lockfile.to_file(output, true)?;
@@ -161,13 +161,14 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             lockfile: None,
             ..
         } => {
+            let presenter = Presenter::new(&plugin_mgr);
+
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
             let (distmap, solution) = perform_solve(&plugin_mgr, &constraints)?;
-            //present_solve_results(distmap);
-            present_solve_results_tree(
+
+            presenter.solve_results_tree(
                 PresentationInput::Constraints(constraints),
                 &(&distmap, &solution),
-                &plugin_mgr
             ).expect("present_solve_resutls_tree failed");
 
             launch_shell(&plugin_mgr, solution)
