@@ -11,6 +11,7 @@ use std::{
     },
 };
 
+/// Present distributions from all of the repositories identified by the repo_finder plugin in a tidy table, 
 pub fn present_distributions(plugin_mgr: &PluginMgr) -> Result<(), PesError> {
     // setup the table
     let mut table = Table::new();
@@ -138,7 +139,6 @@ pub fn present_solve_results_tree<'a> (
                     depth+1,
                     plugin_mgr
                 );
-
             }
         }
         memo
