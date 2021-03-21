@@ -88,7 +88,7 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
     let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
     let manifests = package_repo.manifests_for("foo").unwrap();
     // list of versions in ROOT/test_fixtures/repo/foo
-    let versions = vec!["0.1.0", "0.2.0", "0.2.1"];
+    let versions = vec!["0.1.0", "0.2.0", "0.2.1", "0.2.2-beta"];
     // 
     let expected = expected_manifests_for(&["foo"], &[versions], "manifest.yaml");
     assert_eq!(expected.len(), manifests.len());
@@ -97,16 +97,64 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
     }
 }
 
+// this tests the case where we are asking the manifests method to ignore any non-release distributions. We 
+// ensure that we are not picking up the foo-0.2.2-beta distribution, which should be getting filtered out.
 #[test]
-fn manifests__returns_vec_of_pathbuf_to_manifest_files() {
+fn manifests__returns_vec_of_pathbuf_to_manifest_files_with_release_type_Release() {
     let root = get_repo_root();
     let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
 
     let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
-    let manifests: Vec<PathBuf> = package_repo.manifests().filter_map(|x| x.ok()).collect();
+    let overrides = std::rc::Rc::new(Vec::new());
+    let manifests: Vec<PathBuf> = package_repo.manifests(ReleaseType::Release,overrides).filter_map(|x| x.ok()).collect();
     // list of versions in ROOT/test_fixtures/repo/foo
     let packs = &["foo", "bar"];
     let versions = &[vec!["0.1.0", "0.2.0", "0.2.1"], vec!["0.1.0", "1.0.1"]];
+    
+    let expected = expected_manifests_for(packs, versions, "manifest.yaml");
+    assert_eq!(expected.len(), manifests.len());
+    for manifest in manifests {
+        assert!(expected.iter().any(|x| &manifest == x));
+    }
+}
+
+
+// this tests the case where we are setting the release_type to allow Beta release types. In our fixture data
+// we have a 0.2.2-beta, which we test to make sure exists in the returned manifest path vec
+#[test]
+fn manifests__returns_vec_of_pathbuf_to_manifest_files_that_include_prereleases__when_release_type_is_alpha() {
+    let root = get_repo_root();
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+
+    let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
+    let overrides = std::rc::Rc::new(Vec::new());
+    let manifests: Vec<PathBuf> = package_repo.manifests(ReleaseType::Alpha, overrides).filter_map(|x| x.ok()).collect();
+    // list of versions in ROOT/test_fixtures/repo/foo
+    let packs = &["foo", "bar"];
+    let versions = &[vec!["0.1.0", "0.2.0", "0.2.1", "0.2.2-beta"], vec!["0.1.0", "1.0.1"]];
+    
+    let expected = expected_manifests_for(packs, versions, "manifest.yaml");
+    assert_eq!(expected.len(), manifests.len());
+    for manifest in manifests {
+        assert!(expected.iter().any(|x| &manifest == x));
+    }
+}
+
+// This tests the case where we are generally filtering out any non Release ReleaseTypes, but where we explicitly 
+// set the override for foo-0.2.2-beta via the distriubtions_override parameter. We assure that 0.2.2-beta, from the 
+// test fixture data, is getting returned
+#[test]
+fn manifests__returns_vec_of_pathbuf_to_manifest_files_with_release_type_Release_and_explicit_override() {
+    let root = get_repo_root();
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+
+    let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
+    let override_version = ("foo".to_string(), SemanticVersion::new(0,2,2, ReleaseType::Beta));
+    let overrides = std::rc::Rc::new(vec![override_version]);
+    let manifests: Vec<PathBuf> = package_repo.manifests(ReleaseType::Release,overrides).filter_map(|x| x.ok()).collect();
+    // list of versions in ROOT/test_fixtures/repo/foo
+    let packs = &["foo", "bar"];
+    let versions = &[vec!["0.1.0", "0.2.0", "0.2.1", "0.2.2-beta"], vec!["0.1.0", "1.0.1"]];
     
     let expected = expected_manifests_for(packs, versions, "manifest.yaml");
     assert_eq!(expected.len(), manifests.len());

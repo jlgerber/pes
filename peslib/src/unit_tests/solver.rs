@@ -29,7 +29,7 @@ fn add_repository__given_a_repository_with_a_package_without_run_target__succeed
     let pkg_repo = PackageRepository::new(get_repo_root("repo2"), &plugin_mgr);
     let mut solver = Solver::new();
     solver
-        .add_repository(&pkg_repo)
+        .add_repository(&pkg_repo, ReleaseType::Release, Rc::new(Vec::new()))
         .expect("should be able to add repository");
     let versions: Vec<&SemanticVersion> = solver.versions("foo").unwrap().collect();
     assert_eq!(versions.len(), 1);
@@ -57,7 +57,7 @@ fn solve_from_str__given_a_valid_distribution__succeeds() {
     let package_repo = PackageRepository::new(get_repo_root("repo"), &plugin_mgr);
     let mut solver = Solver::new();
     solver
-        .add_repository(&package_repo)
+        .add_repository(&package_repo, ReleaseType::Release, Rc::new(Vec::new()))
         .expect("should be able to add repository");
     let solution = solver.solve_from_str("bar-0.1.0");
     assert!(solution.is_ok());

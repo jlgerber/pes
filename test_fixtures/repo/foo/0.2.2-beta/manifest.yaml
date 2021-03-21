@@ -1,0 +1,8 @@
+---
+schema: 1
+name: foo
+version: 0.2.2-beta
+description: This is the foo package
+environment: 
+  PATH: "prepend({root}/bin)"
+  PYTHONPATH: "prepend({root}/python)"
