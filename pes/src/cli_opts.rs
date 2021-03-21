@@ -62,6 +62,10 @@ pub enum SubCmds {
          /// Provide a distribution to solve, coupled with an optional target name (defaults to run)
          distribution: Option<String>,
 
+         #[structopt(short = "p", long="pre")]
+         /// Include prereleases in the solve. By default, false
+         include_pre: bool,
+
          #[structopt(short="t", long="target", default_value=DEFAULT_TARGET)]
          /// Provide a target to calculate the dependencies for. Used with -d | --distribution
          target: String
@@ -77,6 +81,10 @@ pub enum SubCmds {
         #[structopt(short = "l", long="lock-file", group= "shell_action", parse(from_os_str))]
         /// Provide a pes lock file
          lockfile: Option<PathBuf>,
+
+         #[structopt(short = "p", long="pre")]
+         /// Include prereleases in the solve. By default, false
+         include_pre: bool,
 
         #[structopt(group = "shell_action")]
         /// provide a list of constraints

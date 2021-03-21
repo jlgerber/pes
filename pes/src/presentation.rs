@@ -154,7 +154,7 @@ impl<'a> Presenter<'a> {
                     memo.insert(distribution.to_string());
                     println!("{}{}", &indent, &distribution);
                     // get manifest and list of constraints
-                    let distpath = solve.0.get(&distribution).expect(format!("unable to get path to distribution {} from DistPathMap", &distribution).as_str());
+                    let distpath = solve.0.get(&distribution).expect(format!("unable to get path to distribution {} from DistPathMap: {:#?} and solve: {:#?}", &distribution, solve.0, solve.1).as_str());
                     let  distpath = PathBuf::from(distpath.as_str());
                     // get the manifest from the distribution path via the plugin manager
                     let manifest_path = plugin_mgr.manifest_path_from_distribution(distpath);

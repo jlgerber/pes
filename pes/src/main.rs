@@ -68,10 +68,11 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             distribution: Some(dist),
             target,
             output,
+            include_pre,
             ..
         } => {
             let (distmap, results) =
-                perform_solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str())?;
+                perform_solve_for_distribution_and_target(&plugin_mgr, dist.as_str(), target.as_str(), include_pre)?;
             
             if let Some(output) = output {
                 // get the user from the current process
@@ -102,6 +103,7 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         // used to generate a solve for runtime
         SubCmds::Env {
             constraints,
+            include_pre,
             output: None,
             ..
         } => {
@@ -109,7 +111,8 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
             // results, as we dont want to present that to the end user
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
             info!("perfoming solve with constraints: {:?}", &constraints);
-            let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
+           
+            let (distmap, results) = perform_solve(&plugin_mgr, &constraints, include_pre)?;
             info!("solve returned: {:#?}", &results);
 
             presenter.solve_results_tree(
@@ -122,12 +125,14 @@ fn env_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         // than display the results, we write them to a file.
         SubCmds::Env {
             constraints,
+            include_pre,
             output: Some(output),
             ..
         } => {
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
             // perform the solve given the constraints
-            let (distmap, results) = perform_solve(&plugin_mgr, &constraints)?;
+           
+            let (distmap, results) = perform_solve(&plugin_mgr, &constraints, include_pre)?;
 
             // calculate the request string
             let request = std::env::args().collect::<Vec<_>>().join(" ");
@@ -166,13 +171,15 @@ fn shell_cmd(subcmd: SubCmds) -> Result<(), PesError> {
         }
         SubCmds::Shell {
             constraints,
+            include_pre,
             lockfile: None,
             ..
         } => {
             let presenter = Presenter::new(&plugin_mgr);
 
             let constraints: Vec<&str> = constraints.iter().map(AsRef::as_ref).collect();
-            let (distmap, solution) = perform_solve(&plugin_mgr, &constraints)?;
+            
+            let (distmap, solution) = perform_solve(&plugin_mgr, &constraints, include_pre)?;
 
             presenter.solve_results_tree(
                 PresentationInput::Constraints(constraints),

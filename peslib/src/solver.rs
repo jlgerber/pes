@@ -9,6 +9,7 @@
 // package
 
 use std::path::Path;
+use std::rc::Rc;
 use log::*;
 
 use pubgrub::{
@@ -25,9 +26,15 @@ pub use pubgrub::type_aliases::SelectedDependencies;
 use crate::{
     aliases::{DistMap, SolveResult, DistPathMap}, 
     constants::ROOT_REQUEST,
-    distribution_range::DistributionRange, manifest::Manifest,
-    manifest::PackageManifest, PesError, Repository, SemanticVersion, ReleaseType,PackageRepository,
+    distribution_range::DistributionRange, 
+    manifest::Manifest,
+    manifest::PackageManifest, 
+    parser::parse_consuming_package_version,
+    PesError, 
     PluginMgr,
+    ReleaseType,PackageRepository,
+    Repository, 
+    SemanticVersion, 
 };
 
 
@@ -35,6 +42,7 @@ use crate::{
 pub fn perform_solve(
     plugin_mgr: &PluginMgr,
     constraints: &Vec<&str>, 
+    include_pre: bool,
 ) -> Result<SolveResult, PesError> {
     debug!("user supplied constraints: {:?}.", constraints);
 
@@ -45,26 +53,62 @@ pub fn perform_solve(
         .collect::<Result<Vec<_>, PesError>>()?;
 
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
-    
-    let mut solver = Solver::new_from_repos(repos)?;
+    let min_release_type = if include_pre {ReleaseType::Alpha} else {ReleaseType::Release};
+    // if we are not including prereleases, we search for any explicitly defined
+    // constraints that happen to be pre-releases, and pass them through as overrides.
+    let dist_overrides = if include_pre {Vec::new()} else {
+        constraints
+            .iter()
+            .filter_map(|x| parse_consuming_package_version(x).ok())
+            .filter(|(_name, version)| version.release_type < ReleaseType::Release)
+            .map(|(name, version)| (name.to_string(), version))
+            .collect::<Vec<_>>()
+    };
+    let dist_overrides = Rc::new(dist_overrides);
+    let mut solver = Solver::new_from_repos(repos, min_release_type, dist_overrides)?;
     // calculate the solution
     debug!("Calling solver.solve with request {:?}", &request);
     let mut solution = solver.solve(request)?;
 
-    // remove the root request from the solution as that is not a real package
+    // // remove the root request from the solution as that is not a real package
     solution.remove(ROOT_REQUEST);
-
-    trace!("Solver solution:\n{:#?}", solution);
-
     let mut distpathmap = DistPathMap::new();
     
-    for (name, version) in &solution {
-        let dist = format!("{}-{}", name, version);
-        if let Some(value) = solver.dist_path(&dist) {
-            distpathmap.insert(dist, value.as_os_str().to_str().unwrap_or("").to_string());
-        }
-    }
-
+    solution
+        .iter()
+        .map(|(ref name, ref version)|{
+            let dist = format!("{}-{}", name, version);
+            let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+            distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+            Ok(())
+        }).collect::<Result<(), PesError>>()?; 
+    // turns out that we handle this in Solver::new_from_repos(...)
+    // I should measure whether the following improves or impedes performance...
+    // It isnt incorrect to do. Its just unneccessary from a solution standpoint.
+    // if include_pre {
+    //     solution
+    //     .iter()
+    //     .map(|(ref name, ref version)|{
+    //         let dist = format!("{}-{}", name, version);
+    //         let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+    //         distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+    //         Ok(())
+    //     }).collect::<Result<(), PesError>>()?; 
+    // } else {
+    //     solution
+    //     .iter()
+    //     // we are going to keep the distribution if it is either (a) a Release or 
+    //     // (b) it matches one of the preserve_pre items passed in
+    //     .filter(|(ref name, version)| version.release_type >= ReleaseType::Release || 
+    //                                   preserve_pre.iter().any(|x| name.as_str() == x.0 && *version == &x.1))
+    //     .map(|(ref name, ref version)|{
+    //         let dist = format!("{}-{}", name, version);
+    //         let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+    //         distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+    //         Ok(())
+    //     }).collect::<Result<(), PesError>>()?; 
+    // }
+    
     Ok((distpathmap, solution))
 }
 
@@ -73,6 +117,10 @@ pub fn perform_solve_for_distribution_and_target(
     plugin_mgr: &PluginMgr,
     distribution: &str,
     target: &str,
+    // indicate whether or not you wish to include prereleases in the solution space.
+    // By default, the function ignores all pre-releases other than potentially 
+    // the supplied distribution.
+    include_pre: bool
 ) -> Result<SolveResult, PesError> {
     debug!("distribution: {} target: {}", distribution, target);
     let repos = PackageRepository::from_plugin(plugin_mgr)?;
@@ -84,28 +132,54 @@ pub fn perform_solve_for_distribution_and_target(
             break;
         }
     }
+   
     if path.is_none() {
         return Err(PesError::DistributionNotFound(distribution.to_string()));
     }
     let manifest = Manifest::from_path(path.unwrap())?;
     let request = manifest.get_requires(target)?;
-    let mut solver = Solver::new_from_repos(repos)?;
-    let solution = solver.solve(request)?;
+
+    let min_release_type = if include_pre {ReleaseType::Alpha} else {ReleaseType::Release};
+    let dist_overrides = if include_pre {Rc::new(Vec::new())} else {
+        let (name, version) = parse_consuming_package_version(distribution)?;
+        Rc::new(vec![(name.to_string(), version)])
+    };
+
+    let mut solver = Solver::new_from_repos(repos, min_release_type, dist_overrides)?;
+    let mut solution = solver.solve(request)?;
+    solution.remove(ROOT_REQUEST);
     // store a mapping between distributions and their paths on disk
     let mut distpathmap = DistPathMap::new();
     // get the path to the requested distribution and then insert requested distribution and its path into the map
     let dist_path = solver.dist_path(distribution).ok_or(PesError::DistributionNotFound(distribution.to_string()))?;
     distpathmap.insert(distribution.to_string(), dist_path.to_string_lossy().to_string());
-    // iterate over solution, filtering out ROOT_REQUEST, and inserting the rest into the distpathmap
-    solution
+   
+    if include_pre {
+        solution
         .iter()
-        .filter(|(ref name,_)| name.as_str() != ROOT_REQUEST)
         .map(|(ref name, ref version)|{
             let dist = format!("{}-{}", name, version);
             let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
             distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
             Ok(())
         }).collect::<Result<(), PesError>>()?; 
+    } else {
+        // if we are not going to include pre-releases
+        let dist_pair = parse_consuming_package_version(distribution)?;
+
+        solution
+        .iter()
+        // in this case we need to filter out any pre-release versions
+        .filter(|(ref name, version)| version.release_type >= ReleaseType::Release|| 
+                     (dist_pair.0 == name.as_str() && &dist_pair.1 == *version))
+        .map(|(ref name, ref version)|{
+            let dist = format!("{}-{}", name, version);
+            let dist_path = solver.dist_path(&dist).ok_or(PesError::DistributionPathNotFound(dist.clone()))?;
+            distpathmap.insert(dist, dist_path.to_string_lossy().to_string()); 
+            Ok(())
+        }).collect::<Result<(), PesError>>()?; 
+    }
+    
     Ok((distpathmap, solution))
 }
 
@@ -136,10 +210,14 @@ impl Solver<String, SemanticVersion> {
     /// closure when `solve` is later invoked.
     pub fn new_from_repos(
         repos: Vec<PackageRepository>,
+        min_release_type: ReleaseType, 
+        distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>
+
     ) -> Result<Solver<String, SemanticVersion>, PesError> {
         let mut solver = Solver::new();
+
         for repo in repos {
-            solver.add_repository(&repo)?;
+            solver.add_repository(&repo, min_release_type, distributions_override.clone())?;
         }
         Ok(solver)
     }
@@ -158,8 +236,13 @@ impl Solver<String, SemanticVersion> {
         self.dist_cache.get(distribution).map(|x| x.as_path())
     }
     /// Add packages from a repository to the dependency provider
-    pub fn add_repository<R: Repository>(&mut self, repository: &R) -> Result<(), PesError> {
-        for manifest_path in repository.manifests() {
+    pub fn add_repository<R: Repository>(
+        &mut self, 
+        repository: &R, 
+        min_release_type: ReleaseType, 
+        distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>
+    ) -> Result<(), PesError> {
+        for manifest_path in repository.manifests(min_release_type, distributions_override) {
             let manifest_path =
                 manifest_path.map_err(|e| PesError::PesError(format!("{:?}", e)))?;
             let mut dist_path = manifest_path.as_ref().to_path_buf();

@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 use std::ffi::CString;
 
 use generator::Generator;
-
-use crate::{Manifest, PesError};
+use pes_core::ReleaseType;
+use crate::{Manifest, PesError, SemanticVersion};
 
 /// Trait to provide a means to retrieve variables
 pub trait VarProvider<'a> {
@@ -61,8 +61,9 @@ pub trait Repository: std::fmt::Debug {
     /// retrieve manifests for the provided package
     fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError>;
 
-    /// retrieve a generator over all of the manifests in a repository
-    fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
+    /// retrieve a generator over all of the manifests in a repository for which the 
+    /// predicate evaluates to true.
+    fn manifests(&self, min_release_type: ReleaseType, distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
 
     /// Retrieve generator over distributions in repository
     fn distributions(&self)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> ;

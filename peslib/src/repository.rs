@@ -6,8 +6,10 @@
 //! ```ignore
 //! /repo/foo/0.1.0/METADATA/manifest.yaml
 //! ```
-
+use std::str::FromStr;
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
+
 // extern imports
 use generator::{Generator, Gn};
 // crate imports
@@ -16,6 +18,7 @@ use crate::parser::parse_consuming_package_version;
 use crate::PesError;
 use crate::Repository;
 use crate::PluginMgr;
+use crate::{ReleaseType, SemanticVersion};
 
 /// A collection of package distributions
 #[derive(Debug, PartialEq, Eq)]
@@ -76,16 +79,49 @@ impl<'a> Repository for PackageRepository<'a> {
         Ok(manifests)
     }
 
-    fn manifests(&self) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> {
+    fn manifests(
+        &self,  
+        min_release_type: ReleaseType, 
+        distributions_override: Rc<Vec<(String, SemanticVersion)>>
+    ) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> {
         let root = self.root.clone();
+        
+        let overrides = distributions_override.clone();
 
         Gn::new_scoped(move |mut s| {
+            let overrides = overrides
+            .iter()
+            .filter(|(_name, version)| version.release_type != ReleaseType::Release)
+            .collect::<Vec<_>>();
             for dir in root.read_dir().unwrap() {
                 let path = dir.unwrap().path();
                 if path.is_dir() {
                     for dir2 in path.read_dir().unwrap() {
                         let path2 = dir2.unwrap().path();
                         if path2.is_dir() {
+                            if min_release_type > ReleaseType::Alpha {
+                                let version_string = path2.file_name().unwrap().to_string_lossy().to_string();
+                                let version = match SemanticVersion::from_str(version_string.as_str()) {
+                                    Ok(version) => version,
+                                    Err(e) => panic!(format!("unable to extract semantic version from {}. Error: {}", version_string.as_str(), e))//s.yield_(Err(PesError::InvalidVersion(version_string)))
+                                };
+                                if version.release_type < min_release_type {
+                                    // for example. min_release_type = Release & version = Beta. 
+                                    // Beta < Release so we skip.
+                                    let mut found_match = false;
+                                    if overrides.len() > 0 {
+                                        let package = path2.parent().unwrap().file_name().unwrap().to_string_lossy().to_string();
+                                        if overrides.iter().any(|(candidate_name, candidate_version)| candidate_name == &package && candidate_version == &version) {
+                                            found_match = true;
+                                        }
+                                    }
+                                    // we see if any of the overrides match the current package and version
+                                    // if so, we dont skip
+                                    if !found_match {
+                                        continue;
+                                    }
+                                }
+                            }
                             let manifest_path = self.plugin_mgr.manifest_path_from_distribution(path2);
                             if manifest_path.is_file() {
                                 s.yield_(Ok(manifest_path));

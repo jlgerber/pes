@@ -16,10 +16,10 @@ use pubgrub::version::Version;
 /// - 1.2.3 (implicitly releast type Release)
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SemanticVersion {
-    major: u32,
-    minor: u32,
-    patch: u32,
-    release_type: ReleaseType
+    pub major: u32,
+    pub minor: u32,
+    pub patch: u32,
+    pub release_type: ReleaseType
 }
 
 
