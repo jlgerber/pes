@@ -14,7 +14,7 @@ use std::rc::Rc;
 use generator::{Generator, Gn};
 // crate imports
 //use crate::constants::{MANIFEST_NAME, /*PACKAGE_REPO_PATH_VAR_NAME*/ };
-use crate::parser::parse_consuming_package_version;
+use crate::parser::{parse_consuming_package_version, parse_consuming_semver};
 use crate::PesError;
 use crate::Repository;
 use crate::PluginMgr;
@@ -65,7 +65,7 @@ impl<'a> Repository for PackageRepository<'a> {
         Ok(manifest_path)
     }
 
-    fn manifests_for<P: AsRef<str>>(&self, package: P) -> Result<Vec<Self::Manifest>, PesError> {
+    fn manifests_for<P: AsRef<str>>(&self, package: P, min_release_type: ReleaseType) -> Result<Vec<Self::Manifest>, PesError> {
         let mut manifest_path = self.root.clone();
         manifest_path.push(package.as_ref());
 
@@ -73,7 +73,18 @@ impl<'a> Repository for PackageRepository<'a> {
         for entry in manifest_path.read_dir()? {
             let entry = entry?;
             let manifest_path = self.plugin_mgr.manifest_path_from_distribution(entry.path());
-           
+            if min_release_type != ReleaseType::Alpha {
+                let version = manifest_path
+                                .as_path()
+                                .parent().ok_or_else(|| PesError::InvalidPath(manifest_path.clone()))?
+                                .file_name().ok_or_else(|| PesError::InvalidVersion(format!("{:?} unable to extract directory from PathBuf via as_path().file_name()", manifest_path)))?;
+                let version = version.to_string_lossy().to_string();
+
+                let version = parse_consuming_semver(version.as_str())?;
+                if version.release_type < min_release_type {
+                    continue;
+                }
+            }
             manifests.push(manifest_path);
         }
         Ok(manifests)

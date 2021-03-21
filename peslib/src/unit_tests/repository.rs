@@ -86,9 +86,26 @@ fn manifests_for__returns_vec_of_pathbuf_to_manifest_files() {
     let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
     let root = get_repo_root();
     let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
-    let manifests = package_repo.manifests_for("foo").unwrap();
+    let manifests = package_repo.manifests_for("foo", ReleaseType::Alpha).unwrap();
     // list of versions in ROOT/test_fixtures/repo/foo
     let versions = vec!["0.1.0", "0.2.0", "0.2.1", "0.2.2-beta"];
+    // 
+    let expected = expected_manifests_for(&["foo"], &[versions], "manifest.yaml");
+    assert_eq!(expected.len(), manifests.len());
+    for manifest in manifests {
+        assert!(expected.iter().any(|x| &manifest == x));
+    }
+}
+
+
+#[test]
+fn manifests_for__when_supplied_with_a_min_pre_release_of_Release__returns_vec_of_pathbuf_to_manifest_files_that_does_not_include_prereleases() {
+    let plugin_mgr = PluginMgr::new().expect("unable to load plugin manager");
+    let root = get_repo_root();
+    let package_repo = PackageRepository::new(root.clone(), &plugin_mgr);
+    let manifests = package_repo.manifests_for("foo", ReleaseType::Release).expect("unable to get manfiests for foo");
+    // list of versions in ROOT/test_fixtures/repo/foo
+    let versions = vec!["0.1.0", "0.2.0", "0.2.1"];
     // 
     let expected = expected_manifests_for(&["foo"], &[versions], "manifest.yaml");
     assert_eq!(expected.len(), manifests.len());

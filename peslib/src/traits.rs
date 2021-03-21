@@ -49,7 +49,9 @@ pub trait Repository: std::fmt::Debug {
     type Manifest: AsRef<Path>;
     type Distribution: AsRef<Path>;
     type Err: std::error::Error;
-
+     
+    /// Retrieve the root of the repository
+    // todo: shouldnt this be defined as an associated type via something line Borrow<Root>
     fn root(&self) -> &Path;
 
     /// retrieve a manifest for the provided package and version
@@ -58,11 +60,19 @@ pub trait Repository: std::fmt::Debug {
     /// Retrieve the manifest for the provided distribution
     fn manifest_for<P: AsRef<str> >(&self, distribution: P) -> Result<Self::Manifest, PesError>;
 
-    /// retrieve manifests for the provided package
-    fn manifests_for<P: AsRef<str> >(&self, package: P) -> Result<Vec<Self::Manifest>, PesError>;
+    /// Retrieve manifests for the provided package whose release_type is greater than or equal to the provided `min_release_type`.
+    /// This would typlically be used to filter out pre-releases by passing in `ReleaseType::Release`, or return all
+    /// release types by specifying `ReleaseType::Alpha`.
+    fn manifests_for<P: AsRef<str> >(&self, package: P, min_release_type: ReleaseType) -> Result<Vec<Self::Manifest>, PesError>;
 
-    /// retrieve a generator over all of the manifests in a repository for which the 
-    /// predicate evaluates to true.
+    /// Retrieve a generator over all of the manifests in a repository for which the 
+    /// predicate evaluates to true. One may supply a `min_release_type` which filters out distributions whose release types are 
+    /// less than the `nim_release_type`. One may, for example, filter out pre-releases, by supplying `ReleaseType::Release`, or 
+    /// return all pre-releases by supplying `ReleaseType::Alpha`. One may override the filtering behavior by providing specific  
+    /// distributions to return, regardless of `min_release_type` via the `distributions_override`. This would typeically be used
+    /// in cases where one is solving for a user supplied distribution which is a pre-release, but one does not want to pick up 
+    /// transitive pre-releases. In this case, one may set `min_release_type` to `ReleaseType::Release` and then pass in the
+    /// specific pre-release distribution via `distributions_override`.
     fn manifests(&self, min_release_type: ReleaseType, distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
 
     /// Retrieve generator over distributions in repository

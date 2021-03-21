@@ -75,6 +75,9 @@ pub enum PesError {
         /// The include name
         include: String,
     },
+    /// Problem parsing path
+    #[error("Invalid Path: {0:?}")]
+    InvalidPath(PathBuf),
 
     /// Indicates that an io::Error has taken place
     #[error("io::Error {0:?}")]
