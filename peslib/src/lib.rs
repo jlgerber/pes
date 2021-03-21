@@ -67,6 +67,7 @@ pub mod prelude {
         PackageRepository, 
         PesError, 
         PluginMgr, 
+        ReleaseType,
         Repository, 
         SemanticVersion, 
         Solver,

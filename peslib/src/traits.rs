@@ -66,7 +66,7 @@ pub trait Repository: std::fmt::Debug {
     fn manifests(&self, min_release_type: ReleaseType, distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>) -> Generator<'_, (), Result<Self::Manifest, Self::Err>> ;
 
     /// Retrieve generator over distributions in repository
-    fn distributions(&self)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> ;
+    fn distributions(&self, min_release_type: ReleaseType, distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> ;
 
     /// determine whether the repository has the distribution
     fn has_distribution<D: AsRef<str>>(&self, distribution: D) -> Result<bool,Self::Err>;

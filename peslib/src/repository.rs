@@ -136,16 +136,37 @@ impl<'a> Repository for PackageRepository<'a> {
         })
     }
 
-    fn distributions(&self)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> {
+    fn distributions(&self, min_release_type: ReleaseType, distributions_override: std::rc::Rc<Vec<(String, SemanticVersion)>>)-> Generator<'_, (), Result<Self::Distribution, Self::Err>> {
         let root = self.root.clone();
+        let overrides = distributions_override.clone();
         Gn::new_scoped(move |mut s| {
+            let overrides = overrides
+            .iter()
+            .filter(|(_name, version)| version.release_type != ReleaseType::Release)
+            .collect::<Vec<_>>();
+
             for dir in root.read_dir().unwrap() {
                 let package = dir.unwrap().path();
                 if package.is_dir() {
                     for version in package.read_dir().unwrap() {
                         let version = version.unwrap().path();
                         if version.is_dir() {
-                            
+                            if min_release_type < ReleaseType::Release {
+                                let semver_str = version.file_name().unwrap().to_string_lossy().to_string();
+                                let semver = match SemanticVersion::from_str(semver_str.as_str()) {
+                                    Ok(version) => version,
+                                    Err(e) => panic!(format!("unable to extract semantic version from {}. Error: {}", semver_str.as_str(), e))//s.yield_(Err(PesError::InvalidVersion(version_string)))
+                                };
+                                if semver.release_type < min_release_type {
+                                    let pkg = package.file_name().unwrap().to_string_lossy().to_string();
+                                    // if none of the overrides match the current name and version, then we continue looping without
+                                    // yielding the distribution. We do this because we have already established that the current
+                                    // distribution's verison's release type is less than the minimim release type specified
+                                    if !overrides.iter().any(|(name,version)| name == pkg.as_str() && version == &semver)  {
+                                        continue
+                                    }
+                                }
+                            }
                             s.yield_(Ok(version));
                         } else {
                             s.yield_(Err(PesError::MissingPath(version)));

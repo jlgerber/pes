@@ -3,8 +3,12 @@ use crate::{aliases::DistPathMap, PesError, PackageRepository, traits::Repositor
 use libloading::Library;
 use log::info;
 use pes_core::{ RepoFinderService, ManifestFinderService };
-use std::path::PathBuf;
+use std::{
+    path::PathBuf,
+    rc::Rc,
+};
 
+use crate::{SemanticVersion, ReleaseType};
 
 /// Load and store plugins
 #[derive(Debug)]
@@ -104,12 +108,13 @@ impl PluginMgr {
     }
 
     /// retrieve a map that maps distributions to paths
-    pub fn get_distpathmap(&self) -> Result<DistPathMap, PesError> {
+    pub fn get_distpathmap(&self, min_release_type: ReleaseType, distributions_override: Vec<(String, SemanticVersion)>) -> Result<DistPathMap, PesError> {
         let repos = PackageRepository::from_plugin(self)?;
         let mut distpathmap = DistPathMap::new();
+        let distributions_override = Rc::new(distributions_override);
         // just using this to build list of distributions
         for repo in &repos {
-        for dist in repo.distributions() {
+        for dist in repo.distributions(min_release_type, distributions_override.clone()) {
             let dist = dist?;
             let version = dist.file_name().unwrap();
             let package = dist.parent().unwrap();

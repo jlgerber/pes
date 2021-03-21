@@ -8,10 +8,8 @@ use std::{
 };
 
 use prettytable::{color, format, Attr, Cell, Row, Table};
-use peslib::{PluginMgr, Manifest, PesError};
-
-use crate::aliases::SolveRefResult;
-
+use peslib::{PluginMgr, Manifest, PesError, ReleaseType};
+use crate::{aliases::SolveRefResult};
 
 
 /// Specify input to presentation method
@@ -39,11 +37,11 @@ impl<'a> Presenter<'a> {
     }
 
     /// present a list of distributions and their location in a pretty table
-    pub fn distributions(&self, filter: DistributionFilter<'a>) -> Result<(), PesError> {
+    pub fn distributions(&self, filter: DistributionFilter<'a>, min_release_type: ReleaseType) -> Result<(), PesError> {
         // TODO: implement different strategies for filtering
         let _ = filter;
 
-        let dist_path_map = self.plugin_mgr.get_distpathmap()?;
+        let dist_path_map = self.plugin_mgr.get_distpathmap(min_release_type, Vec::new())?;
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_CLEAN);
         table.add_row(Row::new(vec![
@@ -86,7 +84,8 @@ impl<'a> Presenter<'a> {
     #[allow(dead_code)]
     /// present th resutls of a solve
     pub fn solve_results(&self) -> Result<(), PesError> {
-        let dist_path_map = self.plugin_mgr.get_distpathmap()?;
+        // currently, we dont care to make use of releasetype filtering
+        let dist_path_map = self.plugin_mgr.get_distpathmap(ReleaseType::Alpha, Vec::new())?;
         let mut table = Table::new();
         table.set_format(*format::consts::FORMAT_CLEAN);
         table.add_row(Row::new(vec![

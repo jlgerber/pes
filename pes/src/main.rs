@@ -30,7 +30,8 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
     match subcmd {
         SubCmds::Dist{ check, dist, list_dists } => {
             if list_dists {
-                presenter.distributions(DistributionFilter::All)?;
+                // in the future, we can expose the ability to filter out pre-releases
+                presenter.distributions(DistributionFilter::All, ReleaseType::Alpha)?;
             } else if check {
                 match dist {
                     Some(ref dist) => {
@@ -46,7 +47,8 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 } 
             } else {
                 match dist {
-                    Some(ref dist) =>  presenter.distributions(DistributionFilter::Package(dist))?,
+                    // in the future, we can expose the ability to filter out pre-releases if we so desire
+                    Some(ref dist) =>  presenter.distributions(DistributionFilter::Package(dist), ReleaseType::Alpha)?,
                     None => return Err(PesError::CliArgError("Must supply a distribution".into()))
                 }
                
