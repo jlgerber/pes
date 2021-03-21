@@ -168,7 +168,7 @@ dependencies = [
 
 [[package]]
 name = "dev_manifest_finder"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "pes_core",
 ]
@@ -439,7 +439,7 @@ dependencies = [
 
 [[package]]
 name = "pes_core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "libloading",
  "nom",
@@ -452,7 +452,7 @@ dependencies = [
 
 [[package]]
 name = "peslib"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "generator",
  "indexmap",
@@ -667,7 +667,7 @@ dependencies = [
 
 [[package]]
 name = "repo_finder"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "dirs 3.0.1",
  "log",
