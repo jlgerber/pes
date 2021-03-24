@@ -4,17 +4,8 @@ use std::ffi::CString;
 
 use generator::Generator;
 use pes_core::ReleaseType;
+
 use crate::{Manifest, PesError, SemanticVersion};
-
-/// Trait to provide a means to retrieve variables
-pub trait VarProvider<'a> {
-    type Returns;
-    type Key;
-    type Value;
-
-    fn insert<K: Into<Self::Key>, V: Into<Self::Value> >(&mut self, k: K, v: V) -> Option<Self::Value>; 
-    fn get(&'a self, value: impl AsRef<str>) -> Option<Self::Returns>;
-}
 
 
 /// Trait to provide an alternative, falible constructor from a &str

@@ -25,12 +25,9 @@ pub use pes_core::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub mod aliases;
 pub mod constants;
 pub mod distribution;
-pub mod env;
 pub mod jsys;
 pub mod lock;
 pub mod manifest;
-pub mod parser;
-//pub mod parser_atoms;
 pub mod plugin_mgr;
 pub mod range;
 pub mod repository;
@@ -39,11 +36,10 @@ pub mod traits;
 pub mod utils;
 pub mod distribution_range;
 
-pub use pes_core::{SemanticVersion, ReleaseType, parser_atoms};
+pub use pes_core::{SemanticVersion, ReleaseType, parser_atoms, VarProvider, env::BasicVarProvider, parser, env};
 
 pub use aliases::*;
 pub use distribution::Distribution;
-pub use env::BasicVarProvider;
 pub use lock::LockFile;
 pub use manifest::Manifest;
 pub use plugin_mgr::PluginMgr;
@@ -51,7 +47,7 @@ pub use range::*;
 pub use repository::PackageRepository;
 pub use solver::SelectedDependencies;
 pub use solver::{Solver, perform_solve, perform_solve_for_distribution_and_target};
-pub use traits::{BaseEnv, ManifestLocationProvider, Repository, VarProvider};
+pub use traits::{BaseEnv, ManifestLocationProvider, Repository};
 pub use distribution_range::DistributionRange;
 
 pub mod prelude {

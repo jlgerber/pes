@@ -8,7 +8,7 @@ use pes::utils::launch_cmd;
 use std::collections::VecDeque;
 use std::env;
 use std::fs;
-use log::debug;
+use log::{debug, trace};
 
 
 use anyhow::{Result, anyhow};
@@ -54,7 +54,7 @@ fn _main() -> Result<()> {
     let Opt{pkg, cmd, lockfile} = opt;
     debug!("executing run_cmd(lockfile: {:?}, cmd: {:?}) for package: {})",&lockfile,  &cmd,  &pkg);
     
-    run_cmd(lockfile, cmd.as_str())?;
+    run_cmd(lockfile, cmd)?;
     
     Ok(())
 }
@@ -70,12 +70,13 @@ fn main() {
 }
 
 // run a command 
-fn run_cmd(lockfile: PathBuf, cmd: &str) -> Result<(), PesError> {
+fn run_cmd(lockfile: PathBuf, cmd: PathBuf) -> Result<(), PesError> {
     let plugin_mgr = PluginMgr::new()?;
    
     let lockfile = LockFile::from_file(lockfile)?;
     let solution = lockfile.selected_dependencies_for("run")?;
-    launch_cmd(&plugin_mgr, solution, cmd)?;
+    let cmd_str = cmd.to_string_lossy().to_string();
+    launch_cmd(&plugin_mgr, solution, cmd_str.as_str())?;
     
     Ok(())
 }

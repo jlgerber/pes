@@ -22,3 +22,13 @@ pub trait ReleaseTypeProvider: Debug + Display + FromStr + Copy + Clone + Ord + 
     /// Return the variant which represents a release.
     fn release() -> Self;
 }
+
+/// Trait to provide a means to retrieve variables
+pub trait VarProvider<'a> {
+    type Returns;
+    type Key;
+    type Value;
+
+    fn insert<K: Into<Self::Key>, V: Into<Self::Value> >(&mut self, k: K, v: V) -> Option<Self::Value>; 
+    fn get(&'a self, value: impl AsRef<str>) -> Option<Self::Returns>;
+}
