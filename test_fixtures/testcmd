@@ -1,0 +1,2 @@
+#!/usr/bin/env pes-run
+--pes-lockfile ./testcmd.lockfile --pes-cmd {root}/bin/testcmd --pes-pkg testytest

@@ -21,6 +21,7 @@ build:
 	cargo build --release
 	
 	cp target/$(BTYPE)/pes $(BINROOT)/bin/.
+	cp target/$(BTYPE)/pes-run $(BINROOT)/bin/.
 	cp target/$(BTYPE)/librepo_finder.$(EXTENSION) $(LIBROOT)/lib/.
 	cp target/$(BTYPE)/libmanifest_finder.$(EXTENSION) $(LIBROOT)/lib/.
 	cp $$(rustc --print sysroot)/lib/libstd-*.$(EXTENSION) $(LIBROOT)/lib/.

@@ -219,3 +219,108 @@ impl Shell {
         }
     }
 }
+
+
+pub fn launch_cmd(
+    plugin_mgr: &PluginMgr,
+    solution: SelectedDependencies<String, SemanticVersion>,
+    cmd: &str
+) -> Result<(), PesError> {
+    
+    // iterate through the solve. For each package version, find it in a repository and store it
+    // in a hashmap
+    fn build_manifest_hashmap(
+        solution: SelectedDependencies<String, SemanticVersion>, 
+        repos: &Vec<PackageRepository>
+    ) -> Result< HashMap::<String, (PathBuf, Manifest)>, PesError> {
+        let mut manifests = HashMap::<String, (PathBuf, Manifest)>::new();
+        // define a var to hold a list of distributions for which we cannot find manifests
+        let mut missing_manifests = Vec::new();
+        // solution is a HashMap of (package,version) pairs
+        for (package, version) in solution.iter() {
+            // search through repositories for registered manifests
+            let mut manifest_path = None;
+            for repo in repos {
+                let version_str = version.to_string();
+                // let distribution = PathBuf::from("")
+                match repo.manifest(package, &version_str) {
+                    Ok(path) => manifest_path = Some(path),
+                    Err(_) => (),
+                }
+            }
+            // if we found a manifest path, construct the actual manifest and
+            // add it to the hashmap tracking manifests
+            if let Some(mut path) = manifest_path {
+                let distribution = format!("{}-{}", package, version);
+                let mani = Manifest::from_path(&path)?;
+                // remove manifest from path
+                // todo: introduce abstraction for finding manifest & root of package
+                path.pop();
+                manifests.insert(distribution, (path, mani));
+            } else if package.as_str() != ROOT_REQUEST {
+                let distribution = format!("{}-{}", package, version);
+                // if we were unable to find the manifest, add it to the list of missing manifests
+                missing_manifests.push(distribution);
+            }
+        }
+    
+        if missing_manifests.len() > 0 {
+            Err(PesError::MissingManifests(missing_manifests))
+        } else {
+            Ok(manifests)
+        }
+    }
+
+    // construct a list of repositories
+    let repos = PackageRepository::from_plugin(plugin_mgr)?;
+    let manifests = build_manifest_hashmap(solution, &repos)?;
+    
+    // hashmap to store env vars
+    //let mut env_vars = HashMap::new();
+    let jsys = JsysCleanEnv::new();
+    // TODO: change base_env2 call to base_env
+    let mut env_vars = jsys.base_env2();
+    // instantiate provider
+    let provider = std::rc::Rc::new(RefCell::new(BasicVarProvider::new()));
+
+    // iterate through package manifests, building environment
+    for (name, (root, manifest)) in manifests {
+        debug!("name: {}", name);
+        {
+            let mut prov = provider.borrow_mut();
+            prov.insert_var("root", root.as_path().display().to_string());
+        }
+        for (key, value) in manifest.environment() {
+            debug!("{} {}", &key, value);
+            let result = parse_consuming_all_paths_with_provider(Rc::clone(&provider), value)?;
+            debug!("{:?}", result);
+            {
+                if let Some(val) = env_vars.get_mut(key) {
+                    *val += result;
+                } else {
+                    env_vars.insert(key.clone(), result);
+                }
+            }
+        }
+    }
+    let mut c_env_vars: Vec<std::ffi::CString> = Vec::with_capacity(env_vars.len());
+    debug!("OUTPUT VARS");
+    // construct environment vec<CString> for execve call
+    for (k, v) in env_vars {
+        let existing_paths = v.inner();
+        // construct required format for execve
+        let existing_paths = format!("{}={}", k, join(existing_paths, ":"));
+        info!("{}", &existing_paths);
+        //let existing_paths : std::ffi::CString = existing_paths.bytes().into();
+        let existing_paths =
+            std::ffi::CString::new(&existing_paths[..]).expect("unable to convert to cstring");
+        c_env_vars.push(existing_paths);
+    }
+
+    let env_cmd = CString::new("/usr/bin/env").unwrap();
+    let arg = CString::new(cmd).expect("Unable to convert to cstring");
+    let args = vec![arg];
+    // call execve with environment vec
+    execve(&env_cmd, &args[..], &c_env_vars[..]).unwrap();
+    Ok(())
+}

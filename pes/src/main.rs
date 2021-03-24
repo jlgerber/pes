@@ -1,19 +1,25 @@
 #![recursion_limit = "256"]
 
+mod cli_opts;
+
 use structopt::StructOpt;
 use users::{get_current_uid, get_user_by_uid};
 use log::info;
 use peslib::prelude::*;
 
-mod cli_opts;
-pub mod utils;
-mod presentation;
-pub mod aliases;
-
 use cli_opts::*;
-pub use utils::{
-    audit_manifest_file, audit_manifest_for_current_location, init_log, launch_shell,
-    check_distribution
+use pes::{
+    utils::{
+        audit_manifest_file, 
+        audit_manifest_for_current_location, 
+        init_log, 
+        launch_shell,
+        check_distribution
+    },
+    {
+        presentation, 
+       // aliases
+    }
 };
 
 use presentation::{
