@@ -57,9 +57,9 @@ pub use crate::env::BasicVarProvider;
 /// # Example
 ///
 /// ```
-/// # use peslib::parser::{BasicVarProvider, parse_all_paths_with_provider};
-/// # use peslib::traits::VarProvider;
-/// # use peslib::env::PathMode;
+/// # use pes_core::parser::{BasicVarProvider, parse_all_paths_with_provider};
+/// # use pes_core::traits::VarProvider;
+/// # use pes_core::env::PathMode;
 /// # use std::rc::Rc;
 /// # use std::collections::VecDeque;
 /// # use std::cell::RefCell;
@@ -95,9 +95,9 @@ pub fn parse_all_paths_with_provider<'a>(provider: Rc<RefCell<BasicVarProvider>>
 ///
 /// # Example
 /// ```
-/// # use peslib::parser::{BasicVarProvider, parse_consuming_all_paths_with_provider};
-/// # use peslib::traits::VarProvider;
-/// # use peslib::env::PathMode;
+/// # use pes_core::parser::{BasicVarProvider, parse_consuming_all_paths_with_provider};
+/// # use pes_core::traits::VarProvider;
+/// # use pes_core::env::PathMode;
 /// # use std::cell::RefCell;
 /// # use std::rc::Rc;
 /// # use std::collections::VecDeque;
@@ -136,7 +136,7 @@ pub fn parse_consuming_all_paths_with_provider(provider: Rc<RefCell<BasicVarProv
 /// 
 /// # Example
 /// ```
-/// # use peslib::{parser::parse_semver_range, SemanticVersion, ReleaseType};
+/// # use pes_core::{parser::parse_semver_range, SemanticVersion, ReleaseType};
 /// # use pubgrub::range::Range;
 /// # fn main()  {
 /// let range = parse_semver_range("1.2.3+<3.0.0");
@@ -183,9 +183,9 @@ pub fn parse_consuming_semver_range(s: &str)
 ///
 /// # Example
 /// ```
-/// # use peslib::parser::parse_package_version;
+/// # use pes_core::parser::parse_package_version;
 /// # use pubgrub::{range::Range};
-/// # use peslib::{SemanticVersion, ReleaseType};
+/// # use pes_core::{SemanticVersion, ReleaseType};
 /// # fn main()  {
 /// let range = parse_package_version("maya-1.2.3");
 /// assert_eq!(
@@ -232,7 +232,7 @@ pub fn parse_package_range(input: &str) -> PNResult<&str, (&str, Range<SemanticV
 ///
 /// # Example
 /// ```
-/// # use peslib::{parser::parse_consuming_package_range, SemanticVersion, ReleaseType };
+/// # use pes_core::{parser::parse_consuming_package_range, SemanticVersion, ReleaseType };
 /// # use pubgrub:: range::Range;
 /// # fn main()  {
 /// let range = parse_consuming_package_range("maya-1.2.3+<3");
@@ -263,7 +263,13 @@ pub fn parse_consuming_semver(input: &str) -> Result<SemanticVersion, PesError> 
     Ok(result)
 }
 
-
+/// variant wraps a semver adding the notion of a "you guessed it" variant
+pub fn parse_variant_semver(s: &str) -> PNResult<&str, Variant<SemanticVersion>> {
+    let (rest, (semver, version)) = separated_pair(parse_semver, tag("@"), digit1)(s)?;
+    let version = version.parse::<u8>().unwrap();
+    let variant = Variant::new(semver, version);
+    Ok((rest, variant))
+}
 //---------------------//
 //  PRIVATE FUNCTIONS  //
 //---------------------//
@@ -280,12 +286,6 @@ fn parse_prerelease(s: &str) -> PNResult<&str, ReleaseType> {
     Ok((leftover, ReleaseType::from_str(release_type)?))
 }
 
-fn parse_variant_semver(s: &str) -> PNResult<&str, Variant<SemanticVersion>> {
-    let (rest, (semver, version)) = separated_pair(parse_semver, tag("@"), digit1)(s)?;
-    let version = version.parse::<u8>().unwrap();
-    let variant = Variant::new(semver, version);
-    Ok((rest, variant))
-}
 
 fn parse_semver(s: &str) -> PNResult<&str, SemanticVersion> {
     let results = alt((  parse_semver_prerelease, parse_semver_release))(s)?;
