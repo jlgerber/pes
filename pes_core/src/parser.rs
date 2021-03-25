@@ -40,7 +40,7 @@ use nom::{
     },
 };
 
-use crate::{PNResult, PesNomError, PNCompleteResult, PesError, SemanticVersion, ReleaseType};
+use crate::{PNResult, PesNomError, PNCompleteResult, PesError, SemanticVersion, variant::Variant, ReleaseType};
 use crate::env::{PathToken, PathMode};
 use crate::parser_atoms::{alphaword_many0_underscore_word, ws};
 pub use crate::traits::VarProvider;
@@ -278,6 +278,13 @@ fn parse_package_any(s: &str) -> PNResult<&str, (&str, Range<SemanticVersion>)> 
 fn parse_prerelease(s: &str) -> PNResult<&str, ReleaseType> {
     let (leftover, release_type) = alt((tag("rc"), tag("releaseCandidate"), tag("release_candidate"), tag("alpha"), tag("beta")))(s)?;
     Ok((leftover, ReleaseType::from_str(release_type)?))
+}
+
+fn parse_variant_semver(s: &str) -> PNResult<&str, Variant<SemanticVersion>> {
+    let (rest, (semver, version)) = separated_pair(parse_semver, tag("@"), digit1)(s)?;
+    let version = version.parse::<u8>().unwrap();
+    let variant = Variant::new(semver, version);
+    Ok((rest, variant))
 }
 
 fn parse_semver(s: &str) -> PNResult<&str, SemanticVersion> {
