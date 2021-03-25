@@ -3,8 +3,9 @@ use crate::PesError;
 use crate::parser::parse_consuming_semver_range;
 use crate::traits::FrmStr;
 use crate::SemanticVersion;
+use crate::Variant;
 
-use pubgrub::range::Range;
+pub use pubgrub::range::Range;
 //use pubgrub::version::SemanticVersion;
 
 pub type SemVerRange = Range<SemanticVersion>;
@@ -17,7 +18,7 @@ impl FrmStr for Range<SemanticVersion> {
     }
 }
 
-
+pub type VariantRange = Range<Variant<SemanticVersion>>;
 
 #[cfg(test)]
 #[path = "./unit_tests/range.rs"]

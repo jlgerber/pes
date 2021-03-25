@@ -51,8 +51,8 @@ impl<'de, T: Version> serde::Deserialize<'de> for Variant<T> {
 
 impl<T: Version> Display for Variant<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let version = Display::fmt(&self.version, f)?;
-        write!(f, "@{}", self.index);
+        let _version = Display::fmt(&self.version, f)?;
+        write!(f, "@{}", self.index)?;
         Ok(())
         
     }

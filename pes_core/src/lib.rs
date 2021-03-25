@@ -23,12 +23,14 @@ pub mod parser_atoms;
 pub mod release_type;
 pub mod env;
 pub mod variant;
+pub mod range;
 
 pub use error::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub use traits::*;
 pub use semantic_version::SemanticVersion;
 pub use release_type::ReleaseType;
 pub use variant::Variant;
+pub use range::Range;
 
 pub mod prelude {
     pub use super::*;

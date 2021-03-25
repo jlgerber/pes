@@ -29,14 +29,13 @@ pub mod jsys;
 pub mod lock;
 pub mod manifest;
 pub mod plugin_mgr;
-pub mod range;
 pub mod repository;
 pub mod solver;
 pub mod traits;
 pub mod utils;
 pub mod distribution_range;
 
-pub use pes_core::{SemanticVersion, ReleaseType, parser_atoms, VarProvider, env::BasicVarProvider, parser, env};
+pub use pes_core::{SemanticVersion, ReleaseType, parser_atoms, range, VarProvider, env::BasicVarProvider, parser, env};
 
 pub use aliases::*;
 pub use distribution::Distribution;
