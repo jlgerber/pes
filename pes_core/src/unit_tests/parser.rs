@@ -101,6 +101,7 @@ mod semver_parsing {
         }
     }
 
+    
     #[test]
     fn parse_variant_semver__when_given_release__succeeds() {
         let result = parse_variant_semver("1.2.3@1");
@@ -111,6 +112,18 @@ mod semver_parsing {
     fn parse_variant_semver__when_given_prerelease__succeeds() {
         let result = parse_variant_semver("1.2.3-beta@1");
         assert_eq!(result, Ok(("",Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),1))));
+    }
+     
+    #[test]
+    fn parse_consuming_variant_semver__when_given_release__succeeds() {
+        let result = parse_consuming_variant_semver("1.2.3@1");
+        assert_eq!(result.unwrap(), Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),1));
+    }
+
+    #[test]
+    fn parse_consuming_variant_semver__when_given_prerelease__succeeds() {
+        let result = parse_consuming_variant_semver("1.2.3-beta@1");
+        assert_eq!(result.unwrap(), Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),1));
     }
 
 }
