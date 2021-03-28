@@ -114,6 +114,31 @@ mod semver_parsing {
         assert_eq!(result, Ok(("",Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),1))));
     }
      
+}
+
+mod variant_parsing {
+    use super::*;
+    use crate::{
+        constants,
+        parser::variant::{
+            parse_explicit_variant_semver_carrot,
+            parse_consuming_variant_semver_exact_range,
+        }
+    };
+
+    #[test]
+    fn parse_package_variant__given_expected_input__succeeds() {
+        let result = parse_package_variant("maya-1.2.3@1");
+        assert_eq!(result.unwrap(), ("",("maya",Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),1))));
+    }
+
+
+    #[test]
+    fn parse_consuming_package_variant__given_expected_input__succeeds() {
+        let result = parse_consuming_package_variant("maya-1.2.3@1");
+        assert_eq!(result.unwrap(), ("maya",Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),1)));
+    }
+
     #[test]
     fn parse_consuming_variant_semver__when_given_release__succeeds() {
         let result = parse_consuming_variant_semver("1.2.3@1");
@@ -125,7 +150,64 @@ mod semver_parsing {
         let result = parse_consuming_variant_semver("1.2.3-beta@1");
         assert_eq!(result.unwrap(), Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),1));
     }
+    
 
+
+
+    #[test]
+    fn parse_consuming_variant_semver_exact_range__when_given_release__succeeds() {
+        let result = parse_consuming_variant_semver_exact_range("1.2.3@1");
+        assert_eq!(result.unwrap(), Range::exact(Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),1)));
+    }
+
+    #[test]
+    fn parse_consuming_variant_semver_exact_range__when_given_prerelease__succeeds() {
+        let result = parse_consuming_variant_semver_exact_range("1.2.3-beta@1");
+        assert_eq!(result.unwrap(), Range::exact(Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),1)));
+    }
+    
+
+
+
+    #[test]
+    fn parse_consuming_variant_semver_implicit_range__when_given_release__succeeds() {
+        let result = parse_consuming_variant_semver_implicit_range("1.2.3");
+        assert_eq!(
+            result.unwrap(), 
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),0),
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release),constants::MAX_VARIANTS),
+            )
+        );
+    }
+
+    #[test]
+    fn parse_consuming_variant_semver_implicit_range__when_given_prerelease__succeeds() {
+        let result = parse_consuming_variant_semver_implicit_range("1.2.3-beta");
+        assert_eq!(
+            result.unwrap(), 
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),0),
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta),constants::MAX_VARIANTS),
+            )
+        );
+    }
+    
+
+
+    #[test]
+    fn parse_variant_semver_carrot__given_explicit_variant__succeeds() {
+        let result = parse_explicit_variant_semver_carrot("^1.2.3@1");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 1),
+                Variant::new(SemanticVersion::new(1,2,4, ReleaseType::Release),1)
+
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
 }
 //-----------------//
 // ENV PARSE TESTS //

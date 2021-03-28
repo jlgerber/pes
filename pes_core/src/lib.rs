@@ -24,6 +24,7 @@ pub mod release_type;
 pub mod env;
 pub mod variant;
 pub mod range;
+pub mod constants;
 
 pub use error::{PesError, PNResult, PesNomError, PNCompleteResult};
 pub use traits::*;
