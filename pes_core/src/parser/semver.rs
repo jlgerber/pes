@@ -55,3 +55,8 @@ let result = all_consuming(ws(parse_semver))(input).map_err(|_| PesError::Parsin
 let (_, result) = result;
 Ok(result)
 }
+
+
+#[cfg(test)]
+#[path = "../unit_tests/parser_semver.rs"]
+mod unit_tests;

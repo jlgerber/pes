@@ -1,6 +1,61 @@
 use super::*;
 use crate::constants;
 
+/// given a distribution with explicit or implicit variant, return a tuple with the package name and a range over the semver variant
+/// In otherwords, the package and SemanticVersion should be exact, while the variant index may either be exact or a range.
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_package_range_variant;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
+/// # fn main()  {
+/// let range = parse_package_range_variant("maya-1.2.3@0");
+/// assert_eq!(
+///    range, 
+///    Ok(
+///         ("", ("maya", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0))))
+///      )
+/// );
+/// # }
+/// ```
+pub fn parse_package_range_variant(input: &str) -> PNResult<&str, (&str, Range<Variant<SemanticVersion>>)> {
+    separated_pair(
+        alphaword_many0_underscore_word, 
+        tag("-"), 
+        alt(
+            (
+                parse_variant_semver_exact_range,
+                parse_semver_with_implicit_variant_range
+            )
+        ))(input)
+}
+
+/// Wraps ```parse_package_range_variant```, ensuring that the full input is consumed
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_consuming_package_range_variant;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
+/// # fn main()  {
+/// let variant = parse_consuming_package_range_variant("maya-1.2.3@0");
+/// assert_eq!(
+///    variant.unwrap(), 
+///    ("maya", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)))
+/// );
+/// # }
+/// ```
+pub fn parse_consuming_package_range_variant(input: &str) -> Result<(&str, Range<Variant<SemanticVersion>>), PesError> {
+    let (_,result) = all_consuming(
+        ws(parse_package_range_variant)
+    )(input)
+    .map_err(|_| 
+        PesError::ParsingFailure(
+            format!("parse_package_range_variant failed {}", input)
+        )
+    )?;
+
+    Ok(result)
+}
 
 /// Given a string like this: <package name>-<semver>@<variant> (eg internal-1.2.3@0), return a 
 /// tuple of package name, SemanticVersion.
@@ -51,6 +106,21 @@ pub fn parse_consuming_package_variant(input: &str) -> Result<(&str, Variant<Sem
 }
 
 /// variant wraps a semver adding the notion of a "you guessed it" variant
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_variant_semver;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType};
+/// # fn main()  {
+/// let value = parse_variant_semver("1.2.3@0");
+/// assert_eq!(
+///    value, 
+///    Ok(
+///         ("", Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0))
+///      )
+/// );
+/// # }
+/// ```
 pub fn parse_variant_semver(s: &str) -> PNResult<&str, Variant<SemanticVersion>> {
     let (rest, (semver, version)) = separated_pair(parse_semver, tag("@"), digit1)(s)?;
     let version = version.parse::<u8>().unwrap();
@@ -59,6 +129,19 @@ pub fn parse_variant_semver(s: &str) -> PNResult<&str, Variant<SemanticVersion>>
 }
 
 /// Wraps ```parse_variant_semver```, ensuring that it completely consumes the input
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_consuming_variant_semver;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType};
+/// # fn main()  {
+/// let value = parse_consuming_variant_semver("1.2.3@0");
+/// assert_eq!(
+///    value.unwrap(), 
+///        Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)
+/// );
+/// # }
+/// ```
 pub fn parse_consuming_variant_semver(input: &str) -> Result<Variant<SemanticVersion>, PesError> {
     let (_,result) = all_consuming(
         ws(
@@ -73,6 +156,19 @@ pub fn parse_consuming_variant_semver(input: &str) -> Result<Variant<SemanticVer
 
 /// Parse an explicit semver with variant, and return a Range::Exact. Even though we are returning
 /// a range it will be comprised of a singe Variant<SemanticVersion>.
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_variant_semver_exact_range;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
+/// # fn main()  {
+/// let value = parse_variant_semver_exact_range("1.2.3@0");
+/// assert_eq!(
+///    value.unwrap(), 
+///        ("", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)))
+/// );
+/// # }
+/// ```
 pub fn parse_variant_semver_exact_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
     let (rest, (semver, version)) = separated_pair(parse_semver, tag("@"), digit1)(s)?;
     let version = version.parse::<u8>().unwrap();
@@ -81,6 +177,19 @@ pub fn parse_variant_semver_exact_range(s: &str) -> PNResult<&str, Range<Variant
 }
 
 /// Wraps ```parse_variant_semver_range```, ensuring that it completely consumes the input
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_variant_semver_exact_range;
+/// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
+/// # fn main()  {
+/// let value = parse_variant_semver_exact_range("1.2.3@0");
+/// assert_eq!(
+///    value.unwrap(), 
+///        ("", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)))
+/// );
+/// # }
+/// ```
 pub fn parse_consuming_variant_semver_exact_range(input: &str) -> Result<Range<Variant<SemanticVersion>>, PesError> {
     let (_,result) = all_consuming(
         ws(
@@ -94,22 +203,27 @@ pub fn parse_consuming_variant_semver_exact_range(input: &str) -> Result<Range<V
 }
 
 
-/// Parse an SemVer with a variant range implied by the lack of an explicit variant
-pub fn parse_variant_semver_implicit_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+/// Parse an SemVer with a variant range implied by the lack of an explicit variant. in other words
+/// given an input like this `1.3.4` produce a `Range<Variant<SemanticVersion>>`, where the Range
+/// is over the variant indexes from 0..constants::MAX_VARIANTS.
+pub fn parse_semver_with_implicit_variant_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
     let (rest, semver) = parse_semver(s)?;
-    let variant = Range::between(Variant::new(semver, 0), Variant::new(semver, constants::MAX_VARIANTS));
+    let variant = Range::between(
+        Variant::new(semver, 0), 
+        Variant::new(semver, constants::MAX_VARIANTS)
+    );
     Ok((rest, variant))
 }
 
-/// Wraps ```parse_variant_semver```, ensuring that it completely consumes the input
-pub fn parse_consuming_variant_semver_implicit_range(input: &str) -> Result<Range<Variant<SemanticVersion>>, PesError> {
+/// Wraps the ```parse_semver_with_implicit_variant_range``` parser, ensuring that it completely consumes the input
+pub fn parse_consuming_semver_with_implicit_variant_range(input: &str) -> Result<Range<Variant<SemanticVersion>>, PesError> {
     let (_,result) = all_consuming(
         ws(
-            parse_variant_semver_implicit_range
+            parse_semver_with_implicit_variant_range
         )
     )(input)
     .map_err(|_| 
-        PesError::ParsingFailure(format!("parse_consuming_variant_semver_implicit_range {}",input))
+        PesError::ParsingFailure(format!("parse_consuming_semver_with_implicit_variant_range {}",input))
     )?;
     Ok(result)
 }
@@ -132,7 +246,7 @@ pub fn parse_consuming_variant_semver_implicit_range(input: &str) -> Result<Rang
 /// ```
 */
 // pub fn parse_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-//     //alt((parse_variant_semver_carrot, parse_semver_between, parse_semver_exact))(s)
+//     //alt((parse_carrot_variant_semver_range, parse_semver_between, parse_semver_exact))(s)
 //     todo!()
 // }
 
@@ -158,13 +272,12 @@ pub fn parse_consuming_variant_semver_implicit_range(input: &str) -> Result<Rang
 // parse a variant like so (^1.2 or ^1.2.3@1). 
 // Note that ^1.2 evaluates to a semantic version range betwen 1.2 and 2 AND
 // a variant range between 0 and constants::MAX_VARIANT
-fn parse_variant_semver_carrot(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-    alt((parse_explicit_variant_semver_carrot, parse_implicit_variant_semver_carrot))(s)
+pub(crate) fn parse_carrot_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+    alt((parse_carrot_explicit_variant_semver_range, parse_carrot_implicit_variant_semver_range))(s)
 }
 
-// given an input with an explicit variant (eg ^1.2.3@0), return an exact range
-pub(crate) fn parse_explicit_variant_semver_carrot(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-   
+// given an input with an explicit variant (eg ^1.2.3@0 or ^1.2@3 or ^1@1 ), return an exact range
+pub(crate) fn parse_carrot_explicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
     let (leftover,(first, rest, index)) = preceded(
                                         tag("^"), 
                                         tuple((
@@ -203,8 +316,8 @@ pub(crate) fn parse_explicit_variant_semver_carrot(s: &str) -> PNResult<&str, Ra
     )
 }
 
-// given an input with an implicit variant (eg 1.2.3), return an exact range
-fn parse_implicit_variant_semver_carrot(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+// given an input with an implicit variant (eg ^1.2.3 or ^1.2 or ^1), return an exact range
+fn parse_carrot_implicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
    
     let (leftover,(first, rest)) = preceded(tag("^"), tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)))))(s)?;
     let major = first.parse::<u32>().unwrap();
@@ -235,3 +348,9 @@ fn parse_implicit_variant_semver_carrot(s: &str) -> PNResult<&str, Range<Variant
         )
     )
 }
+
+
+
+#[cfg(test)]
+#[path = "../unit_tests/parser_variant.rs"]
+mod unit_tests;

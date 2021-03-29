@@ -9,7 +9,7 @@ use nom::{
 };
 
 use crate::{
-    env::{BasicVarProvider, PathToken, PathMode},
+    env::{BasicVarProvider, PathMode},
     parser_atoms::ws,
     PNResult,
 };
