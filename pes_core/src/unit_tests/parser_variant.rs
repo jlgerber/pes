@@ -18,12 +18,12 @@ use crate::{
 
 
 
-mod parse_consuming_package_range_variant {
+mod parse_consuming_package_variants {
     use super::*;
 
     #[test]
     fn given_an_explicit_variant__succeeds() {
-        let result = parse_consuming_package_range_variant("maya-1.2.3-beta@1");
+        let result = parse_consuming_package_variants("maya-1.2.3-beta@1");
         assert_eq!(
             result.unwrap(), 
             (
@@ -35,7 +35,7 @@ mod parse_consuming_package_range_variant {
     
     #[test]
     fn given_an_implicit_variant__succeeds() {
-        let result = parse_consuming_package_range_variant("maya-1.2.3-beta");
+        let result = parse_consuming_package_variants("maya-1.2.3-beta");
         assert_eq!(
             result.unwrap(), 
             
@@ -52,7 +52,7 @@ mod parse_consuming_package_range_variant {
     
     #[test]
     fn given_a_short_input__succeeds() {
-        let result = parse_consuming_package_range_variant("maya-1");
+        let result = parse_consuming_package_variants("maya-1");
         assert_eq!(
             result.unwrap(), 
             
@@ -71,7 +71,7 @@ mod parse_consuming_package_range_variant {
     fn given_other_input__fails() {
         let failures = &["maya-^1.2.3",  "foo-1.2.3+<4.3.3"];
         for failure in failures.iter() {
-            let result = parse_consuming_package_range_variant(failure);
+            let result = parse_consuming_package_variants(failure);
             // just for reporting purposes. If we inadvertently find something which should be 
             // an error but isn't, lets get a good look at it.
             // if !result.is_err() {
@@ -83,12 +83,12 @@ mod parse_consuming_package_range_variant {
     }
 }
 
-mod parse_package_range_variant {
+mod parse_package_variants {
     use super::*;
 
     #[test]
     fn given_an_explicit_variant__succeeds() {
-        let result = parse_package_range_variant("maya-1.2.3-beta@1");
+        let result = parse_package_variants("maya-1.2.3-beta@1");
         assert_eq!(
             result.unwrap(), 
             (
@@ -103,7 +103,7 @@ mod parse_package_range_variant {
     
     #[test]
     fn given_an_implicit_variant__succeeds() {
-        let result = parse_package_range_variant("maya-1.2.3-beta");
+        let result = parse_package_variants("maya-1.2.3-beta");
         assert_eq!(
             result.unwrap(), 
             (
@@ -120,7 +120,7 @@ mod parse_package_range_variant {
     }
     #[test]
     fn given_carrot_semver__succeeds() {
-        let result = parse_package_range_variant("maya-1.2.3-beta");
+        let result = parse_package_variants("maya-1.2.3-beta");
         assert_eq!(
             result.unwrap(), 
             (

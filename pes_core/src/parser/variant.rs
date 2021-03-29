@@ -1,15 +1,15 @@
 use super::*;
 use crate::constants;
 
-/// given a distribution with explicit or implicit variant, return a tuple with the package name and a range over the semver variant
+/// Given a distribution with explicit or implicit variant, return a tuple with the package name and a range over the semver variant
 /// In otherwords, the package and SemanticVersion should be exact, while the variant index may either be exact or a range.
 ///
 /// # Example
 /// ```
-/// # use pes_core::parser::parse_package_range_variant;
+/// # use pes_core::parser::parse_package_variants;
 /// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
 /// # fn main()  {
-/// let range = parse_package_range_variant("maya-1.2.3@0");
+/// let range = parse_package_variants("maya-1.2.3@0");
 /// assert_eq!(
 ///    range, 
 ///    Ok(
@@ -18,7 +18,7 @@ use crate::constants;
 /// );
 /// # }
 /// ```
-pub fn parse_package_range_variant(input: &str) -> PNResult<&str, (&str, Range<Variant<SemanticVersion>>)> {
+pub fn parse_package_variants(input: &str) -> PNResult<&str, (&str, Range<Variant<SemanticVersion>>)> {
     separated_pair(
         alphaword_many0_underscore_word, 
         tag("-"), 
@@ -30,27 +30,27 @@ pub fn parse_package_range_variant(input: &str) -> PNResult<&str, (&str, Range<V
         ))(input)
 }
 
-/// Wraps ```parse_package_range_variant```, ensuring that the full input is consumed
+/// Wraps ```parse_package_variants```, ensuring that the full input is consumed
 ///
 /// # Example
 /// ```
-/// # use pes_core::parser::parse_consuming_package_range_variant;
+/// # use pes_core::parser::parse_consuming_package_variants;
 /// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
 /// # fn main()  {
-/// let variant = parse_consuming_package_range_variant("maya-1.2.3@0");
+/// let variant = parse_consuming_package_variants("maya-1.2.3@0");
 /// assert_eq!(
 ///    variant.unwrap(), 
 ///    ("maya", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)))
 /// );
 /// # }
 /// ```
-pub fn parse_consuming_package_range_variant(input: &str) -> Result<(&str, Range<Variant<SemanticVersion>>), PesError> {
+pub fn parse_consuming_package_variants(input: &str) -> Result<(&str, Range<Variant<SemanticVersion>>), PesError> {
     let (_,result) = all_consuming(
-        ws(parse_package_range_variant)
+        ws(parse_package_variants)
     )(input)
     .map_err(|_| 
         PesError::ParsingFailure(
-            format!("parse_package_range_variant failed {}", input)
+            format!("parse_package_variants failed {}", input)
         )
     )?;
 
