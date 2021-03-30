@@ -258,3 +258,128 @@ mod parse_carrot_variant_semver_range {
         assert_eq!(result.unwrap(), expected);
     }
 }
+
+mod parse_semver_variants_between {
+    use super::*;
+
+    #[test]
+    fn given_two_implicit_variants_separated_by_pgt_succeeds() {
+        let result = parse_semver_variants_between("1.2.3+<2.2.2");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release),constants::MAX_VARIANTS)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_two_implicit_variants_separated_by_dotdot_succeeds() {
+        let result = parse_semver_variants_between("1.2.3..2.2.2");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release),constants::MAX_VARIANTS)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+
+    #[test]
+    fn given_one_explicit_and_one_implicit_variant_separated_by_pgt_succeeds() {
+        let result = parse_semver_variants_between("1.2.3@2+<2.2.2");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 2),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release),constants::MAX_VARIANTS)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_one_explicit_and_one_implicit_variant_separated_by_dotdot_succeeds() {
+        let result = parse_semver_variants_between("1.2.3@2..2.2.2");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 2),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release),constants::MAX_VARIANTS)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_one_implicit_and_one_explicit_variant_separated_by_pgt_succeeds() {
+        let result = parse_semver_variants_between("1.2.3+<2.2.2@4");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release), 4)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_one_implicit_and_one_explicit_variant_separated_by_dotdot_succeeds() {
+        let result = parse_semver_variants_between("1.2.3..2.2.2@4");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release), 4)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_two_explicit_variants_separated_by_pgt_succeeds() {
+        let result = parse_semver_variants_between("1.2.3@2+<2.2.2@4");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 2),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release), 4)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_two_explicit_variants_separated_by_dotdot_succeeds() {
+        let result = parse_semver_variants_between("1.2.3@2..2.2.2@4");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 2),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Release), 4)
+    
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
+}
