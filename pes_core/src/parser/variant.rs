@@ -10,7 +10,7 @@ pub fn parse_package_variants_range(input: &str)-> PNResult<&str, (&str, Range<V
         alt(
             (
                 parse_semver_variants_between,
-                parse_carrot_variant_semver_range
+                parse_caret_variant_semver_range
             )
         ))(input)
 }
@@ -259,7 +259,7 @@ pub fn parse_consuming_semver_with_implicit_variant_range(input: &str) -> Result
 /// ```
 */
 // pub fn parse_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-//     //alt((parse_carrot_variant_semver_range, parse_semver_between, parse_semver_exact))(s)
+//     //alt((parse_caret_variant_semver_range, parse_semver_between, parse_semver_exact))(s)
 //     todo!()
 // }
 
@@ -285,12 +285,12 @@ pub fn parse_consuming_semver_with_implicit_variant_range(input: &str) -> Result
 // parse a variant like so (^1.2 or ^1.2.3@1). 
 // Note that ^1.2 evaluates to a semantic version range betwen 1.2 and 2 AND
 // a variant range between 0 and constants::MAX_VARIANT
-pub(crate) fn parse_carrot_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-    alt((parse_carrot_explicit_variant_semver_range, parse_carrot_implicit_variant_semver_range))(s)
+pub(crate) fn parse_caret_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+    alt((parse_caret_explicit_variant_semver_range, parse_caret_implicit_variant_semver_range))(s)
 }
 
 // given an input with an explicit variant (eg ^1.2.3@0 or ^1.2@3 or ^1@1 ), return an exact range
-pub(crate) fn parse_carrot_explicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+pub(crate) fn parse_caret_explicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
     let (leftover,(first, rest, index)) = preceded(
                                         tag("^"), 
                                         tuple((
@@ -330,7 +330,7 @@ pub(crate) fn parse_carrot_explicit_variant_semver_range(s: &str) -> PNResult<&s
 }
 
 // given an input with an implicit variant (eg ^1.2.3 or ^1.2 or ^1), return an exact range
-fn parse_carrot_implicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
+fn parse_caret_implicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
    
     let (leftover,(first, rest)) = preceded(tag("^"), tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)))))(s)?;
     let major = first.parse::<u32>().unwrap();

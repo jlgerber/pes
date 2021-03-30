@@ -10,8 +10,8 @@ use crate::{SemanticVersion, ReleaseType};
 use crate::{
     constants,
     parser::variant::{
-        parse_carrot_explicit_variant_semver_range,
-        parse_carrot_variant_semver_range,
+        parse_caret_explicit_variant_semver_range,
+        parse_caret_variant_semver_range,
         parse_consuming_variant_semver_exact_range,
     }
 };
@@ -81,6 +81,7 @@ mod parse_consuming_package_variants {
     
         }
     }
+    
 }
 
 mod parse_package_variants {
@@ -119,7 +120,7 @@ mod parse_package_variants {
         );
     }
     #[test]
-    fn given_carrot_semver__succeeds() {
+    fn given_caret_semver__succeeds() {
         let result = parse_package_variants("maya-1.2.3-beta");
         assert_eq!(
             result.unwrap(), 
@@ -225,14 +226,14 @@ mod parse_consuming_variant_semver_implicit_range {
 }
 
 /* 
-        parse_carrot_variant_semver_range tests
+        parse_caret_variant_semver_range tests
 */
-mod parse_carrot_variant_semver_range {
+mod parse_caret_variant_semver_range {
     use super::*;
 
     #[test]
     fn given_explicit_variant__succeeds() {
-        let result = parse_carrot_variant_semver_range("^1.2.3@1");
+        let result = parse_caret_variant_semver_range("^1.2.3@1");
         let expected = (
             "",
             Range::between(
@@ -245,7 +246,7 @@ mod parse_carrot_variant_semver_range {
     
     #[test]
     fn given_implicit_variant__succeeds() {
-        let result = parse_carrot_variant_semver_range("^1.2.3");
+        let result = parse_caret_variant_semver_range("^1.2.3");
         let expected = (
             "",
             Range::between(
@@ -288,6 +289,19 @@ mod parse_semver_variants_between {
         assert_eq!(result.unwrap(), expected);
     }
 
+    #[test]
+    fn given_two_implicit_variants_with_prereleases_separated_by_pgt_succeeds() {
+        let result = parse_semver_variants_between("1.2.3-beta+<2.2.2-beta");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Beta), 0),
+                Variant::new(SemanticVersion::new(2,2,2, ReleaseType::Beta),constants::MAX_VARIANTS)
+            )
+        );
+
+        assert_eq!(result.unwrap(), expected);
+    }
 
     #[test]
     fn given_one_explicit_and_one_implicit_variant_separated_by_pgt_succeeds() {
@@ -514,7 +528,7 @@ mod parse_package_variants_range {
     }
 
     #[test]
-    fn given_explicit_variant_starting_with_carrot__succeeds() {
+    fn given_explicit_variant_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1.2.3@1");
         let expected = (
             "",
@@ -533,7 +547,7 @@ mod parse_package_variants_range {
     
     
     #[test]
-    fn given_implicit_variant_starting_with_carrot__succeeds() {
+    fn given_implicit_variant_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1.2.3");
         let expected = (
             "",
@@ -549,7 +563,7 @@ mod parse_package_variants_range {
     }
     
     #[test]
-    fn given_explicit_variant_with_two_digit_semver_starting_with_carrot__succeeds() {
+    fn given_explicit_variant_with_two_digit_semver_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1.2@1");
         let expected = (
             "",
@@ -565,7 +579,7 @@ mod parse_package_variants_range {
     }
 
     #[test]
-    fn given_implicit_variant_with_two_digit_semver_starting_with_carrot__succeeds() {
+    fn given_implicit_variant_with_two_digit_semver_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1.2");
         let expected = (
             "",
@@ -579,9 +593,9 @@ mod parse_package_variants_range {
         );
         assert_eq!(result.unwrap(), expected);
     }
-    
+
     #[test]
-    fn given_explicit_variant_with_one_digit_semver_starting_with_carrot__succeeds() {
+    fn given_explicit_variant_with_one_digit_semver_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1@1");
         let expected = (
             "",
@@ -597,7 +611,7 @@ mod parse_package_variants_range {
     }
 
     #[test]
-    fn given_implicit_variant_with_one_digit_semver_starting_with_carrot__succeeds() {
+    fn given_implicit_variant_with_one_digit_semver_starting_with_caret__succeeds() {
         let result = parse_package_variants_range("maya-^1");
         let expected = (
             "",
@@ -606,6 +620,23 @@ mod parse_package_variants_range {
                 Range::between(
                     Variant::new(SemanticVersion::new(1,0,0, ReleaseType::Release), 0),
                     Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release), constants::MAX_VARIANTS)
+                )
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+
+
+    #[test]
+    fn given_implicit_variant_with_one_digit_semver_and_prerelease_starting_with_caret__succeeds() {
+        let result = parse_package_variants_range("maya-^1-beta");
+        let expected = (
+            "",
+            (
+                "maya",
+                Range::between(
+                    Variant::new(SemanticVersion::new(1,0,0, ReleaseType::Beta), 0),
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Beta), constants::MAX_VARIANTS)
                 )
             )
         );

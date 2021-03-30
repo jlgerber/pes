@@ -19,7 +19,7 @@ use super::*;
 /// # }
 /// ```
 pub fn parse_semver_range(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
-    alt((parse_semver_carrot, parse_semver_between, parse_semver_exact)) //,
+    alt((parse_semver_caret, parse_semver_between, parse_semver_exact)) //,
 (s)
 }
 

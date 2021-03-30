@@ -41,20 +41,40 @@ fn parse_range_with_spaces() {
 
 #[test]
 fn parse_str_starting_with_carot_major() {
-    let result = parse_semver_carrot("^1");
+    let result = parse_semver_caret("^1");
     assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(1,0,0,ReleaseType::Release), SemanticVersion::new(2,0,0,ReleaseType::Release)))));
 }
 
 #[test]
-fn parse_str_starting_with_carot_minor() {
-    let result = parse_semver_carrot("^2.5");
-    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(2,5,0,ReleaseType::Release), SemanticVersion::new(2,6,0,ReleaseType::Release)))));
+fn parse_str_starting_with_carot_minor_with_major_one_or_greater() {
+    // eg ^1.2    :=  >=1.2.0, <2.0.0
+    let result = parse_semver_caret("^1.5");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(1,5,0,ReleaseType::Release), SemanticVersion::new(2,0,0,ReleaseType::Release)))));
+    let result = parse_semver_caret("^2.5");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(2,5,0,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release)))));
 }
 
 #[test]
-fn parse_str_starting_with_carot_path() {
-    let result = parse_semver_carrot("^3.4.2");
-    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(3,4,2,ReleaseType::Release), SemanticVersion::new(3,4,3,ReleaseType::Release)))));
+fn parse_str_starting_with_carot_minor_with_major_zero_greater() {
+    // eg ^0.2    :=  >=0.2.0, <0.3.0
+    let result = parse_semver_caret("^0.5");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(0,5,0,ReleaseType::Release), SemanticVersion::new(0,6,0,ReleaseType::Release)))));
+}
+
+#[test]
+fn parse_str_starting_with_caret_path_and_major_one_or_greater() {
+    // eg ^1.2.3  :=  >=1.2.3, <2.0.0
+    let result = parse_semver_caret("^1.4.2");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(1,4,2,ReleaseType::Release), SemanticVersion::new(2,0,0,ReleaseType::Release)))));
+    let result = parse_semver_caret("^3.4.2");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(3,4,2,ReleaseType::Release), SemanticVersion::new(4,0,0,ReleaseType::Release)))));
+}
+
+#[test]
+fn parse_str_starting_with_caret_path_and_major_zero() {
+    // eg ^0.2.3  :=  >=0.2.3, <0.3.0
+    let result = parse_semver_caret("^0.4.2");
+    assert_eq!(result, Ok(("", Range::between(SemanticVersion::new(0,4,2,ReleaseType::Release), SemanticVersion::new(0,5,0,ReleaseType::Release)))));
 }
 
 #[test]
@@ -66,11 +86,14 @@ fn parse_str_exact() {
 #[test]
 fn parse_semver_from_table() {
     let versions = vec![
-        //("   1.23.4   ", Ok(("", Range::exact(SemanticVersion::new(1,23,4))))) ,
         ("1.23.4", Ok(("", Range::exact(SemanticVersion::new(1,23,4,ReleaseType::Release))))) ,
-        // (" 1.2.3 +< 3 ", Ok(("", Range::between(SemanticVersion::new(1,2,3), SemanticVersion::new(3,0,0))))),
         ("1.2.3+<3", Ok(("", Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release))))),
-        ("^2.2", Ok(("", Range::between(SemanticVersion::new(2,2,0,ReleaseType::Release), SemanticVersion::new(2,3,0,ReleaseType::Release) ))))
+        ("^2.2.1", Ok(("", Range::between(SemanticVersion::new(2,2,1,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release) )))),
+        ("^2.2", Ok(("", Range::between(SemanticVersion::new(2,2,0,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release) )))),
+        ("^2", Ok(("", Range::between(SemanticVersion::new(2,0,0,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release) )))),
+        ("^0.0.2", Ok(("", Range::between(SemanticVersion::new(0,0,2,ReleaseType::Release), SemanticVersion::new(0,0,3,ReleaseType::Release) )))),
+        ("^0.1.2", Ok(("", Range::between(SemanticVersion::new(0,1,2,ReleaseType::Release), SemanticVersion::new(0,2,0,ReleaseType::Release) )))),
+        ("^0.2", Ok(("", Range::between(SemanticVersion::new(0,2, 0,ReleaseType::Release), SemanticVersion::new(0,3,0,ReleaseType::Release) )))),
     ];
 
     for (input,expected) in versions {
@@ -86,11 +109,24 @@ fn parse_package_name_and_version() {
 
 #[test]
 fn parse_package_name_and_range() {
+    /* should conform to:
+    ^1.2.3  :=  >=1.2.3, <2.0.0
+    ^1.2    :=  >=1.2.0, <2.0.0
+    ^1      :=  >=1.0.0, <2.0.0
+    ^0.2.3  :=  >=0.2.3, <0.3.0
+    ^0.2    :=  >=0.2.0, <0.3.0
+    ^0.0.3  :=  >=0.0.3, <0.0.4
+    ^0.0    :=  >=0.0.0, <0.1.0
+    ^0      :=  >=0.0.0, <1.0.0
+    */
     let versions = vec![
         ("maya-1.23.4", Ok(("", ("maya",Range::exact(SemanticVersion::new(1,23,4,ReleaseType::Release)))))) ,
         ("houdini-1.2.3+<3", Ok(("",("houdini", Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release)))))),
         ("houdini-1.2.3 +< 3.0.0", Ok(("",("houdini", Range::between(SemanticVersion::new(1,2,3,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release)))))),
-        ("nuke-^2.2", Ok(("", ("nuke", Range::between(SemanticVersion::new(2,2,0,ReleaseType::Release), SemanticVersion::new(2,3,0,ReleaseType::Release) )))))
+        ("nuke-^2.2", Ok(("", ("nuke", Range::between(SemanticVersion::new(2,2,0,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release) ))))),
+        ("nuke-^2", Ok(("", ("nuke", Range::between(SemanticVersion::new(2,0,0,ReleaseType::Release), SemanticVersion::new(3,0,0,ReleaseType::Release) ))))),
+        ("nuke-^0.2.3", Ok(("", ("nuke", Range::between(SemanticVersion::new(0,2,3,ReleaseType::Release), SemanticVersion::new(0,3,0,ReleaseType::Release) ))))),
+        ("nuke-^0.0.3", Ok(("", ("nuke", Range::between(SemanticVersion::new(0,0,3,ReleaseType::Release), SemanticVersion::new(0,0,4,ReleaseType::Release) )))))
     ];
     for (input, expected) in versions {
         let result = parse_package_range(input);

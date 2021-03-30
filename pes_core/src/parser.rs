@@ -117,7 +117,17 @@ fn parse_semver_between(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
 
 // Given a str reference starting with a '^' followed by a valid semantic version str, return a Range::between two 
 // SemanticVersions
-fn parse_semver_carrot(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
+/* FROM CARGO MANUAL
+^1.2.3  :=  >=1.2.3, <2.0.0
+^1.2    :=  >=1.2.0, <2.0.0
+^1      :=  >=1.0.0, <2.0.0
+^0.2.3  :=  >=0.2.3, <0.3.0
+^0.2    :=  >=0.2.0, <0.3.0
+^0.0.3  :=  >=0.0.3, <0.0.4
+^0.0    :=  >=0.0.0, <0.1.0
+^0      :=  >=0.0.0, <1.0.0
+*/
+fn parse_semver_caret(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
     let (leftover,(first, rest)) = preceded(tag("^"), tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)))))(s)?;
     let major = first.parse::<u32>().unwrap();
     let minor =  rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap();
@@ -132,8 +142,25 @@ fn parse_semver_carrot(s: &str) -> PNResult<&str, Range<SemanticVersion>> {
    
     let semver2 = match rest.len() {
         0 => SemanticVersion::new(major+1, 0, 0, ReleaseType::Release),
-        1 => SemanticVersion::new(major, minor+1, 0, ReleaseType::Release),
-        2 => SemanticVersion::new(major, minor, patch+1, ReleaseType::Release),
+        1 => {
+            if major >= 1 {
+                SemanticVersion::new(major+1, 0, 0, ReleaseType::Release)
+            } else {
+                SemanticVersion::new(major, minor+1, 0, ReleaseType::Release)
+            }
+        },
+        2 => {
+            if major >= 1 {
+                SemanticVersion::new(major+1, 0, 0, ReleaseType::Release)
+            } else if minor == 0{
+                // eg ^0.0.3  :=  >=0.0.3, <0.0.4
+                SemanticVersion::new(major, minor, patch+1, ReleaseType::Release)
+            } else {
+                // eg ^0.2.3  :=  >=0.2.3, <0.3.0
+                SemanticVersion::new(major, minor + 1, 0, ReleaseType::Release)
+            }
+        
+        },
         _ => panic!("invalid semantic version")
     };
 
