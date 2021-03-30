@@ -4,7 +4,15 @@ use crate::constants;
 
 
 pub fn parse_package_variants_range(input: &str)-> PNResult<&str, (&str, Range<Variant<SemanticVersion>>)> {
-    todo!()
+    separated_pair(
+        alphaword_many0_underscore_word, 
+        tag("-"), 
+        alt(
+            (
+                parse_semver_variants_between,
+                parse_carrot_variant_semver_range
+            )
+        ))(input)
 }
 /// Given a distribution with explicit or implicit variant, return a tuple with the package name and a range over the semver variant
 /// In otherwords, the package and SemanticVersion should be exact, while the variant index may either be exact or a range.
@@ -354,19 +362,19 @@ fn parse_carrot_implicit_variant_semver_range(s: &str) -> PNResult<&str, Range<V
     )
 }
 
-fn parse_semver_returning_min_variant(s: &str)-> PNResult<&str, Variant<SemanticVersion>> {
-    let (leftover, semver) = parse_semver(s)?;
-    Ok((leftover, Variant::new(semver, 0)))
-}
-
-fn parse_semver_returning_max_variant(s: &str)-> PNResult<&str, Variant<SemanticVersion>> {
-    let (leftover, semver) = parse_semver(s)?;
-    Ok((leftover, Variant::new(semver, constants::MAX_VARIANTS)))
-}
 // Given a string representing two semantic versions separated by '+<', return a Range::between the first and second
 // Variant wrapped SemanticVersion instances
 pub(crate) fn parse_semver_variants_between(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
    
+    fn parse_semver_returning_min_variant(s: &str)-> PNResult<&str, Variant<SemanticVersion>> {
+        let (leftover, semver) = parse_semver(s)?;
+        Ok((leftover, Variant::new(semver, 0)))
+    }
+
+    fn parse_semver_returning_max_variant(s: &str)-> PNResult<&str, Variant<SemanticVersion>> {
+        let (leftover, semver) = parse_semver(s)?;
+        Ok((leftover, Variant::new(semver, constants::MAX_VARIANTS)))
+    }
 
     let (leftover, (sm1,sm2)) = separated_pair(
         alt((parse_variant_semver, parse_semver_returning_min_variant)),
@@ -384,7 +392,6 @@ pub(crate) fn parse_semver_variants_between(s: &str) -> PNResult<&str, Range<Var
         )
     )
 }
-
 
 
 
