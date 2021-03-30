@@ -514,7 +514,7 @@ mod parse_package_variants_range {
     }
 
     #[test]
-    fn given_explicit_variant__succeeds() {
+    fn given_explicit_variant_starting_with_carrot__succeeds() {
         let result = parse_package_variants_range("maya-^1.2.3@1");
         let expected = (
             "",
@@ -527,10 +527,13 @@ mod parse_package_variants_range {
             )
         );
         assert_eq!(result.unwrap(), expected);
+
     }
+
+    
     
     #[test]
-    fn given_implicit_variant__succeeds() {
+    fn given_implicit_variant_starting_with_carrot__succeeds() {
         let result = parse_package_variants_range("maya-^1.2.3");
         let expected = (
             "",
@@ -544,5 +547,68 @@ mod parse_package_variants_range {
         );
         assert_eq!(result.unwrap(), expected);
     }
+    
+    #[test]
+    fn given_explicit_variant_with_two_digit_semver_starting_with_carrot__succeeds() {
+        let result = parse_package_variants_range("maya-^1.2@1");
+        let expected = (
+            "",
+            (
+                "maya",
+                Range::between(
+                    Variant::new(SemanticVersion::new(1,2,0, ReleaseType::Release), 1),
+                    Variant::new(SemanticVersion::new(1,3,0, ReleaseType::Release),1)
+                )
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
 
+    #[test]
+    fn given_implicit_variant_with_two_digit_semver_starting_with_carrot__succeeds() {
+        let result = parse_package_variants_range("maya-^1.2");
+        let expected = (
+            "",
+            (
+                "maya",
+                Range::between(
+                    Variant::new(SemanticVersion::new(1,2,0, ReleaseType::Release), 0),
+                    Variant::new(SemanticVersion::new(1,3,0, ReleaseType::Release), constants::MAX_VARIANTS)
+                )
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+    
+    #[test]
+    fn given_explicit_variant_with_one_digit_semver_starting_with_carrot__succeeds() {
+        let result = parse_package_variants_range("maya-^1@1");
+        let expected = (
+            "",
+            (
+                "maya",
+                Range::between(
+                    Variant::new(SemanticVersion::new(1,0,0, ReleaseType::Release), 1),
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release),1)
+                )
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_implicit_variant_with_one_digit_semver_starting_with_carrot__succeeds() {
+        let result = parse_package_variants_range("maya-^1");
+        let expected = (
+            "",
+            (
+                "maya",
+                Range::between(
+                    Variant::new(SemanticVersion::new(1,0,0, ReleaseType::Release), 0),
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release), constants::MAX_VARIANTS)
+                )
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
 }
