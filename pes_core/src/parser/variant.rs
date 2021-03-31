@@ -291,38 +291,79 @@ pub(crate) fn parse_caret_variant_semver_range(s: &str) -> PNResult<&str, Range<
 
 // given an input with an explicit variant (eg ^1.2.3@0 or ^1.2@3 or ^1@1 ), return an exact range
 pub(crate) fn parse_caret_explicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-    let (leftover,(first, rest, index)) = preceded(
-                                        tag("^"), 
-                                        tuple((
-                                            digit1, 
-                                            many_m_n(0, 2, preceded(tag("."), digit1)),
-                                            preceded(tag("@"),digit1)
-                                        ))
-                                    )(s)?;
-    let major = first.parse::<u32>().unwrap();
-    let minor =  rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap();
-    let patch =  rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap();
-    let index = index.parse::<u8>().unwrap();
+    fn _parse_variant_prerelease(s: &str) -> PNResult<&str, (Variant<SemanticVersion>, usize)> {
+        let (leftover,(first, rest, release_type, index)) = tuple((
+            digit1, 
+            many_m_n(0, 2, preceded(tag("."), digit1)),
+            preceded(tag("-"), parse_prerelease),
+            preceded(tag("@"),digit1)
+        ))(s)?;
 
-    let semver = SemanticVersion::new(
-        major,
-        minor,
-        patch,
-        ReleaseType::Release
-    );
-   
-    let semver2 = match rest.len() {
-        0 => SemanticVersion::new(major+1, 0, 0, ReleaseType::Release),
-        1 => SemanticVersion::new(major, minor+1, 0, ReleaseType::Release),
-        2 => SemanticVersion::new(major, minor, patch+1, ReleaseType::Release),
+        let variant = Variant::new(
+            SemanticVersion::new(
+                first.parse::<u32>().unwrap(),
+                rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+                rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+                release_type
+            ), 
+            index.parse::<u8>().unwrap()
+        );
+    
+        Ok((leftover,(variant, rest.len())))
+    }
+
+    fn _parse_variant_release(s: &str) -> PNResult<&str, (Variant<SemanticVersion>, usize)> {
+        let (leftover,(first, rest, index)) = tuple((
+            digit1, 
+            many_m_n(0, 2, preceded(tag("."), digit1)),
+            preceded(tag("@"),digit1)
+        ))(s)?;
+
+        let variant = Variant::new(
+            SemanticVersion::new(
+                first.parse::<u32>().unwrap(),
+                rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+                rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+                ReleaseType::Release
+            ), 
+            index.parse::<u8>().unwrap()
+        );
+    
+        Ok((leftover,(variant, rest.len())))
+    }
+
+    let (leftover, (variant, rest_len)) = preceded(tag("^"),alt((_parse_variant_prerelease, _parse_variant_release)))(s)?;
+ 
+    let semver2 = match rest_len {
+        0 => SemanticVersion::new(variant.major()+1, 0, 0, variant.release_type()),
+        1 => {
+            if variant.major() >= 1 {
+                SemanticVersion::new(variant.major()+1, 0, 0, variant.release_type())
+            } else {
+                SemanticVersion::new(variant.major(), variant.minor()+1, 0, variant.release_type())
+            }
+        },
+        2 => {
+            if variant.major() >= 1 {
+                // eg ^1.2.3  :=  >=1.2.3, <2.0.0
+                SemanticVersion::new(variant.major()+1, 0, 0, variant.release_type())
+            } else if variant.minor() == 0{
+                // eg ^0.0.3  :=  >=0.0.3, <0.0.4
+                SemanticVersion::new(variant.major(), variant.minor(), variant.patch()+1, variant.release_type())
+            } else {
+                // eg ^0.2.3  :=  >=0.2.3, <0.3.0
+                SemanticVersion::new(variant.major(), variant.minor() + 1, 0, variant.release_type())
+            }
+        },
         _ => panic!("invalid semantic version")
     };
 
+    let index = variant.index();
     Ok(
         (
             leftover, 
             Range::between(
-                Variant::new(semver, index), 
+                variant, 
                 Variant::new(semver2,index)
             ) 
         )
@@ -331,23 +372,51 @@ pub(crate) fn parse_caret_explicit_variant_semver_range(s: &str) -> PNResult<&st
 
 // given an input with an implicit variant (eg ^1.2.3 or ^1.2 or ^1), return an exact range
 fn parse_caret_implicit_variant_semver_range(s: &str) -> PNResult<&str, Range<Variant<SemanticVersion>>> {
-   
-    let (leftover,(first, rest)) = preceded(tag("^"), tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)))))(s)?;
-    let major = first.parse::<u32>().unwrap();
-    let minor =  rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap();
-    let patch =  rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap();
+    fn _parse_semver_prerelease(s: &str) -> PNResult<&str, (SemanticVersion, usize)> {
+        let (leftover,(first, rest, release_type)) = tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1)),preceded(tag("-"), parse_prerelease) ))(s)?;
+        let semver = SemanticVersion::new(
+            first.parse::<u32>().unwrap(),
+            rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+            rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+           release_type
+        );
+    
+        Ok((leftover,(semver, rest.len())))
+    }
 
-    let semver = SemanticVersion::new(
-        major,
-        minor,
-        patch,
-        ReleaseType::Release
-    );
-   
-    let semver2 = match rest.len() {
-        0 => SemanticVersion::new(major+1, 0, 0, ReleaseType::Release),
-        1 => SemanticVersion::new(major, minor+1, 0, ReleaseType::Release),
-        2 => SemanticVersion::new(major, minor, patch+1, ReleaseType::Release),
+    fn _parse_semver_release(s: &str) -> PNResult<&str, (SemanticVersion, usize)> {
+        let (leftover,(first, rest)) = tuple((digit1, many_m_n(0, 2, preceded(tag("."), digit1))))(s)?;
+        let semver = SemanticVersion::new(
+            first.parse::<u32>().unwrap(),
+            rest.get(0).unwrap_or(&"0").parse::<u32>().unwrap(),
+            rest.get(1).unwrap_or(&"0").parse::<u32>().unwrap(),
+            ReleaseType::Release
+        );
+    
+        Ok((leftover,(semver, rest.len())))
+    }
+    let (leftover, (semver, rest_len)) = preceded(tag("^"),alt((_parse_semver_prerelease, _parse_semver_release)))(s)?;
+ 
+    let semver2 = match rest_len {
+        0 => SemanticVersion::new(semver.major+1, 0, 0, semver.release_type.clone()),
+        1 => {
+            if semver.major >= 1 {
+                SemanticVersion::new(semver.major+1, 0, 0, semver.release_type.clone())
+            } else {
+                SemanticVersion::new(semver.major, semver.minor+1, 0, semver.release_type.clone())
+            }
+        },
+        2 => {
+            if semver.major >= 1 {
+                SemanticVersion::new(semver.major+1, 0, 0, semver.release_type.clone())
+            } else if semver.minor == 0{
+                // eg ^0.0.3  :=  >=0.0.3, <0.0.4
+                SemanticVersion::new(semver.major, semver.minor, semver.patch+1, semver.release_type.clone())
+            } else {
+                // eg ^0.2.3  :=  >=0.2.3, <0.3.0
+                SemanticVersion::new(semver.major, semver.minor + 1, 0, semver.release_type.clone())
+            }
+        },
         _ => panic!("invalid semantic version")
     };
 

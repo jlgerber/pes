@@ -6,6 +6,7 @@
 //!
 //! - The consuming variant of a parser ensures that the input is completely consumed, eating any surounding whitespace
 //! - The non-consuming variant of a parser is simply a `nom` parser, which returns a tuple of the remaining data to be parsed, along with the parse results (assuming a successful parse)
+
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::cell::RefCell;

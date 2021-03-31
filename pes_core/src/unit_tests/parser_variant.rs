@@ -232,26 +232,69 @@ mod parse_caret_variant_semver_range {
     use super::*;
 
     #[test]
-    fn given_explicit_variant__succeeds() {
+    fn given_explicit_variant_and_version_one_or_greater__succeeds() {
+        // eg ^1.2.3  :=  >=1.2.3, <2.0.0
         let result = parse_caret_variant_semver_range("^1.2.3@1");
         let expected = (
             "",
             Range::between(
                 Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 1),
-                Variant::new(SemanticVersion::new(1,2,4, ReleaseType::Release),1)
+                Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release),1)
             )
         );
         assert_eq!(result.unwrap(), expected);
     }
-    
+
+    #[test]
+    fn given_explicit_variant_and_version_major_zero__succeeds() {
+        // eg ^0.2.3  :=  >=0.2.3, <0.3.0
+        let result = parse_caret_variant_semver_range("^0.2.3@1");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(0,2,3, ReleaseType::Release), 1),
+                Variant::new(SemanticVersion::new(0,3,0, ReleaseType::Release),1)
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_explicit_variant_and_version_major_zero_minor_zero__succeeds() {
+        // eg ^0.0.3  :=  >=0.0.3, <0.0.4
+        let result = parse_caret_variant_semver_range("^0.0.3@1");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(0,0,3, ReleaseType::Release), 1),
+                Variant::new(SemanticVersion::new(0,0,4, ReleaseType::Release),1)
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+
     #[test]
     fn given_implicit_variant__succeeds() {
+        // eg ^1.2.3  :=  >=1.2.3, <2.0.0
         let result = parse_caret_variant_semver_range("^1.2.3");
         let expected = (
             "",
             Range::between(
-                Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
-                Variant::new(SemanticVersion::new(1,2,4, ReleaseType::Release), constants::MAX_VARIANTS)
+                Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Release), 0),
+                Variant::new(SemanticVersion::new(2, 0, 0, ReleaseType::Release), constants::MAX_VARIANTS)
+            )
+        );
+        assert_eq!(result.unwrap(), expected);
+    }
+
+    #[test]
+    fn given_implicit_variant_prerelease__succeeds() {
+        let result = parse_caret_variant_semver_range("^1.2.3-beta");
+        let expected = (
+            "",
+            Range::between(
+                Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Beta), 0),
+                Variant::new(SemanticVersion::new(2, 0, 0, ReleaseType::Beta), constants::MAX_VARIANTS)
             )
         );
         assert_eq!(result.unwrap(), expected);
@@ -529,6 +572,7 @@ mod parse_package_variants_range {
 
     #[test]
     fn given_explicit_variant_starting_with_caret__succeeds() {
+        // eg ^1.2.3  :=  >=1.2.3, <2.0.0
         let result = parse_package_variants_range("maya-^1.2.3@1");
         let expected = (
             "",
@@ -536,7 +580,7 @@ mod parse_package_variants_range {
                 "maya",
                 Range::between(
                     Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 1),
-                    Variant::new(SemanticVersion::new(1,2,4, ReleaseType::Release),1)
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release),1)
                 )
             )
         );
@@ -548,6 +592,7 @@ mod parse_package_variants_range {
     
     #[test]
     fn given_implicit_variant_starting_with_caret__succeeds() {
+        //eg ^1.2.3  :=  >=1.2.3, <2.0.0
         let result = parse_package_variants_range("maya-^1.2.3");
         let expected = (
             "",
@@ -555,7 +600,7 @@ mod parse_package_variants_range {
                 "maya",
                 Range::between(
                     Variant::new(SemanticVersion::new(1,2,3, ReleaseType::Release), 0),
-                    Variant::new(SemanticVersion::new(1,2,4, ReleaseType::Release), constants::MAX_VARIANTS)
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release), constants::MAX_VARIANTS)
                 )
             )
         );
@@ -564,6 +609,7 @@ mod parse_package_variants_range {
     
     #[test]
     fn given_explicit_variant_with_two_digit_semver_starting_with_caret__succeeds() {
+        //eg ^1.2    :=  >=1.2.0, <2.0.0
         let result = parse_package_variants_range("maya-^1.2@1");
         let expected = (
             "",
@@ -571,7 +617,7 @@ mod parse_package_variants_range {
                 "maya",
                 Range::between(
                     Variant::new(SemanticVersion::new(1,2,0, ReleaseType::Release), 1),
-                    Variant::new(SemanticVersion::new(1,3,0, ReleaseType::Release),1)
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release),1)
                 )
             )
         );
@@ -587,7 +633,7 @@ mod parse_package_variants_range {
                 "maya",
                 Range::between(
                     Variant::new(SemanticVersion::new(1,2,0, ReleaseType::Release), 0),
-                    Variant::new(SemanticVersion::new(1,3,0, ReleaseType::Release), constants::MAX_VARIANTS)
+                    Variant::new(SemanticVersion::new(2,0,0, ReleaseType::Release), constants::MAX_VARIANTS)
                 )
             )
         );

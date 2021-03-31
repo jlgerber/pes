@@ -90,7 +90,21 @@ impl Variant<SemanticVersion> {
             index
         }
     }
-    
+    pub fn major(&self) -> u32 {
+        self.version.major
+    }
+    pub fn minor(&self) -> u32 {
+        self.version.minor
+    }
+    pub fn patch(&self) -> u32 {
+        self.version.patch
+    }
+    pub fn index(&self) -> u8 {
+        self.index
+    }
+    pub fn release_type(&self) -> ReleaseType {
+        self.version.release_type.clone()
+    }
     /// Version 0.0.0.
     pub fn zero() -> Self {
         // technically one could argue that this should be an alpha
