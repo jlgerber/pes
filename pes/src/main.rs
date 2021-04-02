@@ -42,10 +42,8 @@ fn dist_cmd(subcmd: SubCmds) -> Result<(), PesError> {
                 match dist {
                     Some(ref dist) => {
                         if check_distribution(&plugin_mgr, dist)? {
-                            
                             println!("\n\tDistribution: {} is valid\n", dist);
                         } else {
-                            
                             println!("\nWARNING:\n\n\tDistribution: {} does not exist\n", dist);
                         }
                 },

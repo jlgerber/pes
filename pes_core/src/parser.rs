@@ -56,15 +56,6 @@ pub use crate::traits::VarProvider;
 pub use crate::env::BasicVarProvider;
 
 
-//------------------//
-// PUBLIC FUNCTIONS //
-//------------------//
-
-
-//---------------------//
-//  PRIVATE FUNCTIONS  //
-//---------------------//
-
 // parse a package name with no version specified. In this case, we assume that the 
 // version range is open to any version.
 fn parse_package_any(s: &str) -> PNResult<&str, (&str, Range<SemanticVersion>)> {

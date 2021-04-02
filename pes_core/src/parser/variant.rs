@@ -2,7 +2,15 @@ use super::*;
 use nom::character::complete::space0;
 use crate::constants;
 
-
+/// parses implicit and explicit packages with variant ranges (including caret prefixed).
+///
+/// #Examples
+///
+/// ```ignore
+/// maya-1.2.3+<2.3.2
+/// houdini-^0.2
+/// nuke-0.1@2+<1.1.1@2
+/// ```
 pub fn parse_package_variants_range(input: &str)-> PNResult<&str, (&str, Range<Variant<SemanticVersion>>)> {
     separated_pair(
         alphaword_many0_underscore_word, 
@@ -14,6 +22,49 @@ pub fn parse_package_variants_range(input: &str)-> PNResult<&str, (&str, Range<V
             )
         ))(input)
 }
+
+/// Wraps `parse_package_variants_range` ensuring that it consumes its input completely.
+///
+/// # Example
+/// ```
+/// # use pes_core::parser::parse_consuming_package_variants_range;
+/// # use pes_core::{constants, SemanticVersion, Variant, ReleaseType, range::Range};
+/// # fn main()  {
+/// let variant = parse_consuming_package_variants_range("maya-^1.2.3-beta");
+/// assert_eq!(
+///    variant.unwrap(), 
+///    ("maya", Range::between(
+///               Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Beta), 0),
+///               Variant::new(SemanticVersion::new(2, 0, 0, ReleaseType::Beta), constants::MAX_VARIANTS),
+///             )
+///    ));
+///
+/// // note - just because you can doesnt mean you should. One should not normally refer to a specific
+/// // variant index in a package range. But it does work technically...
+/// let variant = parse_consuming_package_variants_range("maya-1.2.3-beta@2+<4");
+/// assert_eq!(
+///    variant.unwrap(), 
+///    ("maya", Range::between(
+///               Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Beta), 2),
+///               Variant::new(SemanticVersion::new(4, 0, 0, ReleaseType::Release), constants::MAX_VARIANTS),
+///             )
+///    ));
+///
+/// # }
+/// ```
+pub fn parse_consuming_package_variants_range(input: &str) -> Result<(&str, Range<Variant<SemanticVersion>>), PesError> {
+    let (_,result) = all_consuming(
+        ws(parse_package_variants_range)
+    )(input)
+    .map_err(|_| 
+        PesError::ParsingFailure(
+            format!("parse_consuming_package_variants_range failed {}", input)
+        )
+    )?;
+
+    Ok(result)
+}
+
 /// Given a distribution with explicit or implicit variant, return a tuple with the package name and a range over the semver variant
 /// In otherwords, the package and SemanticVersion should be exact, while the variant index may either be exact or a range.
 ///
@@ -48,13 +99,22 @@ pub fn parse_package_variants(input: &str) -> PNResult<&str, (&str, Range<Varian
 /// # Example
 /// ```
 /// # use pes_core::parser::parse_consuming_package_variants;
-/// # use pes_core::{SemanticVersion, Variant, ReleaseType, range::Range};
+/// # use pes_core::{constants, SemanticVersion, Variant, ReleaseType, range::Range};
 /// # fn main()  {
 /// let variant = parse_consuming_package_variants("maya-1.2.3@0");
 /// assert_eq!(
 ///    variant.unwrap(), 
 ///    ("maya", Range::exact(Variant::new(SemanticVersion::new(1,2,3,ReleaseType::Release), 0)))
 /// );
+///
+/// let variant = parse_consuming_package_variants("maya-1.2.3");
+/// assert_eq!(
+///    variant.unwrap(), 
+///    ("maya", Range::between(
+///               Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Release), 0),
+///               Variant::new(SemanticVersion::new(1, 2, 3, ReleaseType::Release), constants::MAX_VARIANTS),
+///             )
+///    ));
 /// # }
 /// ```
 pub fn parse_consuming_package_variants(input: &str) -> Result<(&str, Range<Variant<SemanticVersion>>), PesError> {
@@ -63,7 +123,7 @@ pub fn parse_consuming_package_variants(input: &str) -> Result<(&str, Range<Vari
     )(input)
     .map_err(|_| 
         PesError::ParsingFailure(
-            format!("parse_package_variants failed {}", input)
+            format!("parse_consuming_package_variants failed {}", input)
         )
     )?;
 
